@@ -25,19 +25,16 @@ function addTask() {
     const name = input.value.trim();
 
     if (name === "") {
+        openTaskModal();
         return;
     }
 
-    const task = {
-        id: Date.now(),
-        name: name,
-        subject: "",
-        type: "Task",
-        priority: "Normal",
-        dueDate: null,
-        completed: false,
-        createdAt: new Date().toISOString()
-    };
+    document.querySelector("#taskName").value = name;
+
+    input.value = "";
+
+    openTaskModal();
+}
 
     tasks.push(task);
 
@@ -48,7 +45,128 @@ function addTask() {
     renderTasks();
 }
 
+// ========================================
+// OPEN TASK MODAL
+// ========================================
 
+function openTaskModal() {
+
+    const modal = document.querySelector("#taskModal");
+
+    modal.classList.add("open");
+
+    document.querySelector("#taskName").focus();
+}
+
+
+// ========================================
+// CLOSE TASK MODAL
+// ========================================
+
+function closeTaskModal() {
+
+    const modal = document.querySelector("#taskModal");
+
+    modal.classList.remove("open");
+
+    clearTaskForm();
+}
+
+
+// ========================================
+// CREATE TASK
+// ========================================
+
+function createTask() {
+
+    const name = document
+        .querySelector("#taskName")
+        .value
+        .trim();
+
+    if (name === "") {
+
+        alert("Please enter a task name.");
+
+        return;
+    }
+
+
+    const subject =
+        document.querySelector("#taskSubject").value;
+
+    const type =
+        document.querySelector("#taskType").value;
+
+    const dueDate =
+        document.querySelector("#taskDueDate").value;
+
+    const priority =
+        document.querySelector("#taskPriority").value;
+
+    const tagText =
+        document.querySelector("#taskTags").value;
+
+
+    const tags = tagText
+        .split(",")
+        .map(tag => tag.trim())
+        .filter(tag => tag !== "");
+
+
+    const task = {
+
+        id: Date.now(),
+
+        name: name,
+
+        subject: subject,
+
+        type: type,
+
+        priority: priority,
+
+        dueDate: dueDate || null,
+
+        tags: tags,
+
+        completed: false,
+
+        createdAt: new Date().toISOString()
+
+    };
+
+
+    tasks.push(task);
+
+    saveTasks();
+
+    closeTaskModal();
+
+    renderTasks();
+
+}
+
+
+// ========================================
+// CLEAR TASK FORM
+// ========================================
+
+function clearTaskForm() {
+
+    document.querySelector("#taskName").value = "";
+
+    document.querySelector("#taskSubject").value = "";
+
+    document.querySelector("#taskType").value = "Task";
+
+    document.querySelector("#taskDueDate").value = "";
+
+    document.querySelector("#taskPriority").value = "Normal";
+
+    document.querySelector("#taskTags").value = "";
+
+}
 // ========================================
 // COMPLETE TASK
 // ========================================
@@ -150,12 +268,7 @@ function escapeHTML(text) {
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    const button = document.querySelector(".quick-add button");
-
     const input = document.querySelector(".quick-add input");
-
-
-    button.addEventListener("click", addTask);
 
 
     input.addEventListener("keydown", event => {
