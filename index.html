@@ -3,11 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Planner</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <h1>My Planner</h1>
-    <p>It's alive! 🎉</p>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            Planner
+        </div>
+
+        <div class="nav-section">
+
+            <div class="nav-title">Planner</div>
+
+            <a href="#" class="nav-item active">🏠 Today</a>
+            <a href="#" class="nav-item">📅 Calendar</a>
+            <a href="#" class="nav-item">✓ Tasks</a>
+
+        </div>
+
+        <div class="nav-section">
+
+            <div class="nav-title">School</div>
+
+            <a href="#" class="nav-item">📚 Subjects</a>
+            <a href="#" class="nav-item">📝 Assignments</a>
+            <a href="#" class="nav-item">🧪 Tests & Exams</a>
+            <a href="#" class="nav-item">📊 Grades</a>
+
+        </div>
+
+        <div class="nav-section">
+
+            <div class="nav-title">Personal</div>
+
+            <a href="#" class="nav-item">🌱 Habits</a>
+            <a href="#" class="nav-item">🗒 Notes</a>
+
+        </div>
+
+        <div class="nav-section">
+
+            <a href="#" class="nav-item">⚙ Settings</a>
+
+        </div>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="header">
+
+            <h1>Good afternoon!</h1>
+
+            <p>Monday, August 24</p>
+
+        </header>
+
+
+        <div class="quick-add">
+
+            <input
+                type="text"
+                placeholder="What do you need to do?"
+            >
+
+            <button>Add</button>
+
+        </div>
+
+
+        <div class="dashboard-grid">
+
+
+            <section class="card">
+
+                <h2>Today</h2>
+
+                <div class="task">
+
+                    <input type="checkbox">
+
+                    <div class="task-info">
+
+                        <div class="task-name">
+                            Chemistry homework
+                        </div>
+
+                        <div class="task-meta">
+                            Chemistry · Homework
+                        </div>
+
+                    </div>
+
+                    <span class="priority">
+                        Normal
+                    </span>
+
+                </div>
+
+
+                <div class="task">
+
+                    <input type="checkbox">
+
+                    <div class="task-info">
+
+                        <div class="task-name">
+                            English essay
+                        </div>
+
+                        <div class="task-meta">
+                            English · Assignment
+                        </div>
+
+                    </div>
+
+                    <span class="priority">
+                        High
+                    </span>
+
+                </div>
+
+
+                <div class="task">
+
+                    <input type="checkbox">
+
+                    <div class="task-info">
+
+                        <div class="task-name">
+                            Physics questions
+                        </div>
+
+                        <div class="task-meta">
+                            Physics · Homework
+                        </div>
+
+                    </div>
+
+                    <span class="priority">
+                        Normal
+                    </span>
+
+                </div>
+
+            </section>
+
+
+            <section class="card">
+
+                <h2>Upcoming</h2>
+
+                <div class="task">
+
+                    <div class="task-info">
+
+                        <div class="task-name">
+                            Biology test
+                        </div>
+
+                        <div class="task-meta">
+                            Friday
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="task">
+
+                    <div class="task-info">
+
+                        <div class="task-name">
+                            English essay
+                        </div>
+
+                        <div class="task-meta">
+                            Monday
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+</div>
+
 </body>
 </html>
