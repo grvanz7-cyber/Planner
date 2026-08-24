@@ -10,40 +10,14 @@ let tasks = JSON.parse(localStorage.getItem("plannerTasks")) || [];
 // ========================================
 
 function saveTasks() {
-    localStorage.setItem("plannerTasks", JSON.stringify(tasks));
+
+    localStorage.setItem(
+        "plannerTasks",
+        JSON.stringify(tasks)
+    );
+
 }
 
-
-// ========================================
-// ADD TASK
-// ========================================
-
-function addTask() {
-
-    const input = document.querySelector(".quick-add input");
-
-    const name = input.value.trim();
-
-    if (name === "") {
-        openTaskModal();
-        return;
-    }
-
-    document.querySelector("#taskName").value = name;
-
-    input.value = "";
-
-    openTaskModal();
-}
-
-    tasks.push(task);
-
-    saveTasks();
-
-    input.value = "";
-
-    renderTasks();
-}
 
 // ========================================
 // OPEN TASK MODAL
@@ -56,6 +30,7 @@ function openTaskModal() {
     modal.classList.add("open");
 
     document.querySelector("#taskName").focus();
+
 }
 
 
@@ -70,6 +45,37 @@ function closeTaskModal() {
     modal.classList.remove("open");
 
     clearTaskForm();
+
+}
+
+
+// ========================================
+// QUICK ADD
+// ========================================
+
+function addTask() {
+
+    const input =
+        document.querySelector(".quick-add input");
+
+    const name = input.value.trim();
+
+
+    if (name === "") {
+
+        openTaskModal();
+
+        return;
+
+    }
+
+
+    document.querySelector("#taskName").value = name;
+
+    input.value = "";
+
+    openTaskModal();
+
 }
 
 
@@ -79,16 +85,16 @@ function closeTaskModal() {
 
 function createTask() {
 
-    const name = document
-        .querySelector("#taskName")
-        .value
-        .trim();
+    const name =
+        document.querySelector("#taskName").value.trim();
+
 
     if (name === "") {
 
         alert("Please enter a task name.");
 
         return;
+
     }
 
 
@@ -149,7 +155,7 @@ function createTask() {
 
 
 // ========================================
-// CLEAR TASK FORM
+// CLEAR FORM
 // ========================================
 
 function clearTaskForm() {
@@ -167,23 +173,31 @@ function clearTaskForm() {
     document.querySelector("#taskTags").value = "";
 
 }
+
+
 // ========================================
 // COMPLETE TASK
 // ========================================
 
 function toggleTask(id) {
 
-    const task = tasks.find(task => task.id === id);
+    const task =
+        tasks.find(task => task.id === id);
+
 
     if (!task) {
+
         return;
+
     }
+
 
     task.completed = !task.completed;
 
     saveTasks();
 
     renderTasks();
+
 }
 
 
@@ -193,11 +207,23 @@ function toggleTask(id) {
 
 function renderTasks() {
 
-    const container = document.querySelector(".today-tasks");
+    const container =
+        document.querySelector(".today-tasks");
+
+
+    if (!container) {
+
+        return;
+
+    }
+
 
     container.innerHTML = "";
 
-    const activeTasks = tasks.filter(task => !task.completed);
+
+    const activeTasks =
+        tasks.filter(task => !task.completed);
+
 
     if (activeTasks.length === 0) {
 
@@ -208,14 +234,18 @@ function renderTasks() {
         `;
 
         return;
+
     }
 
 
     activeTasks.forEach(task => {
 
-        const taskElement = document.createElement("div");
+        const taskElement =
+            document.createElement("div");
+
 
         taskElement.className = "task";
+
 
         taskElement.innerHTML = `
 
@@ -231,20 +261,22 @@ function renderTasks() {
                 </div>
 
                 <div class="task-meta">
-                    ${task.type}
+                    ${escapeHTML(task.subject || task.type)}
                 </div>
 
             </div>
 
             <span class="priority">
-                ${task.priority}
+                ${escapeHTML(task.priority)}
             </span>
 
         `;
 
+
         container.appendChild(taskElement);
 
     });
+
 }
 
 
@@ -254,11 +286,15 @@ function renderTasks() {
 
 function escapeHTML(text) {
 
-    const div = document.createElement("div");
+    const div =
+        document.createElement("div");
+
 
     div.textContent = text;
 
+
     return div.innerHTML;
+
 }
 
 
@@ -266,22 +302,29 @@ function escapeHTML(text) {
 // START PLANNER
 // ========================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    const input = document.querySelector(".quick-add input");
-
-
-    input.addEventListener("keydown", event => {
-
-        if (event.key === "Enter") {
-
-            addTask();
-
-        }
-
-    });
+        const input =
+            document.querySelector(".quick-add input");
 
 
-    renderTasks();
+        input.addEventListener(
+            "keydown",
+            event => {
 
-});
+                if (event.key === "Enter") {
+
+                    addTask();
+
+                }
+
+            }
+        );
+
+
+        renderTasks();
+
+    }
+);
