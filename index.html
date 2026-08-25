@@ -45,6 +45,7 @@
             <a
                 href="#"
                 class="nav-item active"
+                onclick="showPage('dashboard'); return false;"
             >
                 🏠 Today
             </a>
@@ -131,6 +132,7 @@
             <a
                 href="#"
                 class="nav-item"
+                onclick="showPage('settings'); return false;"
             >
                 ⚙ Settings
             </a>
@@ -148,70 +150,178 @@
     <main class="main">
 
 
-        <!-- HEADER -->
+        <!-- ====================================
+             DASHBOARD
+             ==================================== -->
 
-        <header class="header">
-
-            <h1>
-                Good afternoon!
-            </h1>
-
-            <p>
-                Tuesday, August 25
-            </p>
-
-        </header>
+        <div id="dashboardPage">
 
 
+            <header class="header">
 
-        <!-- QUICK ADD -->
+                <h1>
+                    Good afternoon!
+                </h1>
 
-        <div class="quick-add">
+                <p id="currentDate">
+                    Loading date...
+                </p>
 
-            <input
-                type="text"
-                placeholder="What do you need to do?"
-            >
+            </header>
 
-            <button onclick="openTaskModal()">
-                Add
-            </button>
+
+
+            <!-- QUICK ADD -->
+
+            <div class="quick-add">
+
+                <input
+                    type="text"
+                    placeholder="What do you need to do?"
+                >
+
+                <button
+                    onclick="openTaskModal()"
+                >
+                    Add
+                </button>
+
+            </div>
+
+
+
+            <!-- DASHBOARD -->
+
+            <div class="dashboard-grid">
+
+
+                <!-- TODAY -->
+
+                <section class="card">
+
+                    <h2>
+                        Today
+                    </h2>
+
+                    <div class="today-tasks"></div>
+
+                </section>
+
+
+
+                <!-- UPCOMING -->
+
+                <section class="card">
+
+                    <h2>
+                        Upcoming
+                    </h2>
+
+                    <div class="upcoming-tasks"></div>
+
+                </section>
+
+
+            </div>
 
         </div>
 
 
 
-        <!-- DASHBOARD -->
+        <!-- ====================================
+             SETTINGS
+             ==================================== -->
 
-        <div class="dashboard-grid">
+        <div
+            id="settingsPage"
+            class="page-hidden"
+        >
+
+            <header class="header">
+
+                <h1>
+                    Settings
+                </h1>
+
+                <p>
+                    Customize your planner
+                </p>
+
+            </header>
 
 
-            <!-- TODAY -->
 
-            <section class="card">
+            <!-- SUBJECTS -->
 
-                <h2>
-                    Today
-                </h2>
+            <section class="card settings-card">
 
-                <div class="today-tasks"></div>
+                <div class="settings-heading">
+
+                    <div>
+
+                        <h2>
+                            Subjects
+                        </h2>
+
+                        <p>
+                            Subjects available when creating tasks.
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="save-button"
+                        onclick="addSubject()"
+                    >
+                        + Add Subject
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="subjectsList"
+                    class="settings-list"
+                ></div>
 
             </section>
 
 
 
-            <!-- UPCOMING -->
+            <!-- TYPES -->
 
-            <section class="card">
+            <section class="card settings-card">
 
-                <h2>
-                    Upcoming
-                </h2>
+                <div class="settings-heading">
 
-                <div class="upcoming-tasks"></div>
+                    <div>
+
+                        <h2>
+                            Task Types
+                        </h2>
+
+                        <p>
+                            Types available when creating tasks.
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="save-button"
+                        onclick="addTaskType()"
+                    >
+                        + Add Type
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="typesList"
+                    class="settings-list"
+                ></div>
 
             </section>
-
 
         </div>
 
@@ -234,8 +344,6 @@
     <div class="modal">
 
 
-        <!-- MODAL HEADER -->
-
         <div class="modal-header">
 
             <h2>
@@ -253,7 +361,7 @@
 
 
 
-        <!-- TASK NAME -->
+        <!-- NAME -->
 
         <div class="form-group">
 
@@ -282,33 +390,7 @@
                     Subject
                 </label>
 
-                <select id="taskSubject">
-
-                    <option value="">
-                        None
-                    </option>
-
-                    <option value="English">
-                        English
-                    </option>
-
-                    <option value="Math">
-                        Math
-                    </option>
-
-                    <option value="Physics">
-                        Physics
-                    </option>
-
-                    <option value="Chemistry">
-                        Chemistry
-                    </option>
-
-                    <option value="Biology">
-                        Biology
-                    </option>
-
-                </select>
+                <select id="taskSubject"></select>
 
             </div>
 
@@ -320,33 +402,7 @@
                     Type
                 </label>
 
-                <select id="taskType">
-
-                    <option value="Task">
-                        Task
-                    </option>
-
-                    <option value="Homework">
-                        Homework
-                    </option>
-
-                    <option value="Assignment">
-                        Assignment
-                    </option>
-
-                    <option value="Quiz">
-                        Quiz
-                    </option>
-
-                    <option value="Test">
-                        Test
-                    </option>
-
-                    <option value="Exam">
-                        Exam
-                    </option>
-
-                </select>
+                <select id="taskType"></select>
 
             </div>
 
@@ -451,8 +507,6 @@
 </div>
 
 
-
-<!-- JAVASCRIPT -->
 
 <script src="script.js"></script>
 
