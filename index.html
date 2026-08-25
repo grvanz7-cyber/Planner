@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Planner</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
 <div class="app">
+
+
+    <!-- ========================================
+         SIDEBAR
+         ======================================== -->
 
     <aside class="sidebar">
 
@@ -19,77 +35,212 @@
             Planner
         </div>
 
+
         <div class="nav-section">
 
-            <div class="nav-title">Planner</div>
+            <div class="nav-title">
+                Planner
+            </div>
 
-            <a href="#" class="nav-item active">🏠 Today</a>
-            <a href="#" class="nav-item">📅 Calendar</a>
-            <a href="#" class="nav-item">✓ Tasks</a>
+            <a
+                href="#"
+                class="nav-item active"
+            >
+                🏠 Today
+            </a>
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+                📅 Calendar
+            </a>
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+                ✓ Tasks
+            </a>
 
         </div>
 
+
         <div class="nav-section">
 
-            <div class="nav-title">School</div>
+            <div class="nav-title">
+                School
+            </div>
 
-            <a href="#" class="nav-item">📚 Subjects</a>
-            <a href="#" class="nav-item">📝 Assignments</a>
-            <a href="#" class="nav-item">🧪 Tests & Exams</a>
-            <a href="#" class="nav-item">📊 Grades</a>
+            <a
+                href="#"
+                class="nav-item"
+            >
+                📚 Subjects
+            </a>
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+                📝 Assignments
+            </a>
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+                🧪 Tests & Exams
+            </a>
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+                📊 Grades
+            </a>
 
         </div>
 
+
         <div class="nav-section">
 
-            <div class="nav-title">Personal</div>
+            <div class="nav-title">
+                Personal
+            </div>
 
-            <a href="#" class="nav-item">🌱 Habits</a>
-            <a href="#" class="nav-item">🗒 Notes</a>
+            <a
+                href="#"
+                class="nav-item"
+            >
+                🌱 Habits
+            </a>
+
+            <a
+                href="#"
+                class="nav-item"
+            >
+                🗒 Notes
+            </a>
 
         </div>
 
+
         <div class="nav-section">
 
-            <a href="#" class="nav-item">⚙ Settings</a>
+            <a
+                href="#"
+                class="nav-item"
+            >
+                ⚙ Settings
+            </a>
 
         </div>
 
     </aside>
 
 
+
+    <!-- ========================================
+         MAIN CONTENT
+         ======================================== -->
+
     <main class="main">
+
+
+        <!-- HEADER -->
 
         <header class="header">
 
-            <h1>Good afternoon!</h1>
+            <h1>
+                Good afternoon!
+            </h1>
 
-            <p>Monday, August 24</p>
+            <p>
+                Tuesday, August 25
+            </p>
 
         </header>
 
 
+
+        <!-- QUICK ADD -->
+
         <div class="quick-add">
 
-    <input
-        type="text"
-        placeholder="What do you need to do?"
-    >
+            <input
+                type="text"
+                placeholder="What do you need to do?"
+            >
 
-    <button onclick="openTaskModal()">Add</button>
+            <button onclick="openTaskModal()">
+                Add
+            </button>
+
+        </div>
+
+
+
+        <!-- DASHBOARD -->
+
+        <div class="dashboard-grid">
+
+
+            <!-- TODAY -->
+
+            <section class="card">
+
+                <h2>
+                    Today
+                </h2>
+
+                <div class="today-tasks"></div>
+
+            </section>
+
+
+
+            <!-- UPCOMING -->
+
+            <section class="card">
+
+                <h2>
+                    Upcoming
+                </h2>
+
+                <div class="upcoming-tasks"></div>
+
+            </section>
+
+
+        </div>
+
+
+    </main>
 
 </div>
 
 
-<!-- New Task Modal -->
 
-<div class="modal-overlay" id="taskModal">
+<!-- ========================================
+     NEW TASK MODAL
+     ======================================== -->
+
+<div
+    class="modal-overlay"
+    id="taskModal"
+>
 
     <div class="modal">
 
+
+        <!-- MODAL HEADER -->
+
         <div class="modal-header">
 
-            <h2>New Task</h2>
+            <h2>
+                New Task
+            </h2>
 
             <button
                 class="close-button"
@@ -100,6 +251,9 @@
 
         </div>
 
+
+
+        <!-- TASK NAME -->
 
         <div class="form-group">
 
@@ -116,7 +270,11 @@
         </div>
 
 
+
+        <!-- SUBJECT + TYPE -->
+
         <div class="form-row">
+
 
             <div class="form-group">
 
@@ -155,6 +313,7 @@
             </div>
 
 
+
             <div class="form-group">
 
                 <label for="taskType">
@@ -191,10 +350,15 @@
 
             </div>
 
+
         </div>
 
 
+
+        <!-- DATE + PRIORITY -->
+
         <div class="form-row">
+
 
             <div class="form-group">
 
@@ -210,6 +374,7 @@
             </div>
 
 
+
             <div class="form-group">
 
                 <label for="taskPriority">
@@ -222,7 +387,10 @@
                         Low
                     </option>
 
-                    <option value="Normal" selected>
+                    <option
+                        value="Normal"
+                        selected
+                    >
                         Normal
                     </option>
 
@@ -234,8 +402,12 @@
 
             </div>
 
+
         </div>
 
+
+
+        <!-- TAGS -->
 
         <div class="form-group">
 
@@ -251,6 +423,9 @@
 
         </div>
 
+
+
+        <!-- BUTTONS -->
 
         <div class="modal-actions">
 
@@ -270,136 +445,18 @@
 
         </div>
 
+
     </div>
 
 </div>
 
-        <div class="dashboard-grid">
 
 
-           <section class="card">
+<!-- JAVASCRIPT -->
 
-    <h2>Today</h2>
-
-    <div class="today-tasks"></div>
-
-</section>
-
-                <div class="task">
-
-                    <input type="checkbox">
-
-                    <div class="task-info">
-
-                        <div class="task-name">
-                            Chemistry homework
-                        </div>
-
-                        <div class="task-meta">
-                            Chemistry · Homework
-                        </div>
-
-                    </div>
-
-                    <span class="priority">
-                        Normal
-                    </span>
-
-                </div>
-
-
-                <div class="task">
-
-                    <input type="checkbox">
-
-                    <div class="task-info">
-
-                        <div class="task-name">
-                            English essay
-                        </div>
-
-                        <div class="task-meta">
-                            English · Assignment
-                        </div>
-
-                    </div>
-
-                    <span class="priority">
-                        High
-                    </span>
-
-                </div>
-
-
-                <div class="task">
-
-                    <input type="checkbox">
-
-                    <div class="task-info">
-
-                        <div class="task-name">
-                            Physics questions
-                        </div>
-
-                        <div class="task-meta">
-                            Physics · Homework
-                        </div>
-
-                    </div>
-
-                    <span class="priority">
-                        Normal
-                    </span>
-
-                </div>
-
-            </section>
-
-
-            <section class="card">
-
-                <h2>Upcoming</h2>
-
-                <div class="task">
-
-                    <div class="task-info">
-
-                        <div class="task-name">
-                            Biology test
-                        </div>
-
-                        <div class="task-meta">
-                            Friday
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="task">
-
-                    <div class="task-info">
-
-                        <div class="task-name">
-                            English essay
-                        </div>
-
-                        <div class="task-meta">
-                            Monday
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-        </div>
-
-    </main>
-
-</div>
 <script src="script.js"></script>
+
+
 </body>
+
 </html>
