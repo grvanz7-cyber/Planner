@@ -2,7 +2,11 @@
 // PLANNER DATA
 // ========================================
 
-let tasks = JSON.parse(localStorage.getItem("plannerTasks")) || [];
+let tasks =
+    JSON.parse(
+        localStorage.getItem("plannerTasks")
+    ) || [];
+
 
 
 // ========================================
@@ -19,19 +23,24 @@ function saveTasks() {
 }
 
 
+
 // ========================================
 // OPEN TASK MODAL
 // ========================================
 
 function openTaskModal() {
 
-    const modal = document.querySelector("#taskModal");
+    const modal =
+        document.querySelector("#taskModal");
 
     modal.classList.add("open");
 
-    document.querySelector("#taskName").focus();
+    document
+        .querySelector("#taskName")
+        .focus();
 
 }
+
 
 
 // ========================================
@@ -40,13 +49,15 @@ function openTaskModal() {
 
 function closeTaskModal() {
 
-    const modal = document.querySelector("#taskModal");
+    const modal =
+        document.querySelector("#taskModal");
 
     modal.classList.remove("open");
 
     clearTaskForm();
 
 }
+
 
 
 // ========================================
@@ -56,9 +67,12 @@ function closeTaskModal() {
 function addTask() {
 
     const input =
-        document.querySelector(".quick-add input");
+        document.querySelector(
+            ".quick-add input"
+        );
 
-    const name = input.value.trim();
+    const name =
+        input.value.trim();
 
 
     if (name === "") {
@@ -70,13 +84,16 @@ function addTask() {
     }
 
 
-    document.querySelector("#taskName").value = name;
+    document
+        .querySelector("#taskName")
+        .value = name;
 
     input.value = "";
 
     openTaskModal();
 
 }
+
 
 
 // ========================================
@@ -86,12 +103,17 @@ function addTask() {
 function createTask() {
 
     const name =
-        document.querySelector("#taskName").value.trim();
+        document
+            .querySelector("#taskName")
+            .value
+            .trim();
 
 
     if (name === "") {
 
-        alert("Please enter a task name.");
+        alert(
+            "Please enter a task name."
+        );
 
         return;
 
@@ -99,25 +121,44 @@ function createTask() {
 
 
     const subject =
-        document.querySelector("#taskSubject").value;
+        document
+            .querySelector("#taskSubject")
+            .value;
+
 
     const type =
-        document.querySelector("#taskType").value;
+        document
+            .querySelector("#taskType")
+            .value;
+
 
     const dueDate =
-        document.querySelector("#taskDueDate").value;
+        document
+            .querySelector("#taskDueDate")
+            .value;
+
 
     const priority =
-        document.querySelector("#taskPriority").value;
+        document
+            .querySelector("#taskPriority")
+            .value;
+
 
     const tagText =
-        document.querySelector("#taskTags").value;
+        document
+            .querySelector("#taskTags")
+            .value;
 
 
-    const tags = tagText
-        .split(",")
-        .map(tag => tag.trim())
-        .filter(tag => tag !== "");
+    const tags =
+        tagText
+            .split(",")
+            .map(
+                tag => tag.trim()
+            )
+            .filter(
+                tag => tag !== ""
+            );
 
 
     const task = {
@@ -132,13 +173,15 @@ function createTask() {
 
         priority: priority,
 
-        dueDate: dueDate || null,
+        dueDate:
+            dueDate || null,
 
         tags: tags,
 
         completed: false,
 
-        createdAt: new Date().toISOString()
+        createdAt:
+            new Date().toISOString()
 
     };
 
@@ -154,25 +197,44 @@ function createTask() {
 }
 
 
+
 // ========================================
-// CLEAR FORM
+// CLEAR TASK FORM
 // ========================================
 
 function clearTaskForm() {
 
-    document.querySelector("#taskName").value = "";
+    document
+        .querySelector("#taskName")
+        .value = "";
 
-    document.querySelector("#taskSubject").value = "";
 
-    document.querySelector("#taskType").value = "Task";
+    document
+        .querySelector("#taskSubject")
+        .value = "";
 
-    document.querySelector("#taskDueDate").value = "";
 
-    document.querySelector("#taskPriority").value = "Normal";
+    document
+        .querySelector("#taskType")
+        .value = "Task";
 
-    document.querySelector("#taskTags").value = "";
+
+    document
+        .querySelector("#taskDueDate")
+        .value = "";
+
+
+    document
+        .querySelector("#taskPriority")
+        .value = "Normal";
+
+
+    document
+        .querySelector("#taskTags")
+        .value = "";
 
 }
+
 
 
 // ========================================
@@ -182,7 +244,9 @@ function clearTaskForm() {
 function toggleTask(id) {
 
     const task =
-        tasks.find(task => task.id === id);
+        tasks.find(
+            task => task.id === id
+        );
 
 
     if (!task) {
@@ -192,7 +256,9 @@ function toggleTask(id) {
     }
 
 
-    task.completed = !task.completed;
+    task.completed =
+        !task.completed;
+
 
     saveTasks();
 
@@ -201,83 +267,239 @@ function toggleTask(id) {
 }
 
 
+
 // ========================================
 // DISPLAY TASKS
 // ========================================
 
 function renderTasks() {
 
-    const container =
-        document.querySelector(".today-tasks");
+    const todayContainer =
+        document.querySelector(
+            ".today-tasks"
+        );
 
 
-    if (!container) {
+    const upcomingContainer =
+        document.querySelector(
+            ".upcoming-tasks"
+        );
+
+
+    if (
+        !todayContainer ||
+        !upcomingContainer
+    ) {
 
         return;
 
     }
 
 
-    container.innerHTML = "";
+    todayContainer.innerHTML = "";
+
+    upcomingContainer.innerHTML = "";
 
 
     const activeTasks =
-        tasks.filter(task => !task.completed);
+        tasks.filter(
+            task => !task.completed
+        );
 
 
-    if (activeTasks.length === 0) {
 
-        container.innerHTML = `
+    // ========================================
+    // TODAY
+    // ========================================
+
+    if (
+        activeTasks.length === 0
+    ) {
+
+        todayContainer.innerHTML = `
             <p class="empty-message">
                 Nothing here yet!
             </p>
         `;
 
-        return;
+    }
+
+    else {
+
+        activeTasks.forEach(
+            task => {
+
+                todayContainer.appendChild(
+                    createTaskElement(task)
+                );
+
+            }
+        );
 
     }
 
 
-    activeTasks.forEach(task => {
 
-        const taskElement =
-            document.createElement("div");
+    // ========================================
+    // UPCOMING
+    // ========================================
+
+    const upcomingTasks =
+        activeTasks.filter(
+            task => task.dueDate
+        );
 
 
-        taskElement.className = "task";
+    if (
+        upcomingTasks.length === 0
+    ) {
 
-
-        taskElement.innerHTML = `
-
-            <input
-                type="checkbox"
-                onchange="toggleTask(${task.id})"
-            >
-
-            <div class="task-info">
-
-                <div class="task-name">
-                    ${escapeHTML(task.name)}
-                </div>
-
-                <div class="task-meta">
-                    ${escapeHTML(task.subject || task.type)}
-                </div>
-
-            </div>
-
-            <span class="priority">
-                ${escapeHTML(task.priority)}
-            </span>
-
+        upcomingContainer.innerHTML = `
+            <p class="empty-message">
+                Nothing upcoming!
+            </p>
         `;
 
+    }
 
-        container.appendChild(taskElement);
+    else {
 
-    });
+        upcomingTasks.forEach(
+            task => {
+
+                upcomingContainer.appendChild(
+                    createUpcomingElement(task)
+                );
+
+            }
+        );
+
+    }
 
 }
+
+
+
+// ========================================
+// CREATE TODAY TASK ELEMENT
+// ========================================
+
+function createTaskElement(task) {
+
+    const taskElement =
+        document.createElement("div");
+
+
+    taskElement.className =
+        "task";
+
+
+    const subjectText =
+        task.subject
+            ? `${task.subject} · ${task.type}`
+            : task.type;
+
+
+    taskElement.innerHTML = `
+
+        <input
+            type="checkbox"
+            onchange="toggleTask(${task.id})"
+        >
+
+        <div class="task-info">
+
+            <div class="task-name">
+                ${escapeHTML(task.name)}
+            </div>
+
+            <div class="task-meta">
+                ${escapeHTML(subjectText)}
+            </div>
+
+        </div>
+
+        <span class="priority">
+            ${escapeHTML(task.priority)}
+        </span>
+
+    `;
+
+
+    return taskElement;
+
+}
+
+
+
+// ========================================
+// CREATE UPCOMING TASK ELEMENT
+// ========================================
+
+function createUpcomingElement(task) {
+
+    const taskElement =
+        document.createElement("div");
+
+
+    taskElement.className =
+        "task";
+
+
+    taskElement.innerHTML = `
+
+        <div class="task-info">
+
+            <div class="task-name">
+                ${escapeHTML(task.name)}
+            </div>
+
+            <div class="task-meta">
+                Due ${escapeHTML(
+                    formatDate(task.dueDate)
+                )}
+            </div>
+
+        </div>
+
+    `;
+
+
+    return taskElement;
+
+}
+
+
+
+// ========================================
+// FORMAT DATE
+// ========================================
+
+function formatDate(dateString) {
+
+    if (!dateString) {
+
+        return "";
+
+    }
+
+
+    const date =
+        new Date(
+            dateString + "T00:00:00"
+        );
+
+
+    return date.toLocaleDateString(
+        undefined,
+        {
+            month: "short",
+            day: "numeric"
+        }
+    );
+
+}
+
 
 
 // ========================================
@@ -298,6 +520,7 @@ function escapeHTML(text) {
 }
 
 
+
 // ========================================
 // START PLANNER
 // ========================================
@@ -307,14 +530,18 @@ document.addEventListener(
     () => {
 
         const input =
-            document.querySelector(".quick-add input");
+            document.querySelector(
+                ".quick-add input"
+            );
 
 
         input.addEventListener(
             "keydown",
             event => {
 
-                if (event.key === "Enter") {
+                if (
+                    event.key === "Enter"
+                ) {
 
                     addTask();
 
