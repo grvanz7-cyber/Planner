@@ -706,12 +706,8 @@ body {
    ======================================== */
 
 .page-hidden {
-
-    display:
-        none;
-
+    display: none !important;
 }
-
 
 .settings-card {
 
