@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -16,7 +15,6 @@
         rel="stylesheet"
         href="style.css"
     >
-
 </head>
 
 
@@ -25,9 +23,7 @@
 <div class="app">
 
 
-    <!-- ========================================
-         SIDEBAR
-         ======================================== -->
+    <!-- SIDEBAR -->
 
     <aside class="sidebar">
 
@@ -143,19 +139,14 @@
 
 
 
-    <!-- ========================================
-         MAIN CONTENT
-         ======================================== -->
+    <!-- MAIN -->
 
     <main class="main">
 
 
-        <!-- ====================================
-             DASHBOARD
-             ==================================== -->
+        <!-- DASHBOARD -->
 
         <div id="dashboardPage">
-
 
             <header class="header">
 
@@ -169,9 +160,6 @@
 
             </header>
 
-
-
-            <!-- QUICK ADD -->
 
             <div class="quick-add">
 
@@ -189,13 +177,8 @@
             </div>
 
 
-
-            <!-- DASHBOARD -->
-
             <div class="dashboard-grid">
 
-
-                <!-- TODAY -->
 
                 <section class="card">
 
@@ -207,9 +190,6 @@
 
                 </section>
 
-
-
-                <!-- UPCOMING -->
 
                 <section class="card">
 
@@ -228,9 +208,7 @@
 
 
 
-        <!-- ====================================
-             SETTINGS
-             ==================================== -->
+        <!-- SETTINGS -->
 
         <div
             id="settingsPage"
@@ -271,7 +249,7 @@
 
                     <button
                         class="save-button"
-                        onclick="addSubject()"
+                        onclick="openSubjectModal()"
                     >
                         + Add Subject
                     </button>
@@ -325,7 +303,6 @@
 
         </div>
 
-
     </main>
 
 </div>
@@ -333,7 +310,7 @@
 
 
 <!-- ========================================
-     NEW TASK MODAL
+     TASK MODAL
      ======================================== -->
 
 <div
@@ -342,7 +319,6 @@
 >
 
     <div class="modal">
-
 
         <div class="modal-header">
 
@@ -360,9 +336,6 @@
         </div>
 
 
-
-        <!-- NAME -->
-
         <div class="form-group">
 
             <label for="taskName">
@@ -378,11 +351,7 @@
         </div>
 
 
-
-        <!-- SUBJECT + TYPE -->
-
         <div class="form-row">
-
 
             <div class="form-group">
 
@@ -390,10 +359,11 @@
                     Subject
                 </label>
 
-                <select id="taskSubject"></select>
+                <select
+                    id="taskSubject"
+                ></select>
 
             </div>
-
 
 
             <div class="form-group">
@@ -402,19 +372,16 @@
                     Type
                 </label>
 
-                <select id="taskType"></select>
+                <select
+                    id="taskType"
+                ></select>
 
             </div>
-
 
         </div>
 
 
-
-        <!-- DATE + PRIORITY -->
-
         <div class="form-row">
-
 
             <div class="form-group">
 
@@ -430,14 +397,15 @@
             </div>
 
 
-
             <div class="form-group">
 
                 <label for="taskPriority">
                     Priority
                 </label>
 
-                <select id="taskPriority">
+                <select
+                    id="taskPriority"
+                >
 
                     <option value="Low">
                         Low
@@ -458,12 +426,8 @@
 
             </div>
 
-
         </div>
 
-
-
-        <!-- TAGS -->
 
         <div class="form-group">
 
@@ -479,9 +443,6 @@
 
         </div>
 
-
-
-        <!-- BUTTONS -->
 
         <div class="modal-actions">
 
@@ -501,6 +462,137 @@
 
         </div>
 
+    </div>
+
+</div>
+
+
+
+<!-- ========================================
+     SUBJECT MODAL
+     ======================================== -->
+
+<div
+    class="modal-overlay"
+    id="subjectModal"
+>
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 id="subjectModalTitle">
+                Add Subject
+            </h2>
+
+            <button
+                class="close-button"
+                onclick="closeSubjectModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- NAME -->
+
+        <div class="form-group">
+
+            <label for="subjectName">
+                Subject name
+            </label>
+
+            <input
+                id="subjectName"
+                type="text"
+                placeholder="e.g. Chemistry"
+            >
+
+        </div>
+
+
+
+        <!-- ICON -->
+
+        <div class="form-group">
+
+            <label>
+                Icon
+            </label>
+
+            <div
+                id="iconPicker"
+                class="icon-picker"
+            ></div>
+
+        </div>
+
+
+
+        <!-- COLOUR -->
+
+        <div class="form-group">
+
+            <label for="subjectColour">
+                Colour
+            </label>
+
+            <div class="colour-row">
+
+                <input
+                    id="subjectColour"
+                    type="color"
+                    value="#304b8a"
+                >
+
+                <span>
+                    Choose a colour for this subject
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ACTIVE -->
+
+        <div class="checkbox-row">
+
+            <input
+                id="subjectActive"
+                type="checkbox"
+                checked
+            >
+
+            <label for="subjectActive">
+                Active
+            </label>
+
+        </div>
+
+
+
+        <!-- BUTTONS -->
+
+        <div class="modal-actions">
+
+            <button
+                class="cancel-button"
+                onclick="closeSubjectModal()"
+            >
+                Cancel
+            </button>
+
+            <button
+                class="save-button"
+                onclick="saveSubject()"
+            >
+                Save Subject
+            </button>
+
+        </div>
 
     </div>
 
@@ -509,7 +601,6 @@
 
 
 <script src="script.js"></script>
-
 
 </body>
 
