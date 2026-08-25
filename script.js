@@ -25,13 +25,139 @@ function saveTasks() {
 
 
 // ========================================
+// DATE HELPERS
+// ========================================
+
+function getToday() {
+
+    const today = new Date();
+
+    today.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    return today;
+
+}
+
+
+function getDateOnly(dateString) {
+
+    if (!dateString) {
+
+        return null;
+
+    }
+
+    const date =
+        new Date(
+            dateString + "T00:00:00"
+        );
+
+    date.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+    return date;
+
+}
+
+
+
+// ========================================
+// CHECK IF TASK IS TODAY
+// ========================================
+
+function isToday(task) {
+
+    if (!task.dueDate) {
+
+        return false;
+
+    }
+
+    const taskDate =
+        getDateOnly(task.dueDate);
+
+    const today =
+        getToday();
+
+
+    return (
+        taskDate.getTime() ===
+        today.getTime()
+    );
+
+}
+
+
+
+// ========================================
+// CHECK IF TASK IS OVERDUE
+// ========================================
+
+function isOverdue(task) {
+
+    if (!task.dueDate) {
+
+        return false;
+
+    }
+
+    const taskDate =
+        getDateOnly(task.dueDate);
+
+    const today =
+        getToday();
+
+
+    return taskDate < today;
+
+}
+
+
+
+// ========================================
+// CHECK IF TASK IS UPCOMING
+// ========================================
+
+function isUpcoming(task) {
+
+    if (!task.dueDate) {
+
+        return false;
+
+    }
+
+    const taskDate =
+        getDateOnly(task.dueDate);
+
+    const today =
+        getToday();
+
+
+    return taskDate > today;
+
+}
+
+
+
+// ========================================
 // OPEN TASK MODAL
 // ========================================
 
 function openTaskModal() {
 
     const modal =
-        document.querySelector("#taskModal");
+        document.querySelector(
+            "#taskModal"
+        );
 
     modal.classList.add("open");
 
@@ -50,7 +176,9 @@ function openTaskModal() {
 function closeTaskModal() {
 
     const modal =
-        document.querySelector("#taskModal");
+        document.querySelector(
+            "#taskModal"
+        );
 
     modal.classList.remove("open");
 
@@ -309,11 +437,20 @@ function renderTasks() {
 
 
     // ========================================
-    // TODAY
+    // TODAY + OVERDUE
     // ========================================
 
+    const todayTasks =
+        activeTasks.filter(
+            task =>
+                !task.dueDate ||
+                isToday(task) ||
+                isOverdue(task)
+        );
+
+
     if (
-        activeTasks.length === 0
+        todayTasks.length === 0
     ) {
 
         todayContainer.innerHTML = `
@@ -326,7 +463,7 @@ function renderTasks() {
 
     else {
 
-        activeTasks.forEach(
+        todayTasks.forEach(
             task => {
 
                 todayContainer.appendChild(
@@ -345,9 +482,15 @@ function renderTasks() {
     // ========================================
 
     const upcomingTasks =
-        activeTasks.filter(
-            task => task.dueDate
-        );
+        activeTasks
+            .filter(
+                task => isUpcoming(task)
+            )
+            .sort(
+                (a, b) =>
+                    getDateOnly(a.dueDate) -
+                    getDateOnly(b.dueDate)
+            );
 
 
     if (
@@ -381,7 +524,7 @@ function renderTasks() {
 
 
 // ========================================
-// CREATE TODAY TASK ELEMENT
+// CREATE TODAY TASK
 // ========================================
 
 function createTaskElement(task) {
@@ -400,6 +543,30 @@ function createTaskElement(task) {
             : task.type;
 
 
+    let dateText = "";
+
+
+    if (isOverdue(task)) {
+
+        dateText = "Overdue";
+
+    }
+
+    else if (isToday(task)) {
+
+        dateText = "Today";
+
+    }
+
+
+    if (dateText !== "") {
+
+        dateText =
+            ` · ${dateText}`;
+
+    }
+
+
     taskElement.innerHTML = `
 
         <input
@@ -414,7 +581,9 @@ function createTaskElement(task) {
             </div>
 
             <div class="task-meta">
-                ${escapeHTML(subjectText)}
+                ${escapeHTML(
+                    subjectText + dateText
+                )}
             </div>
 
         </div>
@@ -433,7 +602,7 @@ function createTaskElement(task) {
 
 
 // ========================================
-// CREATE UPCOMING TASK ELEMENT
+// CREATE UPCOMING TASK
 // ========================================
 
 function createUpcomingElement(task) {
@@ -455,12 +624,16 @@ function createUpcomingElement(task) {
             </div>
 
             <div class="task-meta">
-                Due ${escapeHTML(
+                ${escapeHTML(
                     formatDate(task.dueDate)
                 )}
             </div>
 
         </div>
+
+        <span class="priority">
+            ${escapeHTML(task.priority)}
+        </span>
 
     `;
 
@@ -485,14 +658,13 @@ function formatDate(dateString) {
 
 
     const date =
-        new Date(
-            dateString + "T00:00:00"
-        );
+        getDateOnly(dateString);
 
 
     return date.toLocaleDateString(
         undefined,
         {
+            weekday: "short",
             month: "short",
             day: "numeric"
         }
