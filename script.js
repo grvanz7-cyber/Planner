@@ -18,30 +18,35 @@ const defaultSettings = {
         {
             name: "English",
             emoji: "📖",
+            colour: "#7c3aed",
             active: true
         },
 
         {
             name: "Math",
             emoji: "🧮",
+            colour: "#2563eb",
             active: true
         },
 
         {
             name: "Physics",
             emoji: "⚛️",
+            colour: "#0891b2",
             active: true
         },
 
         {
             name: "Chemistry",
             emoji: "🧪",
+            colour: "#059669",
             active: true
         },
 
         {
             name: "Biology",
             emoji: "🧬",
+            colour: "#65a30d",
             active: true
         }
     ],
@@ -83,13 +88,81 @@ const defaultSettings = {
 
 
 // ========================================
-// INITIALIZE PLANNER DATA
+// ICON OPTIONS
+// ========================================
+
+const iconOptions = [
+
+    "📖",
+    "📚",
+    "📝",
+    "📓",
+    "📒",
+    "📕",
+
+    "🧮",
+    "📐",
+    "📏",
+    "🔢",
+
+    "⚛️",
+    "🔬",
+    "🧪",
+    "🧬",
+    "🌡️",
+
+    "💻",
+    "⌨️",
+    "🖥️",
+    "💾",
+
+    "🎨",
+    "🎭",
+    "🎵",
+    "🎼",
+    "🎬",
+
+    "🌱",
+    "🌿",
+    "🌎",
+    "🌍",
+
+    "🏃",
+    "🏆",
+    "⚽",
+    "🏀",
+
+    "🏠",
+    "🧹",
+    "🍳",
+    "🍎",
+
+    "⭐",
+    "💡",
+    "🎯",
+    "📌",
+    "📅",
+    "⏰",
+    "✓",
+    "❗"
+
+];
+
+
+// Currently edited subject.
+// null = creating a new subject.
+
+let editingSubjectIndex = null;
+
+let selectedSubjectIcon = "📚";
+
+
+
+// ========================================
+// INITIALIZE
 // ========================================
 
 function initializePlannerData() {
-
-    // If this is the first time using
-    // the new data system...
 
     if (!plannerData) {
 
@@ -117,8 +190,6 @@ function initializePlannerData() {
     }
 
 
-    // Make sure settings exist.
-
     if (!plannerData.settings) {
 
         plannerData.settings =
@@ -127,7 +198,21 @@ function initializePlannerData() {
     }
 
 
-    // Make sure tasks exist.
+    if (!plannerData.settings.subjects) {
+
+        plannerData.settings.subjects =
+            defaultSettings.subjects;
+
+    }
+
+
+    if (!plannerData.settings.types) {
+
+        plannerData.settings.types =
+            defaultSettings.types;
+
+    }
+
 
     if (!plannerData.tasks) {
 
@@ -136,13 +221,35 @@ function initializePlannerData() {
     }
 
 
+    // Add missing colour values to
+    // subjects created before colours
+    // existed.
+
+    plannerData
+        .settings
+        .subjects
+        .forEach(
+            subject => {
+
+                if (!subject.colour) {
+
+                    subject.colour =
+                        "#304b8a";
+
+                }
+
+            }
+        );
+
+
     savePlannerData();
 
 }
 
 
+
 // ========================================
-// SAVE PLANNER DATA
+// SAVE DATA
 // ========================================
 
 function savePlannerData() {
@@ -155,8 +262,8 @@ function savePlannerData() {
     );
 
 
-    // Keep the old task storage updated
-    // temporarily for compatibility.
+    // Temporary compatibility with
+    // the old task storage.
 
     localStorage.setItem(
         "plannerTasks",
@@ -166,6 +273,7 @@ function savePlannerData() {
     );
 
 }
+
 
 
 // ========================================
@@ -362,7 +470,7 @@ function closeTaskModal() {
 
 
 // ========================================
-// POPULATE TASK OPTIONS
+// TASK OPTIONS
 // ========================================
 
 function populateTaskOptions() {
@@ -379,13 +487,26 @@ function populateTaskOptions() {
         );
 
 
-    subjectSelect.innerHTML = "";
+    if (
+        !subjectSelect ||
+        !typeSelect
+    ) {
 
-    typeSelect.innerHTML = "";
+        return;
+
+    }
+
+
+    subjectSelect.innerHTML =
+        "";
+
+
+    typeSelect.innerHTML =
+        "";
 
 
 
-    // NONE OPTION
+    // None
 
     const noneOption =
         document.createElement(
@@ -393,7 +514,9 @@ function populateTaskOptions() {
         );
 
 
-    noneOption.value = "";
+    noneOption.value =
+        "";
+
 
     noneOption.textContent =
         "None";
@@ -405,9 +528,11 @@ function populateTaskOptions() {
 
 
 
-    // SUBJECTS
+    // Subjects
 
-    plannerData.settings.subjects
+    plannerData
+        .settings
+        .subjects
         .filter(
             subject =>
                 subject.active
@@ -438,9 +563,11 @@ function populateTaskOptions() {
 
 
 
-    // TYPES
+    // Types
 
-    plannerData.settings.types
+    plannerData
+        .settings
+        .types
         .forEach(
             type => {
 
@@ -498,10 +625,12 @@ function addTask() {
         .querySelector(
             "#taskName"
         )
-        .value = name;
+        .value =
+            name;
 
 
-    input.value = "";
+    input.value =
+        "";
 
 
     openTaskModal();
@@ -591,23 +720,30 @@ function createTask() {
 
     const task = {
 
-        id: Date.now(),
+        id:
+            Date.now(),
 
-        name: name,
+        name:
+            name,
 
-        subject: subject,
+        subject:
+            subject,
 
-        type: type,
+        type:
+            type,
 
-        priority: priority,
+        priority:
+            priority,
 
         dueDate:
             dueDate ||
             null,
 
-        tags: tags,
+        tags:
+            tags,
 
-        completed: false,
+        completed:
+            false,
 
         createdAt:
             new Date()
@@ -616,9 +752,11 @@ function createTask() {
     };
 
 
-    plannerData.tasks.push(
-        task
-    );
+    plannerData
+        .tasks
+        .push(
+            task
+        );
 
 
     savePlannerData();
@@ -637,51 +775,97 @@ function createTask() {
 
 function clearTaskForm() {
 
-    document
-        .querySelector(
+    const name =
+        document.querySelector(
             "#taskName"
-        )
-        .value = "";
+        );
 
 
-    document
-        .querySelector(
+    if (name) {
+
+        name.value =
+            "";
+
+    }
+
+
+    const subject =
+        document.querySelector(
             "#taskSubject"
-        )
-        .value = "";
+        );
 
 
-    document
-        .querySelector(
+    if (subject) {
+
+        subject.value =
+            "";
+
+    }
+
+
+    const type =
+        document.querySelector(
             "#taskType"
-        )
-        .value =
+        );
+
+
+    if (
+        type &&
+        plannerData
+            .settings
+            .types
+            .length
+    ) {
+
+        type.value =
             plannerData
                 .settings
                 .types[0]
                 .name;
 
+    }
 
-    document
-        .querySelector(
+
+    const dueDate =
+        document.querySelector(
             "#taskDueDate"
-        )
-        .value = "";
+        );
 
 
-    document
-        .querySelector(
+    if (dueDate) {
+
+        dueDate.value =
+            "";
+
+    }
+
+
+    const priority =
+        document.querySelector(
             "#taskPriority"
-        )
-        .value =
+        );
+
+
+    if (priority) {
+
+        priority.value =
             "Normal";
 
+    }
 
-    document
-        .querySelector(
+
+    const tags =
+        document.querySelector(
             "#taskTags"
-        )
-        .value = "";
+        );
+
+
+    if (tags) {
+
+        tags.value =
+            "";
+
+    }
 
 }
 
@@ -694,10 +878,12 @@ function clearTaskForm() {
 function toggleTask(id) {
 
     const task =
-        plannerData.tasks.find(
-            task =>
-                task.id === id
-        );
+        plannerData
+            .tasks
+            .find(
+                task =>
+                    task.id === id
+            );
 
 
     if (!task) {
@@ -720,7 +906,7 @@ function toggleTask(id) {
 
 
 // ========================================
-// DISPLAY TASKS
+// RENDER TASKS
 // ========================================
 
 function renderTasks() {
@@ -756,16 +942,16 @@ function renderTasks() {
 
 
     const activeTasks =
-        plannerData.tasks.filter(
-            task =>
-                !task.completed
-        );
+        plannerData
+            .tasks
+            .filter(
+                task =>
+                    !task.completed
+            );
 
 
 
-    // ====================================
     // TODAY
-    // ====================================
 
     const todayTasks =
         activeTasks.filter(
@@ -787,7 +973,6 @@ function renderTasks() {
         `;
 
     }
-
     else {
 
         todayTasks.forEach(
@@ -806,9 +991,7 @@ function renderTasks() {
 
 
 
-    // ====================================
     // UPCOMING
-    // ====================================
 
     const upcomingTasks =
         activeTasks
@@ -838,7 +1021,6 @@ function renderTasks() {
         `;
 
     }
-
     else {
 
         upcomingTasks.forEach(
@@ -860,7 +1042,7 @@ function renderTasks() {
 
 
 // ========================================
-// CREATE TODAY TASK
+// TASK ELEMENT
 // ========================================
 
 function createTaskElement(task) {
@@ -881,7 +1063,8 @@ function createTaskElement(task) {
             : task.type;
 
 
-    let dateText = "";
+    let dateText =
+        "";
 
 
     if (
@@ -892,7 +1075,6 @@ function createTaskElement(task) {
             " · Overdue";
 
     }
-
     else if (
         isToday(task)
     ) {
@@ -943,7 +1125,7 @@ function createTaskElement(task) {
 
 
 // ========================================
-// CREATE UPCOMING TASK
+// UPCOMING ELEMENT
 // ========================================
 
 function createUpcomingElement(task) {
@@ -1031,7 +1213,7 @@ function formatDate(dateString) {
 
 
 // ========================================
-// SETTINGS — SUBJECTS
+// SUBJECT SETTINGS
 // ========================================
 
 function renderSubjects() {
@@ -1049,7 +1231,8 @@ function renderSubjects() {
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     plannerData
@@ -1070,7 +1253,10 @@ function renderSubjects() {
 
                 row.innerHTML = `
 
-                    <span class="settings-icon">
+                    <span
+                        class="settings-icon"
+                        style="color: ${subject.colour}"
+                    >
                         ${escapeHTML(
                             subject.emoji
                         )}
@@ -1101,6 +1287,13 @@ function renderSubjects() {
                         }
                     </button>
 
+                    <button
+                        class="small-button"
+                        onclick="editSubject(${index})"
+                    >
+                        Edit
+                    </button>
+
                 `;
 
 
@@ -1116,7 +1309,380 @@ function renderSubjects() {
 
 
 // ========================================
-// SETTINGS — TYPES
+// ICON PICKER
+// ========================================
+
+function renderIconPicker() {
+
+    const picker =
+        document.querySelector(
+            "#iconPicker"
+        );
+
+
+    if (!picker) {
+
+        return;
+
+    }
+
+
+    picker.innerHTML =
+        "";
+
+
+    iconOptions.forEach(
+        icon => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "icon-option";
+
+
+            if (
+                icon ===
+                selectedSubjectIcon
+            ) {
+
+                button.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            button.textContent =
+                icon;
+
+
+            button.onclick =
+                () => {
+
+                    selectedSubjectIcon =
+                        icon;
+
+
+                    renderIconPicker();
+
+                };
+
+
+            picker.appendChild(
+                button
+            );
+
+        }
+    );
+
+}
+
+
+
+// ========================================
+// OPEN ADD SUBJECT MODAL
+// ========================================
+
+function openSubjectModal() {
+
+    editingSubjectIndex =
+        null;
+
+
+    selectedSubjectIcon =
+        "📚";
+
+
+    document
+        .querySelector(
+            "#subjectModalTitle"
+        )
+        .textContent =
+            "Add Subject";
+
+
+    document
+        .querySelector(
+            "#subjectName"
+        )
+        .value =
+            "";
+
+
+    document
+        .querySelector(
+            "#subjectColour"
+        )
+        .value =
+            "#304b8a";
+
+
+    document
+        .querySelector(
+            "#subjectActive"
+        )
+        .checked =
+            true;
+
+
+    renderIconPicker();
+
+
+    document
+        .querySelector(
+            "#subjectModal"
+        )
+        .classList.add(
+            "open"
+        );
+
+
+    document
+        .querySelector(
+            "#subjectName"
+        )
+        .focus();
+
+}
+
+
+
+// ========================================
+// EDIT SUBJECT
+// ========================================
+
+function editSubject(index) {
+
+    const subject =
+        plannerData
+            .settings
+            .subjects[index];
+
+
+    if (!subject) {
+
+        return;
+
+    }
+
+
+    editingSubjectIndex =
+        index;
+
+
+    selectedSubjectIcon =
+        subject.emoji;
+
+
+    document
+        .querySelector(
+            "#subjectModalTitle"
+        )
+        .textContent =
+            "Edit Subject";
+
+
+    document
+        .querySelector(
+            "#subjectName"
+        )
+        .value =
+            subject.name;
+
+
+    document
+        .querySelector(
+            "#subjectColour"
+        )
+        .value =
+            subject.colour ||
+            "#304b8a";
+
+
+    document
+        .querySelector(
+            "#subjectActive"
+        )
+        .checked =
+            subject.active;
+
+
+    renderIconPicker();
+
+
+    document
+        .querySelector(
+            "#subjectModal"
+        )
+        .classList.add(
+            "open"
+        );
+
+}
+
+
+
+// ========================================
+// SAVE SUBJECT
+// ========================================
+
+function saveSubject() {
+
+    const name =
+        document
+            .querySelector(
+                "#subjectName"
+            )
+            .value
+            .trim();
+
+
+    if (!name) {
+
+        alert(
+            "Please enter a subject name."
+        );
+
+        return;
+
+    }
+
+
+    const colour =
+        document
+            .querySelector(
+                "#subjectColour"
+            )
+            .value;
+
+
+    const active =
+        document
+            .querySelector(
+                "#subjectActive"
+            )
+            .checked;
+
+
+    const subject = {
+
+        name:
+            name,
+
+        emoji:
+            selectedSubjectIcon,
+
+        colour:
+            colour,
+
+        active:
+            active
+
+    };
+
+
+    if (
+        editingSubjectIndex ===
+        null
+    ) {
+
+        plannerData
+            .settings
+            .subjects
+            .push(
+                subject
+            );
+
+    }
+    else {
+
+        plannerData
+            .settings
+            .subjects[
+                editingSubjectIndex
+            ] =
+                subject;
+
+    }
+
+
+    savePlannerData();
+
+    renderSubjects();
+
+    populateTaskOptions();
+
+    closeSubjectModal();
+
+}
+
+
+
+// ========================================
+// CLOSE SUBJECT MODAL
+// ========================================
+
+function closeSubjectModal() {
+
+    document
+        .querySelector(
+            "#subjectModal"
+        )
+        .classList.remove(
+            "open"
+        );
+
+
+    editingSubjectIndex =
+        null;
+
+}
+
+
+
+// ========================================
+// TOGGLE SUBJECT
+// ========================================
+
+function toggleSubject(index) {
+
+    const subject =
+        plannerData
+            .settings
+            .subjects[index];
+
+
+    if (!subject) {
+
+        return;
+
+    }
+
+
+    subject.active =
+        !subject.active;
+
+
+    savePlannerData();
+
+    renderSubjects();
+
+    populateTaskOptions();
+
+}
+
+
+
+// ========================================
+// TASK TYPES
 // ========================================
 
 function renderTaskTypes() {
@@ -1134,7 +1700,8 @@ function renderTaskTypes() {
     }
 
 
-    container.innerHTML = "";
+    container.innerHTML =
+        "";
 
 
     plannerData
@@ -1189,85 +1756,6 @@ function renderTaskTypes() {
 
 
 // ========================================
-// ADD SUBJECT
-// ========================================
-
-function addSubject() {
-
-    const name =
-        prompt(
-            "What should the subject be called?"
-        );
-
-
-    if (!name) {
-
-        return;
-
-    }
-
-
-    const emoji =
-        prompt(
-            "Choose an emoji for this subject:",
-            "📚"
-        );
-
-
-    plannerData
-        .settings
-        .subjects
-        .push({
-
-            name:
-                name.trim(),
-
-            emoji:
-                emoji || "📚",
-
-            active:
-                true
-
-        });
-
-
-    savePlannerData();
-
-    renderSubjects();
-
-    populateTaskOptions();
-
-}
-
-
-
-// ========================================
-// TOGGLE SUBJECT
-// ========================================
-
-function toggleSubject(index) {
-
-    const subject =
-        plannerData
-            .settings
-            .subjects[index];
-
-
-    subject.active =
-        !subject.active;
-
-
-    savePlannerData();
-
-    renderSubjects();
-
-    populateTaskOptions();
-
-}
-
-
-
-// ========================================
 // ADD TASK TYPE
 // ========================================
 
@@ -1302,7 +1790,8 @@ function addTaskType() {
                 name.trim(),
 
             emoji:
-                emoji || "✓"
+                emoji ||
+                "✓"
 
         });
 
@@ -1327,6 +1816,13 @@ function removeTaskType(index) {
         plannerData
             .settings
             .types[index];
+
+
+    if (!type) {
+
+        return;
+
+    }
 
 
     const confirmed =
@@ -1390,7 +1886,8 @@ function showPage(page) {
 
 
     if (
-        page === "dashboard"
+        page ===
+        "dashboard"
     ) {
 
         dashboard.classList.remove(
@@ -1401,7 +1898,8 @@ function showPage(page) {
 
 
     if (
-        page === "settings"
+        page ===
+        "settings"
     ) {
 
         settings.classList.remove(
@@ -1420,7 +1918,7 @@ function showPage(page) {
 
 
 // ========================================
-// BASIC HTML SAFETY
+// ESCAPE HTML
 // ========================================
 
 function escapeHTML(text) {
@@ -1442,7 +1940,7 @@ function escapeHTML(text) {
 
 
 // ========================================
-// START PLANNER
+// START
 // ========================================
 
 document.addEventListener(
@@ -1458,20 +1956,25 @@ document.addEventListener(
             );
 
 
-        input.addEventListener(
-            "keydown",
-            event => {
+        if (input) {
 
-                if (
-                    event.key === "Enter"
-                ) {
+            input.addEventListener(
+                "keydown",
+                event => {
 
-                    addTask();
+                    if (
+                        event.key ===
+                        "Enter"
+                    ) {
+
+                        addTask();
+
+                    }
 
                 }
+            );
 
-            }
-        );
+        }
 
 
         renderTasks();
