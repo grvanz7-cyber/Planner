@@ -2,23 +2,186 @@
 // PLANNER DATA
 // ========================================
 
-let tasks =
+let plannerData =
     JSON.parse(
-        localStorage.getItem("plannerTasks")
-    ) || [];
-
+        localStorage.getItem("plannerData")
+    );
 
 
 // ========================================
-// SAVE TASKS
+// DEFAULT SETTINGS
 // ========================================
 
-function saveTasks() {
+const defaultSettings = {
+
+    subjects: [
+        {
+            name: "English",
+            emoji: "📖",
+            active: true
+        },
+
+        {
+            name: "Math",
+            emoji: "🧮",
+            active: true
+        },
+
+        {
+            name: "Physics",
+            emoji: "⚛️",
+            active: true
+        },
+
+        {
+            name: "Chemistry",
+            emoji: "🧪",
+            active: true
+        },
+
+        {
+            name: "Biology",
+            emoji: "🧬",
+            active: true
+        }
+    ],
+
+
+    types: [
+        {
+            name: "Task",
+            emoji: "✓"
+        },
+
+        {
+            name: "Homework",
+            emoji: "📚"
+        },
+
+        {
+            name: "Assignment",
+            emoji: "📝"
+        },
+
+        {
+            name: "Quiz",
+            emoji: "❓"
+        },
+
+        {
+            name: "Test",
+            emoji: "🧪"
+        },
+
+        {
+            name: "Exam",
+            emoji: "🎓"
+        }
+    ]
+
+};
+
+
+// ========================================
+// INITIALIZE PLANNER DATA
+// ========================================
+
+function initializePlannerData() {
+
+    // If this is the first time using
+    // the new data system...
+
+    if (!plannerData) {
+
+        const oldTasks =
+            JSON.parse(
+                localStorage.getItem(
+                    "plannerTasks"
+                )
+            ) || [];
+
+
+        plannerData = {
+
+            settings:
+                defaultSettings,
+
+            tasks:
+                oldTasks
+
+        };
+
+
+        savePlannerData();
+
+    }
+
+
+    // Make sure settings exist.
+
+    if (!plannerData.settings) {
+
+        plannerData.settings =
+            defaultSettings;
+
+    }
+
+
+    // Make sure tasks exist.
+
+    if (!plannerData.tasks) {
+
+        plannerData.tasks = [];
+
+    }
+
+
+    savePlannerData();
+
+}
+
+
+// ========================================
+// SAVE PLANNER DATA
+// ========================================
+
+function savePlannerData() {
+
+    localStorage.setItem(
+        "plannerData",
+        JSON.stringify(
+            plannerData
+        )
+    );
+
+
+    // Keep the old task storage updated
+    // temporarily for compatibility.
 
     localStorage.setItem(
         "plannerTasks",
-        JSON.stringify(tasks)
+        JSON.stringify(
+            plannerData.tasks
+        )
     );
+
+}
+
+
+// ========================================
+// TASKS
+// ========================================
+
+function getTasks() {
+
+    return plannerData.tasks;
+
+}
+
+
+function saveTasks() {
+
+    savePlannerData();
 
 }
 
@@ -30,7 +193,8 @@ function saveTasks() {
 
 function getToday() {
 
-    const today = new Date();
+    const today =
+        new Date();
 
     today.setHours(
         0,
@@ -52,10 +216,13 @@ function getDateOnly(dateString) {
 
     }
 
+
     const date =
         new Date(
-            dateString + "T00:00:00"
+            dateString +
+            "T00:00:00"
         );
+
 
     date.setHours(
         0,
@@ -64,15 +231,11 @@ function getDateOnly(dateString) {
         0
     );
 
+
     return date;
 
 }
 
-
-
-// ========================================
-// CHECK IF TASK IS TODAY
-// ========================================
 
 function isToday(task) {
 
@@ -82,8 +245,12 @@ function isToday(task) {
 
     }
 
+
     const taskDate =
-        getDateOnly(task.dueDate);
+        getDateOnly(
+            task.dueDate
+        );
+
 
     const today =
         getToday();
@@ -97,11 +264,6 @@ function isToday(task) {
 }
 
 
-
-// ========================================
-// CHECK IF TASK IS OVERDUE
-// ========================================
-
 function isOverdue(task) {
 
     if (!task.dueDate) {
@@ -110,8 +272,12 @@ function isOverdue(task) {
 
     }
 
+
     const taskDate =
-        getDateOnly(task.dueDate);
+        getDateOnly(
+            task.dueDate
+        );
+
 
     const today =
         getToday();
@@ -122,11 +288,6 @@ function isOverdue(task) {
 }
 
 
-
-// ========================================
-// CHECK IF TASK IS UPCOMING
-// ========================================
-
 function isUpcoming(task) {
 
     if (!task.dueDate) {
@@ -135,8 +296,12 @@ function isUpcoming(task) {
 
     }
 
+
     const taskDate =
-        getDateOnly(task.dueDate);
+        getDateOnly(
+            task.dueDate
+        );
+
 
     const today =
         getToday();
@@ -149,29 +314,33 @@ function isUpcoming(task) {
 
 
 // ========================================
-// OPEN TASK MODAL
+// TASK MODAL
 // ========================================
 
 function openTaskModal() {
+
+    populateTaskOptions();
+
 
     const modal =
         document.querySelector(
             "#taskModal"
         );
 
-    modal.classList.add("open");
+
+    modal.classList.add(
+        "open"
+    );
+
 
     document
-        .querySelector("#taskName")
+        .querySelector(
+            "#taskName"
+        )
         .focus();
 
 }
 
-
-
-// ========================================
-// CLOSE TASK MODAL
-// ========================================
 
 function closeTaskModal() {
 
@@ -180,9 +349,121 @@ function closeTaskModal() {
             "#taskModal"
         );
 
-    modal.classList.remove("open");
+
+    modal.classList.remove(
+        "open"
+    );
+
 
     clearTaskForm();
+
+}
+
+
+
+// ========================================
+// POPULATE TASK OPTIONS
+// ========================================
+
+function populateTaskOptions() {
+
+    const subjectSelect =
+        document.querySelector(
+            "#taskSubject"
+        );
+
+
+    const typeSelect =
+        document.querySelector(
+            "#taskType"
+        );
+
+
+    subjectSelect.innerHTML = "";
+
+    typeSelect.innerHTML = "";
+
+
+
+    // NONE OPTION
+
+    const noneOption =
+        document.createElement(
+            "option"
+        );
+
+
+    noneOption.value = "";
+
+    noneOption.textContent =
+        "None";
+
+
+    subjectSelect.appendChild(
+        noneOption
+    );
+
+
+
+    // SUBJECTS
+
+    plannerData.settings.subjects
+        .filter(
+            subject =>
+                subject.active
+        )
+        .forEach(
+            subject => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    subject.name;
+
+
+                option.textContent =
+                    `${subject.emoji} ${subject.name}`;
+
+
+                subjectSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+
+    // TYPES
+
+    plannerData.settings.types
+        .forEach(
+            type => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    type.name;
+
+
+                option.textContent =
+                    `${type.emoji} ${type.name}`;
+
+
+                typeSelect.appendChild(
+                    option
+                );
+
+            }
+        );
 
 }
 
@@ -199,6 +480,7 @@ function addTask() {
             ".quick-add input"
         );
 
+
     const name =
         input.value.trim();
 
@@ -213,10 +495,14 @@ function addTask() {
 
 
     document
-        .querySelector("#taskName")
+        .querySelector(
+            "#taskName"
+        )
         .value = name;
 
+
     input.value = "";
+
 
     openTaskModal();
 
@@ -232,7 +518,9 @@ function createTask() {
 
     const name =
         document
-            .querySelector("#taskName")
+            .querySelector(
+                "#taskName"
+            )
             .value
             .trim();
 
@@ -250,31 +538,41 @@ function createTask() {
 
     const subject =
         document
-            .querySelector("#taskSubject")
+            .querySelector(
+                "#taskSubject"
+            )
             .value;
 
 
     const type =
         document
-            .querySelector("#taskType")
+            .querySelector(
+                "#taskType"
+            )
             .value;
 
 
     const dueDate =
         document
-            .querySelector("#taskDueDate")
+            .querySelector(
+                "#taskDueDate"
+            )
             .value;
 
 
     const priority =
         document
-            .querySelector("#taskPriority")
+            .querySelector(
+                "#taskPriority"
+            )
             .value;
 
 
     const tagText =
         document
-            .querySelector("#taskTags")
+            .querySelector(
+                "#taskTags"
+            )
             .value;
 
 
@@ -282,10 +580,12 @@ function createTask() {
         tagText
             .split(",")
             .map(
-                tag => tag.trim()
+                tag =>
+                    tag.trim()
             )
             .filter(
-                tag => tag !== ""
+                tag =>
+                    tag !== ""
             );
 
 
@@ -302,21 +602,26 @@ function createTask() {
         priority: priority,
 
         dueDate:
-            dueDate || null,
+            dueDate ||
+            null,
 
         tags: tags,
 
         completed: false,
 
         createdAt:
-            new Date().toISOString()
+            new Date()
+                .toISOString()
 
     };
 
 
-    tasks.push(task);
+    plannerData.tasks.push(
+        task
+    );
 
-    saveTasks();
+
+    savePlannerData();
 
     closeTaskModal();
 
@@ -333,32 +638,49 @@ function createTask() {
 function clearTaskForm() {
 
     document
-        .querySelector("#taskName")
+        .querySelector(
+            "#taskName"
+        )
         .value = "";
 
 
     document
-        .querySelector("#taskSubject")
+        .querySelector(
+            "#taskSubject"
+        )
         .value = "";
 
 
     document
-        .querySelector("#taskType")
-        .value = "Task";
+        .querySelector(
+            "#taskType"
+        )
+        .value =
+            plannerData
+                .settings
+                .types[0]
+                .name;
 
 
     document
-        .querySelector("#taskDueDate")
+        .querySelector(
+            "#taskDueDate"
+        )
         .value = "";
 
 
     document
-        .querySelector("#taskPriority")
-        .value = "Normal";
+        .querySelector(
+            "#taskPriority"
+        )
+        .value =
+            "Normal";
 
 
     document
-        .querySelector("#taskTags")
+        .querySelector(
+            "#taskTags"
+        )
         .value = "";
 
 }
@@ -372,8 +694,9 @@ function clearTaskForm() {
 function toggleTask(id) {
 
     const task =
-        tasks.find(
-            task => task.id === id
+        plannerData.tasks.find(
+            task =>
+                task.id === id
         );
 
 
@@ -388,7 +711,7 @@ function toggleTask(id) {
         !task.completed;
 
 
-    saveTasks();
+    savePlannerData();
 
     renderTasks();
 
@@ -424,21 +747,25 @@ function renderTasks() {
     }
 
 
-    todayContainer.innerHTML = "";
+    todayContainer.innerHTML =
+        "";
 
-    upcomingContainer.innerHTML = "";
+
+    upcomingContainer.innerHTML =
+        "";
 
 
     const activeTasks =
-        tasks.filter(
-            task => !task.completed
+        plannerData.tasks.filter(
+            task =>
+                !task.completed
         );
 
 
 
-    // ========================================
-    // TODAY + OVERDUE
-    // ========================================
+    // ====================================
+    // TODAY
+    // ====================================
 
     const todayTasks =
         activeTasks.filter(
@@ -467,7 +794,9 @@ function renderTasks() {
             task => {
 
                 todayContainer.appendChild(
-                    createTaskElement(task)
+                    createTaskElement(
+                        task
+                    )
                 );
 
             }
@@ -477,19 +806,24 @@ function renderTasks() {
 
 
 
-    // ========================================
+    // ====================================
     // UPCOMING
-    // ========================================
+    // ====================================
 
     const upcomingTasks =
         activeTasks
             .filter(
-                task => isUpcoming(task)
+                task =>
+                    isUpcoming(task)
             )
             .sort(
                 (a, b) =>
-                    getDateOnly(a.dueDate) -
-                    getDateOnly(b.dueDate)
+                    getDateOnly(
+                        a.dueDate
+                    ) -
+                    getDateOnly(
+                        b.dueDate
+                    )
             );
 
 
@@ -511,7 +845,9 @@ function renderTasks() {
             task => {
 
                 upcomingContainer.appendChild(
-                    createUpcomingElement(task)
+                    createUpcomingElement(
+                        task
+                    )
                 );
 
             }
@@ -530,7 +866,9 @@ function renderTasks() {
 function createTaskElement(task) {
 
     const taskElement =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     taskElement.className =
@@ -546,23 +884,21 @@ function createTaskElement(task) {
     let dateText = "";
 
 
-    if (isOverdue(task)) {
-
-        dateText = "Overdue";
-
-    }
-
-    else if (isToday(task)) {
-
-        dateText = "Today";
-
-    }
-
-
-    if (dateText !== "") {
+    if (
+        isOverdue(task)
+    ) {
 
         dateText =
-            ` · ${dateText}`;
+            " · Overdue";
+
+    }
+
+    else if (
+        isToday(task)
+    ) {
+
+        dateText =
+            " · Today";
 
     }
 
@@ -577,19 +913,24 @@ function createTaskElement(task) {
         <div class="task-info">
 
             <div class="task-name">
-                ${escapeHTML(task.name)}
+                ${escapeHTML(
+                    task.name
+                )}
             </div>
 
             <div class="task-meta">
                 ${escapeHTML(
-                    subjectText + dateText
+                    subjectText +
+                    dateText
                 )}
             </div>
 
         </div>
 
         <span class="priority">
-            ${escapeHTML(task.priority)}
+            ${escapeHTML(
+                task.priority
+            )}
         </span>
 
     `;
@@ -608,7 +949,9 @@ function createTaskElement(task) {
 function createUpcomingElement(task) {
 
     const taskElement =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     taskElement.className =
@@ -620,19 +963,25 @@ function createUpcomingElement(task) {
         <div class="task-info">
 
             <div class="task-name">
-                ${escapeHTML(task.name)}
+                ${escapeHTML(
+                    task.name
+                )}
             </div>
 
             <div class="task-meta">
-                ${escapeHTML(
-                    formatDate(task.dueDate)
+                Due ${escapeHTML(
+                    formatDate(
+                        task.dueDate
+                    )
                 )}
             </div>
 
         </div>
 
         <span class="priority">
-            ${escapeHTML(task.priority)}
+            ${escapeHTML(
+                task.priority
+            )}
         </span>
 
     `;
@@ -658,17 +1007,413 @@ function formatDate(dateString) {
 
 
     const date =
-        getDateOnly(dateString);
+        getDateOnly(
+            dateString
+        );
 
 
     return date.toLocaleDateString(
         undefined,
         {
-            weekday: "short",
-            month: "short",
-            day: "numeric"
+            weekday:
+                "short",
+
+            month:
+                "short",
+
+            day:
+                "numeric"
         }
     );
+
+}
+
+
+
+// ========================================
+// SETTINGS — SUBJECTS
+// ========================================
+
+function renderSubjects() {
+
+    const container =
+        document.querySelector(
+            "#subjectsList"
+        );
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    container.innerHTML = "";
+
+
+    plannerData
+        .settings
+        .subjects
+        .forEach(
+            (subject, index) => {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                row.className =
+                    "settings-row";
+
+
+                row.innerHTML = `
+
+                    <span class="settings-icon">
+                        ${escapeHTML(
+                            subject.emoji
+                        )}
+                    </span>
+
+                    <span class="settings-name">
+                        ${escapeHTML(
+                            subject.name
+                        )}
+                    </span>
+
+                    <span class="settings-status">
+                        ${
+                            subject.active
+                                ? "Active"
+                                : "Inactive"
+                        }
+                    </span>
+
+                    <button
+                        class="small-button"
+                        onclick="toggleSubject(${index})"
+                    >
+                        ${
+                            subject.active
+                                ? "Disable"
+                                : "Enable"
+                        }
+                    </button>
+
+                `;
+
+
+                container.appendChild(
+                    row
+                );
+
+            }
+        );
+
+}
+
+
+
+// ========================================
+// SETTINGS — TYPES
+// ========================================
+
+function renderTaskTypes() {
+
+    const container =
+        document.querySelector(
+            "#typesList"
+        );
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    container.innerHTML = "";
+
+
+    plannerData
+        .settings
+        .types
+        .forEach(
+            (type, index) => {
+
+                const row =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                row.className =
+                    "settings-row";
+
+
+                row.innerHTML = `
+
+                    <span class="settings-icon">
+                        ${escapeHTML(
+                            type.emoji
+                        )}
+                    </span>
+
+                    <span class="settings-name">
+                        ${escapeHTML(
+                            type.name
+                        )}
+                    </span>
+
+                    <button
+                        class="small-button danger-button"
+                        onclick="removeTaskType(${index})"
+                    >
+                        Remove
+                    </button>
+
+                `;
+
+
+                container.appendChild(
+                    row
+                );
+
+            }
+        );
+
+}
+
+
+
+// ========================================
+// ADD SUBJECT
+// ========================================
+
+function addSubject() {
+
+    const name =
+        prompt(
+            "What should the subject be called?"
+        );
+
+
+    if (!name) {
+
+        return;
+
+    }
+
+
+    const emoji =
+        prompt(
+            "Choose an emoji for this subject:",
+            "📚"
+        );
+
+
+    plannerData
+        .settings
+        .subjects
+        .push({
+
+            name:
+                name.trim(),
+
+            emoji:
+                emoji || "📚",
+
+            active:
+                true
+
+        });
+
+
+    savePlannerData();
+
+    renderSubjects();
+
+    populateTaskOptions();
+
+}
+
+
+
+// ========================================
+// TOGGLE SUBJECT
+// ========================================
+
+function toggleSubject(index) {
+
+    const subject =
+        plannerData
+            .settings
+            .subjects[index];
+
+
+    subject.active =
+        !subject.active;
+
+
+    savePlannerData();
+
+    renderSubjects();
+
+    populateTaskOptions();
+
+}
+
+
+
+// ========================================
+// ADD TASK TYPE
+// ========================================
+
+function addTaskType() {
+
+    const name =
+        prompt(
+            "What should the task type be called?"
+        );
+
+
+    if (!name) {
+
+        return;
+
+    }
+
+
+    const emoji =
+        prompt(
+            "Choose an emoji for this type:",
+            "✓"
+        );
+
+
+    plannerData
+        .settings
+        .types
+        .push({
+
+            name:
+                name.trim(),
+
+            emoji:
+                emoji || "✓"
+
+        });
+
+
+    savePlannerData();
+
+    renderTaskTypes();
+
+    populateTaskOptions();
+
+}
+
+
+
+// ========================================
+// REMOVE TASK TYPE
+// ========================================
+
+function removeTaskType(index) {
+
+    const type =
+        plannerData
+            .settings
+            .types[index];
+
+
+    const confirmed =
+        confirm(
+            `Remove "${type.name}"?`
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    plannerData
+        .settings
+        .types
+        .splice(
+            index,
+            1
+        );
+
+
+    savePlannerData();
+
+    renderTaskTypes();
+
+    populateTaskOptions();
+
+}
+
+
+
+// ========================================
+// PAGE NAVIGATION
+// ========================================
+
+function showPage(page) {
+
+    const dashboard =
+        document.querySelector(
+            "#dashboardPage"
+        );
+
+
+    const settings =
+        document.querySelector(
+            "#settingsPage"
+        );
+
+
+    dashboard.classList.add(
+        "page-hidden"
+    );
+
+
+    settings.classList.add(
+        "page-hidden"
+    );
+
+
+    if (
+        page === "dashboard"
+    ) {
+
+        dashboard.classList.remove(
+            "page-hidden"
+        );
+
+    }
+
+
+    if (
+        page === "settings"
+    ) {
+
+        settings.classList.remove(
+            "page-hidden"
+        );
+
+
+        renderSubjects();
+
+        renderTaskTypes();
+
+    }
 
 }
 
@@ -681,10 +1426,13 @@ function formatDate(dateString) {
 function escapeHTML(text) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
-    div.textContent = text;
+    div.textContent =
+        text;
 
 
     return div.innerHTML;
@@ -700,6 +1448,9 @@ function escapeHTML(text) {
 document.addEventListener(
     "DOMContentLoaded",
     () => {
+
+        initializePlannerData();
+
 
         const input =
             document.querySelector(
@@ -724,6 +1475,33 @@ document.addEventListener(
 
 
         renderTasks();
+
+
+        const dateElement =
+            document.querySelector(
+                "#currentDate"
+            );
+
+
+        if (dateElement) {
+
+            dateElement.textContent =
+                new Date()
+                    .toLocaleDateString(
+                        undefined,
+                        {
+                            weekday:
+                                "long",
+
+                            month:
+                                "long",
+
+                            day:
+                                "numeric"
+                        }
+                    );
+
+        }
 
     }
 );
