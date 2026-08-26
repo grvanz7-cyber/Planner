@@ -1,601 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planner</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="subject-enhancements.css">
 </head>
-
-
 <body>
-
 <div class="app">
-
-
-    <!-- ========================================
-         SIDEBAR
-         ======================================== -->
-
     <aside class="sidebar">
-
-        <div class="logo">
-            Planner
-        </div>
-
-
+        <div class="logo">Planner</div>
         <div class="nav-section">
-
-            <div class="nav-title">
-                Planner
-            </div>
-
-            <a
-                href="#"
-                class="nav-item active"
-                onclick="showPage('dashboard'); return false;"
-            >
-                🏠 Today
-            </a>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                📅 Calendar
-            </a>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                ✓ Tasks
-            </a>
-
+            <div class="nav-title">Planner</div>
+            <a href="#" class="nav-item active" onclick="showPage('dashboard'); return false;">🏠 Today</a>
+            <a href="#" class="nav-item">📅 Calendar</a>
+            <a href="#" class="nav-item">✓ Tasks</a>
         </div>
-
-
         <div class="nav-section">
-
-            <div class="nav-title">
-                School
-            </div>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                📚 Subjects
-            </a>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                📝 Assignments
-            </a>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                🧪 Tests & Exams
-            </a>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                📊 Grades
-            </a>
-
+            <div class="nav-title">School</div>
+            <a href="#" class="nav-item">📚 Subjects</a>
+            <a href="#" class="nav-item">📝 Assignments</a>
+            <a href="#" class="nav-item">🧪 Tests & Exams</a>
+            <a href="#" class="nav-item">📊 Grades</a>
         </div>
-
-
         <div class="nav-section">
-
-            <div class="nav-title">
-                Personal
-            </div>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                🌱 Habits
-            </a>
-
-            <a
-                href="#"
-                class="nav-item"
-            >
-                🗒 Notes
-            </a>
-
+            <div class="nav-title">Personal</div>
+            <a href="#" class="nav-item">🌱 Habits</a>
+            <a href="#" class="nav-item">🗒 Notes</a>
         </div>
-
-
         <div class="nav-section">
-
-            <a
-                href="#"
-                class="nav-item"
-                onclick="showPage('settings'); return false;"
-            >
-                ⚙ Settings
-            </a>
-
+            <a href="#" class="nav-item" onclick="showPage('settings'); return false;">⚙ Settings</a>
         </div>
-
     </aside>
 
-
-
-    <!-- ========================================
-         MAIN CONTENT
-         ======================================== -->
-
     <main class="main">
-
-
-        <!-- ====================================
-             DASHBOARD
-             ==================================== -->
-
         <div id="dashboardPage">
-
             <header class="header">
-
-                <h1>
-                    Good afternoon!
-                </h1>
-
-                <p id="currentDate">
-                    Loading date...
-                </p>
-
+                <h1>Good afternoon!</h1>
+                <p id="currentDate">Loading date...</p>
             </header>
-
-
             <div class="quick-add">
-
-                <input
-                    type="text"
-                    placeholder="What do you need to do?"
-                >
-
-                <button
-                    onclick="openTaskModal()"
-                >
-                    Add
-                </button>
-
+                <input type="text" placeholder="What do you need to do?">
+                <button onclick="openTaskModal()">Add</button>
             </div>
-
-
             <div class="dashboard-grid">
-
                 <section class="card">
-
-                    <h2>
-                        Today
-                    </h2>
-
+                    <h2>Today</h2>
                     <div class="today-tasks"></div>
-
                 </section>
-
-
                 <section class="card">
-
-                    <h2>
-                        Upcoming
-                    </h2>
-
+                    <h2>Upcoming</h2>
                     <div class="upcoming-tasks"></div>
-
                 </section>
-
             </div>
-
         </div>
 
-
-
-        <!-- ====================================
-             SETTINGS
-             ==================================== -->
-
-        <div
-            id="settingsPage"
-            class="page-hidden"
-        >
-
+        <div id="settingsPage" class="page-hidden">
             <header class="header">
-
-                <h1>
-                    Settings
-                </h1>
-
-                <p>
-                    Customize your planner
-                </p>
-
+                <h1>Settings</h1>
+                <p>Customize your planner</p>
             </header>
 
-
-
-            <!-- SUBJECTS -->
-
             <section class="card settings-card">
-
                 <div class="settings-heading">
-
                     <div>
-
-                        <h2>
-                            Subjects
-                        </h2>
-
-                        <p>
-                            Subjects available when creating tasks.
-                        </p>
-
+                        <h2>Subjects</h2>
+                        <p>Subjects available when creating tasks.</p>
                     </div>
-
-                    <button
-                        class="save-button"
-                        onclick="openSubjectModal()"
-                    >
-                        + Add Subject
-                    </button>
-
+                    <button class="save-button" onclick="openSubjectModal()">+ Add Subject</button>
                 </div>
-
-
-                <div
-                    id="subjectsList"
-                    class="settings-list"
-                ></div>
-
+                <div id="subjectsList" class="settings-list"></div>
             </section>
 
-
-
-            <!-- TYPES -->
-
             <section class="card settings-card">
-
                 <div class="settings-heading">
-
                     <div>
-
-                        <h2>
-                            Task Types
-                        </h2>
-
-                        <p>
-                            Types available when creating tasks.
-                        </p>
-
+                        <h2>Task Types</h2>
+                        <p>Types available when creating tasks.</p>
                     </div>
-
-                    <button
-                        class="save-button"
-                        onclick="addTaskType()"
-                    >
-                        + Add Type
-                    </button>
-
+                    <button class="save-button" onclick="addTaskType()">+ Add Type</button>
                 </div>
-
-
-                <div
-                    id="typesList"
-                    class="settings-list"
-                ></div>
-
+                <div id="typesList" class="settings-list"></div>
             </section>
-
         </div>
-
     </main>
-
 </div>
 
-
-
-<!-- ========================================
-     TASK MODAL
-     ======================================== -->
-
-<div
-    class="modal-overlay"
-    id="taskModal"
->
-
+<div class="modal-overlay" id="taskModal">
     <div class="modal">
-
         <div class="modal-header">
-
-            <h2>
-                New Task
-            </h2>
-
-            <button
-                class="close-button"
-                onclick="closeTaskModal()"
-            >
-                ×
-            </button>
-
+            <h2>New Task</h2>
+            <button class="close-button" onclick="closeTaskModal()">×</button>
         </div>
-
-
         <div class="form-group">
-
-            <label for="taskName">
-                Name
-            </label>
-
-            <input
-                id="taskName"
-                type="text"
-                placeholder="What do you need to do?"
-            >
-
+            <label for="taskName">Name</label>
+            <input id="taskName" type="text" placeholder="What do you need to do?">
         </div>
-
-
         <div class="form-row">
-
             <div class="form-group">
-
-                <label for="taskSubject">
-                    Subject
-                </label>
-
-                <select
-                    id="taskSubject"
-                ></select>
-
+                <label for="taskSubject">Subject</label>
+                <select id="taskSubject"></select>
             </div>
-
-
             <div class="form-group">
-
-                <label for="taskType">
-                    Type
-                </label>
-
-                <select
-                    id="taskType"
-                ></select>
-
+                <label for="taskType">Type</label>
+                <select id="taskType"></select>
             </div>
-
         </div>
-
-
         <div class="form-row">
-
             <div class="form-group">
-
-                <label for="taskDueDate">
-                    Due date
-                </label>
-
-                <input
-                    id="taskDueDate"
-                    type="date"
-                >
-
+                <label for="taskDueDate">Due date</label>
+                <input id="taskDueDate" type="date">
             </div>
-
-
             <div class="form-group">
-
-                <label for="taskPriority">
-                    Priority
-                </label>
-
-                <select
-                    id="taskPriority"
-                >
-
-                    <option value="Low">
-                        Low
-                    </option>
-
-                    <option
-                        value="Normal"
-                        selected
-                    >
-                        Normal
-                    </option>
-
-                    <option value="High">
-                        High
-                    </option>
-
+                <label for="taskPriority">Priority</label>
+                <select id="taskPriority">
+                    <option value="Low">Low</option>
+                    <option value="Normal" selected>Normal</option>
+                    <option value="High">High</option>
                 </select>
-
             </div>
-
         </div>
-
-
         <div class="form-group">
-
-            <label for="taskTags">
-                Tags
-            </label>
-
-            <input
-                id="taskTags"
-                type="text"
-                placeholder="#School, #Important"
-            >
-
+            <label for="taskTags">Tags</label>
+            <input id="taskTags" type="text" placeholder="#School, #Important">
         </div>
-
-
         <div class="modal-actions">
-
-            <button
-                class="cancel-button"
-                onclick="closeTaskModal()"
-            >
-                Cancel
-            </button>
-
-            <button
-                class="save-button"
-                onclick="createTask()"
-            >
-                Add Task
-            </button>
-
+            <button class="cancel-button" onclick="closeTaskModal()">Cancel</button>
+            <button class="save-button" onclick="createTask()">Add Task</button>
         </div>
-
     </div>
-
 </div>
 
-
-
-<!-- ========================================
-     SUBJECT MODAL
-     ======================================== -->
-
-<div
-    class="modal-overlay"
-    id="subjectModal"
->
-
+<div class="modal-overlay" id="subjectModal">
     <div class="modal">
-
         <div class="modal-header">
-
-            <h2 id="subjectModalTitle">
-                Add Subject
-            </h2>
-
-            <button
-                class="close-button"
-                onclick="closeSubjectModal()"
-            >
-                ×
-            </button>
-
+            <h2 id="subjectModalTitle">Add Subject</h2>
+            <button class="close-button" onclick="closeSubjectModal()">×</button>
         </div>
-
-
         <div class="form-group">
-
-            <label for="subjectName">
-                Subject name
-            </label>
-
-            <input
-                id="subjectName"
-                type="text"
-                placeholder="e.g. Chemistry"
-            >
-
+            <label for="subjectName">Subject name</label>
+            <input id="subjectName" type="text" placeholder="e.g. Chemistry">
         </div>
-
-
         <div class="form-group">
-
-            <label>
-                Icon
-            </label>
-
-            <div
-                id="iconPicker"
-                class="icon-picker"
-            ></div>
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label for="subjectColour">
-                Colour
-            </label>
-
-            <div class="colour-row">
-
-                <input
-                    id="subjectColour"
-                    type="color"
-                    value="#304b8a"
-                >
-
-                <span>
-                    Choose a colour for this subject
-                </span>
-
+            <label>Icon</label>
+            <div class="icon-selector">
+                <button type="button" id="selectedIconButton" class="selected-icon-button" onclick="toggleIconPicker()">
+                    📚 <span>▾</span>
+                </button>
+                <div id="iconPicker" class="icon-picker hidden"></div>
             </div>
-
         </div>
-
-
+        <div class="form-group">
+            <label for="subjectColour">Colour</label>
+            <div class="colour-row">
+                <input id="subjectColour" type="color" value="#304b8a">
+                <span>Choose a colour for this subject</span>
+            </div>
+        </div>
         <div class="checkbox-row">
-
-            <input
-                id="subjectActive"
-                type="checkbox"
-                checked
-            >
-
-            <label for="subjectActive">
-                Active
-            </label>
-
+            <input id="subjectActive" type="checkbox" checked>
+            <label for="subjectActive">Active</label>
         </div>
-
-
         <div class="modal-actions">
-
-            <button
-                class="cancel-button"
-                onclick="closeSubjectModal()"
-            >
-                Cancel
-            </button>
-
-            <button
-                class="save-button"
-                onclick="saveSubject()"
-            >
-                Save Subject
-            </button>
-
+            <button class="cancel-button" onclick="closeSubjectModal()">Cancel</button>
+            <button class="save-button" onclick="saveSubject()">Save Subject</button>
         </div>
-
     </div>
-
 </div>
-
-
 
 <script src="script.js"></script>
-
+<script src="subject-enhancements.js"></script>
 </body>
-
 </html>
