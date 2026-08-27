@@ -3,9 +3,10 @@
 // ========================================
 
 function getAssignmentData() {
-    const tasks = Array.isArray(window.plannerData?.tasks) ? window.plannerData.tasks : (typeof plannerData !== 'undefined' && Array.isArray(plannerData.tasks) ? plannerData.tasks : []);
-    const subjects = Array.isArray(window.plannerData?.settings?.subjects) ? window.plannerData.settings.subjects : (typeof plannerData !== 'undefined' && Array.isArray(plannerData.settings?.subjects) ? plannerData.settings.subjects : []);
-    return { tasks, subjects };
+    return {
+        tasks: Array.isArray(plannerData?.tasks) ? plannerData.tasks : [],
+        subjects: Array.isArray(plannerData?.settings?.subjects) ? plannerData.settings.subjects : []
+    };
 }
 
 function openAssignmentModal() {
@@ -16,7 +17,10 @@ function openAssignmentModal() {
     if (select) {
         select.innerHTML = '<option value="">Choose a subject</option>';
         subjects.filter(s => s && s.active !== false).forEach(s => {
-            const option = document.createElement('option'); option.value = s.name || ''; option.textContent = `${s.emoji || '📚'} ${s.name || ''}`; select.appendChild(option);
+            const option = document.createElement('option');
+            option.value = s.name || '';
+            option.textContent = `${s.emoji || '📚'} ${s.name || ''}`;
+            select.appendChild(option);
         });
     }
     document.querySelector('#assignmentName').value = '';
@@ -24,31 +28,41 @@ function openAssignmentModal() {
     document.querySelector('#assignmentPriority').value = 'Normal';
     document.querySelector('#assignmentWeight').value = '';
     document.querySelector('#assignmentNotes').value = '';
-    modal.classList.add('show');
+    modal.classList.add('open');
+    document.querySelector('#assignmentName')?.focus();
 }
-function closeAssignmentModal() { document.querySelector('#assignmentModal')?.classList.remove('show'); }
+
+function closeAssignmentModal() {
+    document.querySelector('#assignmentModal')?.classList.remove('open');
+}
 
 function createAssignment() {
     const name = document.querySelector('#assignmentName')?.value.trim();
-    if (!name) return;
-    const subject = document.querySelector('#assignmentSubject')?.value || '';
-    const dueDate = document.querySelector('#assignmentDueDate')?.value || '';
-    const priority = document.querySelector('#assignmentPriority')?.value || 'Normal';
-    const weight = document.querySelector('#assignmentWeight')?.value || '';
-    const notes = document.querySelector('#assignmentNotes')?.value.trim() || '';
-
-    // Reuse the existing task system so assignments appear everywhere else too.
-    const task = { name, subject, type: 'Assignment', dueDate, priority, tags: ['#School'], notes, weight };
-    if (typeof window.addPlannerTask === 'function') window.addPlannerTask(task);
-    else if (typeof window.createTaskFromData === 'function') window.createTaskFromData(task);
-    else if (typeof window.tasks !== 'undefined' && Array.isArray(window.tasks)) window.tasks.push(task);
-    else {
-        const data = getAssignmentData();
-        data.tasks.push(task);
+    if (!name) {
+        alert('Please enter an assignment name.');
+        return;
     }
+    const task = {
+        id: Date.now(),
+        name,
+        subject: document.querySelector('#assignmentSubject')?.value || '',
+        type: 'Assignment',
+        priority: document.querySelector('#assignmentPriority')?.value || 'Normal',
+        dueDate: document.querySelector('#assignmentDueDate')?.value || null,
+        tags: ['#School'],
+        notes: document.querySelector('#assignmentNotes')?.value.trim() || '',
+        weight: document.querySelector('#assignmentWeight')?.value || '',
+        completed: false,
+        createdAt: new Date().toISOString()
+    };
+
+    plannerData.tasks.push(task);
+    savePlannerData();
     closeAssignmentModal();
-    if (typeof renderAssignments === 'function') renderAssignments();
+    renderAssignments();
     if (typeof renderTasks === 'function') renderTasks();
+    if (typeof renderCalendar === 'function') renderCalendar();
+    if (typeof renderAllTasks === 'function') renderAllTasks();
 }
 
 function renderAssignments() {
@@ -64,7 +78,9 @@ function renderAssignments() {
     const current = subjectSelect?.value || '';
     if (subjectSelect) {
         subjectSelect.innerHTML = '<option value="">All subjects</option>';
-        subjects.filter(s => s && s.active !== false).forEach(s => { const o=document.createElement('option'); o.value=s.name||''; o.textContent=`${s.emoji||'📚'} ${s.name||''}`; subjectSelect.appendChild(o); });
+        subjects.filter(s => s && s.active !== false).forEach(s => {
+            const o=document.createElement('option'); o.value=s.name||''; o.textContent=`${s.emoji||'📚'} ${s.name||''}`; subjectSelect.appendChild(o);
+        });
         subjectSelect.value=current;
     }
 
