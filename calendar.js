@@ -30,11 +30,7 @@ function renderCalendar() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
 
-    title.textContent = calendarDate.toLocaleDateString(undefined, {
-        month: 'long',
-        year: 'numeric'
-    });
-
+    title.textContent = calendarDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
     grid.innerHTML = '';
 
     for (let i = 0; i < firstDay; i++) {
@@ -47,32 +43,40 @@ function renderCalendar() {
         const cell = document.createElement('div');
         cell.className = 'calendar-day';
 
-        if (
-            day === today.getDate() &&
-            month === today.getMonth() &&
-            year === today.getFullYear()
-        ) {
-            cell.classList.add('calendar-day-today');
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            cell.classList.add('today');
         }
 
         const number = document.createElement('div');
         number.className = 'calendar-day-number';
-        number.textContent = day;
+        const numberSpan = document.createElement('span');
+        numberSpan.textContent = day;
+        number.appendChild(numberSpan);
         cell.appendChild(number);
 
         const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const tasks = (window.plannerData?.tasks || []).filter(task => task.dueDate === dateString);
 
         tasks.slice(0, 4).forEach(task => {
-            const item = document.createElement('div');
+            const item = document.createElement('button');
+            item.type = 'button';
             item.className = 'calendar-task';
-            if (task.completed) item.classList.add('calendar-task-completed');
+            if (task.completed) item.classList.add('completed');
 
             const subject = (window.plannerData?.settings?.subjects || []).find(s => s.name === task.subject);
-            if (subject?.colour) item.style.setProperty('--subject-colour', subject.colour);
+            if (subject?.colour) item.style.borderLeftColor = subject.colour;
 
-            item.textContent = `${subject?.emoji || ''} ${task.name}`.trim();
-            item.title = task.name;
+            const icon = document.createElement('span');
+            icon.className = 'calendar-task-icon';
+            icon.textContent = subject?.emoji || '';
+
+            const name = document.createElement('span');
+            name.className = 'calendar-task-name';
+            name.textContent = task.name;
+
+            item.append(icon, name);
+            item.title = `Edit: ${task.name}`;
+            item.onclick = () => openCalendarTask(task.id);
             cell.appendChild(item);
         });
 
