@@ -1,14 +1,18 @@
+function getCalendarEditTasks() {
+    return (typeof plannerData !== 'undefined' && Array.isArray(plannerData.tasks)) ? plannerData.tasks : [];
+}
+
 function openCalendarTask(taskId) {
-    const task = (window.plannerData?.tasks || []).find(t => String(t.id) === String(taskId));
+    const task = getCalendarEditTasks().find(t => String(t.id) === String(taskId));
     if (!task) return;
-    populateTaskOptions();
+    if (typeof populateTaskOptions === 'function') populateTaskOptions();
     const modal = document.querySelector('#calendarTaskModal');
     if (!modal) return;
     document.querySelector('#calendarEditTaskId').value = task.id;
     document.querySelector('#calendarEditTaskName').value = task.name || '';
     document.querySelector('#calendarEditTaskSubject').value = task.subject || '';
     document.querySelector('#calendarEditTaskType').value = task.type || '';
-    document.querySelector('#calendarEditTaskDueDate').value = task.dueDate || '';
+    document.querySelector('#calendarEditTaskDueDate').value = task.dueDate ? String(task.dueDate).slice(0,10) : '';
     document.querySelector('#calendarEditTaskPriority').value = task.priority || 'Normal';
     document.querySelector('#calendarEditTaskTags').value = (task.tags || []).join(', ');
     document.querySelector('#calendarEditTaskCompleted').checked = !!task.completed;
@@ -23,7 +27,7 @@ function closeCalendarTaskModal() {
 
 function saveCalendarTask() {
     const id = document.querySelector('#calendarEditTaskId').value;
-    const task = (window.plannerData?.tasks || []).find(t => String(t.id) === String(id));
+    const task = getCalendarEditTasks().find(t => String(t.id) === String(id));
     if (!task) return;
     const name = document.querySelector('#calendarEditTaskName').value.trim();
     if (!name) { alert('Please enter a task name.'); return; }
@@ -42,7 +46,7 @@ function saveCalendarTask() {
 
 function deleteCalendarTask() {
     const id = document.querySelector('#calendarEditTaskId').value;
-    const task = (window.plannerData?.tasks || []).find(t => String(t.id) === String(id));
+    const task = getCalendarEditTasks().find(t => String(t.id) === String(id));
     if (!task) return;
     if (!confirm(`Delete "${task.name}"? This cannot be undone.`)) return;
     plannerData.tasks = plannerData.tasks.filter(t => String(t.id) !== String(id));
