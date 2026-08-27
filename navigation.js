@@ -1,12 +1,11 @@
 // ========================================
 // PAGE NAVIGATION
 // ========================================
-
-const VALID_PAGES = ['dashboard', 'calendar', 'tasks', 'subjects', 'settings'];
+const VALID_PAGES = ['dashboard', 'calendar', 'tasks', 'subjects', 'assignments', 'settings'];
 function setActiveNav(page) { document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === page)); }
 function showPage(page, updateHistory = true) {
     if (!VALID_PAGES.includes(page)) page = 'dashboard';
-    const pages = { dashboard:document.querySelector('#dashboardPage'), calendar:document.querySelector('#calendarPage'), tasks:document.querySelector('#tasksPage'), subjects:document.querySelector('#subjectsPage'), settings:document.querySelector('#settingsPage') };
+    const pages = { dashboard:document.querySelector('#dashboardPage'), calendar:document.querySelector('#calendarPage'), tasks:document.querySelector('#tasksPage'), subjects:document.querySelector('#subjectsPage'), assignments:document.querySelector('#assignmentsPage'), settings:document.querySelector('#settingsPage') };
     Object.values(pages).forEach(el => { if(el) el.classList.add('page-hidden'); });
     if(pages[page]) pages[page].classList.remove('page-hidden');
     setActiveNav(page);
@@ -14,6 +13,7 @@ function showPage(page, updateHistory = true) {
     else if(page==='calendar'){if(typeof renderCalendar==='function')renderCalendar();}
     else if(page==='tasks'){if(typeof renderAllTasks==='function')renderAllTasks();}
     else if(page==='subjects'){if(typeof renderSubjectsPage==='function')renderSubjectsPage();}
+    else if(page==='assignments'){if(typeof renderAssignments==='function')renderAssignments();}
     else if(typeof renderTasks==='function')renderTasks();
     if(updateHistory) history.replaceState(null,'',`#${page}`);
 }
