@@ -22,15 +22,17 @@
     window.showPage = function (page) {
         originalShowPage(page);
         setActiveNav(page);
+        history.replaceState(null, "", `#${page}`);
 
-        const hash = page === "dashboard" ? "dashboard" : page;
-        history.replaceState(null, "", `#${hash}`);
+        if (page === "calendar" && typeof renderCalendar === "function") {
+            renderCalendar();
+        }
     };
 
     document.addEventListener("DOMContentLoaded", () => {
         const page = window.location.hash.replace("#", "");
-        const initialPage = page === "settings" ? "settings" : "dashboard";
-
+        const validPages = ["dashboard", "calendar", "settings"];
+        const initialPage = validPages.includes(page) ? page : "dashboard";
         window.showPage(initialPage);
     });
 })();
