@@ -1,0 +1,13 @@
+/* ========================================
+   ASSIGNMENTS PAGE
+   ======================================== */
+.assignments-page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+.assignment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:0 0 22px}
+.assignment-stat{background:var(--card-bg,#fff);border:1px solid var(--border-color,#e6e1da);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:5px}
+.assignment-stat span{font-size:28px;font-weight:700;line-height:1.1}.assignment-stat small{color:var(--muted-text,#777);font-size:13px}
+.assignments-card{padding:22px}.assignment-filters{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}.assignment-filters select{min-width:170px}
+.assignments-list{display:flex;flex-direction:column;gap:12px}.assignment-row{width:100%;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:16px;text-align:left;padding:17px 18px;border:1px solid var(--border-color,#e6e1da);border-radius:14px;background:var(--card-bg,#fff);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;position:relative;overflow:hidden}
+.assignment-row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--assignment-color,transparent)}
+.assignment-row:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(0,0,0,.06)}.assignment-row.completed{opacity:.62}.assignment-icon{font-size:23px;text-align:center}.assignment-main{display:flex;flex-direction:column;gap:5px;min-width:0}.assignment-main strong{font-size:15px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.assignment-main small{color:var(--muted-text,#777);font-size:13px}.assignment-due{font-size:13px;font-weight:600;white-space:nowrap;color:var(--muted-text,#777)}
+.empty-assignments{padding:45px 20px;text-align:center;color:var(--muted-text,#777)}
+@media(max-width:700px){.assignment-summary{grid-template-columns:1fr}.assignments-page-header{flex-direction:column}.assignment-filters select{width:100%}.assignment-row{grid-template-columns:38px minmax(0,1fr)}.assignment-due{grid-column:2}}
