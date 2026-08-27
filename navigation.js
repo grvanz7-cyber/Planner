@@ -2,35 +2,39 @@
 // PAGE NAVIGATION
 // ========================================
 
+const VALID_PAGES = ['dashboard', 'calendar', 'settings'];
+
 function setActiveNav(page) {
     document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
+        item.classList.toggle('active', item.dataset.page === page);
     });
-
-    const target = document.querySelector(`.nav-item[data-page="${page}"]`);
-    if (target) target.classList.add('active');
 }
 
 function showPage(page, updateHistory = true) {
-    const dashboard = document.querySelector('#dashboardPage');
-    const settings = document.querySelector('#settingsPage');
+    if (!VALID_PAGES.includes(page)) page = 'dashboard';
 
-    if (!dashboard || !settings) return;
+    const pages = {
+        dashboard: document.querySelector('#dashboardPage'),
+        calendar: document.querySelector('#calendarPage'),
+        settings: document.querySelector('#settingsPage')
+    };
 
-    dashboard.classList.add('page-hidden');
-    settings.classList.add('page-hidden');
+    Object.values(pages).forEach(element => {
+        if (element) element.classList.add('page-hidden');
+    });
 
-    if (page === 'settings') {
-        settings.classList.remove('page-hidden');
-        if (typeof renderSubjects === 'function') renderSubjects();
-        if (typeof renderTaskTypes === 'function') renderTaskTypes();
-    } else {
-        dashboard.classList.remove('page-hidden');
-        page = 'dashboard';
-        if (typeof renderTasks === 'function') renderTasks();
-    }
+    if (pages[page]) pages[page].classList.remove('page-hidden');
 
     setActiveNav(page);
+
+    if (page === 'settings') {
+        if (typeof renderSubjects === 'function') renderSubjects();
+        if (typeof renderTaskTypes === 'function') renderTaskTypes();
+    } else if (page === 'calendar') {
+        if (typeof renderCalendar === 'function') renderCalendar();
+    } else {
+        if (typeof renderTasks === 'function') renderTasks();
+    }
 
     if (updateHistory) {
         history.replaceState(null, '', `#${page}`);
@@ -39,10 +43,9 @@ function showPage(page, updateHistory = true) {
 
 function loadSavedPage() {
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    const page = hash === 'settings' ? 'settings' : 'dashboard';
+    const page = VALID_PAGES.includes(hash) ? hash : 'dashboard';
     showPage(page, false);
 }
 
 window.addEventListener('hashchange', loadSavedPage);
-
 document.addEventListener('DOMContentLoaded', loadSavedPage);
