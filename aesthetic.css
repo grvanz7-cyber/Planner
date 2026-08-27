@@ -1,0 +1,33 @@
+/* Cozy visual layer */
+:root{--cozy-bg:#f6f1ea;--cozy-paper:#fffdf8;--cozy-soft:#eee6dc;--cozy-line:#e8ded3;--cozy-text:#403c37;--cozy-muted:#918980;--cozy-accent:#7d7567;--cozy-shadow:0 10px 35px rgba(79,68,55,.065)}
+html{background:var(--cozy-bg)}
+body{background:radial-gradient(circle at 12% 8%,rgba(255,255,255,.72),transparent 28%),radial-gradient(circle at 88% 90%,rgba(232,220,206,.4),transparent 30%),var(--cozy-bg);color:var(--cozy-text)}
+.sidebar{background:rgba(255,253,248,.88);border-right-color:var(--cozy-line);box-shadow:5px 0 24px rgba(78,67,54,.025)}
+.logo{font-size:26px;letter-spacing:-.045em;color:var(--cozy-text)}
+.nav-title{color:#9a9188}
+.nav-item{color:#706960;border:1px solid transparent;transition:all .18s ease}
+.nav-item:hover{background:#f1ebe3;border-color:#ece2d8;transform:translateX(2px)}
+.nav-item.active{background:#e9e0d5;color:#554e45;border-color:#e3d8cc}
+.main{max-width:1450px;padding:48px 56px}
+.header h1{font-size:32px;letter-spacing:-.035em;color:var(--cozy-text)}
+.header p{color:var(--cozy-muted)}
+.quick-add{background:rgba(255,253,248,.92);border-color:var(--cozy-line);border-radius:17px;box-shadow:var(--cozy-shadow)}
+.quick-add button,.save-button{background:var(--cozy-accent);border-radius:11px}
+.card{background:rgba(255,253,248,.94);border-color:var(--cozy-line);border-radius:19px;box-shadow:var(--cozy-shadow)}
+.card h2{color:var(--cozy-text)}
+.task{border-top-color:#eee6dd}
+.task-name{color:#49443e}.task-meta,.empty-message,.settings-heading p,.settings-status{color:var(--cozy-muted)}
+.priority{background:#f0e9e0;color:#766e64}
+.modal-overlay{background:rgba(61,53,45,.24);backdrop-filter:blur(5px)}
+.modal{background:var(--cozy-paper);border-color:var(--cozy-line);border-radius:21px;box-shadow:0 22px 65px rgba(55,47,39,.16)}
+.form-group input,.form-group select,.selected-icon-button,.small-button{background:#fffdf9;border-color:var(--cozy-line);color:var(--cozy-text)}
+.form-group input:focus,.form-group select:focus,.selected-icon-button:hover{border-color:#b7aa9a;box-shadow:0 0 0 3px rgba(183,170,154,.13)}
+.cancel-button{background:#f0e9e1;color:#655e56}
+.settings-list{border-top-color:#eee6dd}.settings-row{border-bottom-color:#eee6dd}
+.small-button:hover,.cancel-button:hover{background:#e9e0d7}
+.danger-button{color:#9b655d}
+.icon-picker,.task-type-icon-picker{background:var(--cozy-paper);border-color:var(--cozy-line);border-radius:15px;box-shadow:0 14px 40px rgba(65,57,48,.13)}
+.icon-option:hover,.task-type-icon-option:hover{background:#f0e8df}
+.icon-option.selected,.task-type-icon-option.selected{background:#e8dfd5;box-shadow:inset 0 0 0 2px #aaa091}
+@media(max-width:800px){.main{padding:32px 25px}}
+@media(max-width:600px){.main{padding:24px 18px}}
