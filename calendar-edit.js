@@ -2,19 +2,44 @@ function getCalendarEditTasks() {
     return (typeof plannerData !== 'undefined' && Array.isArray(plannerData.tasks)) ? plannerData.tasks : [];
 }
 
+function populateCalendarEditOptions(task) {
+    const subjectSelect = document.querySelector('#calendarEditTaskSubject');
+    const typeSelect = document.querySelector('#calendarEditTaskType');
+    if (!subjectSelect || !typeSelect) return;
+
+    subjectSelect.innerHTML = '<option value="">None</option>';
+    const subjects = plannerData?.settings?.subjects || [];
+    subjects.filter(subject => subject && subject.active !== false).forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject.name || '';
+        option.textContent = `${subject.emoji || '📚'} ${subject.name || ''}`;
+        subjectSelect.appendChild(option);
+    });
+    subjectSelect.value = task.subject || '';
+
+    typeSelect.innerHTML = '';
+    const types = plannerData?.settings?.types || [];
+    types.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.name || '';
+        option.textContent = `${type.emoji || '✓'} ${type.name || ''}`;
+        typeSelect.appendChild(option);
+    });
+    typeSelect.value = task.type || '';
+}
+
 function openCalendarTask(taskId) {
     const task = getCalendarEditTasks().find(t => String(t.id) === String(taskId));
     if (!task) return;
-    if (typeof populateTaskOptions === 'function') populateTaskOptions();
     const modal = document.querySelector('#calendarTaskModal');
     if (!modal) return;
+
+    populateCalendarEditOptions(task);
     document.querySelector('#calendarEditTaskId').value = task.id;
     document.querySelector('#calendarEditTaskName').value = task.name || '';
-    document.querySelector('#calendarEditTaskSubject').value = task.subject || '';
-    document.querySelector('#calendarEditTaskType').value = task.type || '';
     document.querySelector('#calendarEditTaskDueDate').value = task.dueDate ? String(task.dueDate).slice(0,10) : '';
     document.querySelector('#calendarEditTaskPriority').value = task.priority || 'Normal';
-    document.querySelector('#calendarEditTaskTags').value = (task.tags || []).join(', ');
+    document.querySelector('#calendarEditTaskTags').value = Array.isArray(task.tags) ? task.tags.join(', ') : (task.tags || '');
     document.querySelector('#calendarEditTaskCompleted').checked = !!task.completed;
     modal.classList.add('open');
     document.querySelector('#calendarEditTaskName').focus();
@@ -31,6 +56,7 @@ function saveCalendarTask() {
     if (!task) return;
     const name = document.querySelector('#calendarEditTaskName').value.trim();
     if (!name) { alert('Please enter a task name.'); return; }
+
     task.name = name;
     task.subject = document.querySelector('#calendarEditTaskSubject').value;
     task.type = document.querySelector('#calendarEditTaskType').value;
@@ -38,9 +64,10 @@ function saveCalendarTask() {
     task.priority = document.querySelector('#calendarEditTaskPriority').value;
     task.tags = document.querySelector('#calendarEditTaskTags').value.split(',').map(tag => tag.trim()).filter(Boolean);
     task.completed = document.querySelector('#calendarEditTaskCompleted').checked;
+
     savePlannerData();
-    renderTasks();
-    renderCalendar();
+    if (typeof renderTasks === 'function') renderTasks();
+    if (typeof renderCalendar === 'function') renderCalendar();
     closeCalendarTaskModal();
 }
 
@@ -51,8 +78,8 @@ function deleteCalendarTask() {
     if (!confirm(`Delete "${task.name}"? This cannot be undone.`)) return;
     plannerData.tasks = plannerData.tasks.filter(t => String(t.id) !== String(id));
     savePlannerData();
-    renderTasks();
-    renderCalendar();
+    if (typeof renderTasks === 'function') renderTasks();
+    if (typeof renderCalendar === 'function') renderCalendar();
     closeCalendarTaskModal();
 }
 
