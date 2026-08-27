@@ -13,7 +13,7 @@
         <div class="logo">Planner</div>
         <div class="nav-section">
             <div class="nav-title">Planner</div>
-            <a href="#" class="nav-item active" onclick="showPage('dashboard'); return false;">🏠 Today</a>
+            <a href="#dashboard" class="nav-item active" data-page="dashboard" onclick="showPage('dashboard'); return false;">🏠 Today</a>
             <a href="#" class="nav-item">📅 Calendar</a>
             <a href="#" class="nav-item">✓ Tasks</a>
         </div>
@@ -30,7 +30,7 @@
             <a href="#" class="nav-item">🗒 Notes</a>
         </div>
         <div class="nav-section">
-            <a href="#" class="nav-item" onclick="showPage('settings'); return false;">⚙ Settings</a>
+            <a href="#settings" class="nav-item" data-page="settings" onclick="showPage('settings'); return false;">⚙ Settings</a>
         </div>
     </aside>
 
@@ -61,7 +61,6 @@
                 <h1>Settings</h1>
                 <p>Customize your planner</p>
             </header>
-
             <section class="card settings-card">
                 <div class="settings-heading">
                     <div>
@@ -72,7 +71,6 @@
                 </div>
                 <div id="subjectsList" class="settings-list"></div>
             </section>
-
             <section class="card settings-card">
                 <div class="settings-heading">
                     <div>
@@ -145,9 +143,7 @@
         <div class="form-group">
             <label>Icon</label>
             <div class="icon-selector">
-                <button type="button" id="selectedIconButton" class="selected-icon-button" onclick="toggleIconPicker()">
-                    📚 <span>▾</span>
-                </button>
+                <button type="button" id="selectedIconButton" class="selected-icon-button" onclick="toggleIconPicker()">📚 <span>▾</span></button>
                 <div id="iconPicker" class="icon-picker hidden"></div>
             </div>
         </div>
@@ -171,5 +167,6 @@
 
 <script src="script.js"></script>
 <script src="subject-enhancements.js"></script>
+<script src="navigation.js"></script>
 </body>
 </html>
