@@ -62,17 +62,26 @@ function renderCalendar() {
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'calendar-task';
-            if (task.completed) item.classList.add('completed');
+            if (task.completed || task.status === 'Completed') item.classList.add('completed');
             const subject = subjects.find(s => s.name === task.subject);
             if (subject?.colour) item.style.setProperty('--task-color', subject.colour);
 
             const icon = document.createElement('span');
             icon.className = 'calendar-task-icon';
-            icon.textContent = subject?.emoji || '';
+            icon.textContent = subject?.emoji || '✓';
             const name = document.createElement('span');
             name.className = 'calendar-task-name';
             name.textContent = task.name || 'Untitled task';
             item.append(icon, name);
+
+            if (task.recurrence) {
+                const repeat = document.createElement('span');
+                repeat.className = 'calendar-task-repeat';
+                repeat.textContent = '↻';
+                repeat.title = 'Recurring task';
+                item.appendChild(repeat);
+            }
+
             item.title = `Edit: ${task.name || 'Untitled task'}`;
             item.onclick = event => { event.stopPropagation(); openCalendarTask(task.id); };
             cell.appendChild(item);
