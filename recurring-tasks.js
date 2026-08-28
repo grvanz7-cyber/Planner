@@ -16,11 +16,49 @@
   function visibility(){const r=document.querySelector('#taskRecurrence')?.value||'';const w=document.querySelector('#weeklyRecurrenceOptions'),m=document.querySelector('#monthlyRecurrenceOptions'),c=document.querySelector('#customRecurrenceOptions'),l=document.querySelector('#taskDateLabel');if(w)w.style.display=(r==='weekly'||r==='biweekly')?'block':'none';if(m)m.style.display=r==='monthly'?'block':'none';if(c)c.style.display=r==='custom'?'flex':'none';if(l)l.textContent=r?'Starts on':'Due date';}
   function values(){const r=document.querySelector('#taskRecurrence')?.value||'';return{recurrence:r,recurrenceDay:(r==='weekly'||r==='biweekly')?Number(document.querySelector('#taskRecurrenceDay')?.value||0):null,recurrenceMonthDay:r==='monthly'?Math.min(31,Math.max(1,Number(document.querySelector('#taskRecurrenceMonthDay')?.value||1))):null,recurrenceInterval:r==='custom'?Math.max(1,Number(document.querySelector('#taskRecurrenceInterval')?.value||1)):null,recurrenceUnit:r==='custom'?(document.querySelector('#taskRecurrenceUnit')?.value||'days'):null};}
   window.getRecurrenceValues=values;
-  window.applyRecurrenceToTask=t=>{if(t)Object.assign(t,values());};
   window.setRecurrence=function(t){ensure();const r=document.querySelector('#taskRecurrence');if(!r)return;r.value=t?.recurrence||'';const d=document.querySelector('#taskRecurrenceDay');if(d)d.value=String(t?.recurrenceDay??(t?.dueDate?new Date(t.dueDate+'T00:00:00').getDay():0));const md=document.querySelector('#taskRecurrenceMonthDay');if(md)md.value=t?.recurrenceMonthDay||(t?.dueDate?Number(String(t.dueDate).slice(8,10)):1);const i=document.querySelector('#taskRecurrenceInterval');if(i)i.value=t?.recurrenceInterval||1;const u=document.querySelector('#taskRecurrenceUnit');if(u)u.value=t?.recurrenceUnit||'days';visibility();};
 
-  // Make Calendar's call openTaskModal(task) actually load the existing task's
-  // recurrence settings instead of opening a fresh blank modal.
+  // The key persistence fix: savePlannerData is wrapped so recurrence is
+  // attached BEFORE localStorage is written. This avoids relying on timing
+  // around closeTaskModal()/clearTaskForm().
+  let pendingRecurrence=null;
+  function patchSave(){
+    if(typeof window.savePlannerData!=='function'||window.savePlannerData.__recurrencePatched)return;
+    const original=window.savePlannerData;
+    const patched=function(){
+      if(pendingRecurrence&&typeof plannerData!=='undefined'&&Array.isArray(plannerData.tasks)&&plannerData.tasks.length){
+        const task=plannerData.tasks[plannerData.tasks.length-1];
+        Object.assign(task,pendingRecurrence);
+        pendingRecurrence=null;
+      }
+      return original.apply(this,arguments);
+    };
+    patched.__recurrencePatched=true;
+    window.savePlannerData=patched;
+  }
+
+  function patchCreate(){
+    if(typeof window.createTask!=='function'||window.createTask.__recurrencePatched)return;
+    const original=window.createTask;
+    const patched=function(){
+      ensure();
+      pendingRecurrence=values();
+      const before=typeof plannerData!=='undefined'&&Array.isArray(plannerData.tasks)?plannerData.tasks.length:0;
+      const result=original.apply(this,arguments);
+      // If the original save function was not intercepted for any reason,
+      // persist the recurrence explicitly after creation as a fallback.
+      if(typeof plannerData!=='undefined'&&Array.isArray(plannerData.tasks)&&plannerData.tasks.length>before){
+        Object.assign(plannerData.tasks[plannerData.tasks.length-1],pendingRecurrence||{});
+        pendingRecurrence=null;
+        if(typeof window.savePlannerData==='function')window.savePlannerData();
+        if(typeof renderCalendar==='function')renderCalendar();
+      }
+      return result;
+    };
+    patched.__recurrencePatched=true;
+    window.createTask=patched;
+  }
+
   function patchOpen(){
     if(typeof window.openTaskModal!=='function'||window.openTaskModal.__recurrenceOpenPatched)return;
     const original=window.openTaskModal;
@@ -28,18 +66,9 @@
       const result=original.apply(this,arguments);
       if(task){
         setTimeout(()=>{
-          const name=document.querySelector('#taskName');
-          const subject=document.querySelector('#taskSubject');
-          const type=document.querySelector('#taskType');
-          const date=document.querySelector('#taskDueDate');
-          const priority=document.querySelector('#taskPriority');
-          const tags=document.querySelector('#taskTags');
-          if(name)name.value=task.name||'';
-          if(subject)subject.value=task.subject||'';
-          if(type)type.value=task.type||'';
-          if(date)date.value=task.dueDate?String(task.dueDate).slice(0,10):'';
-          if(priority)priority.value=task.priority||'Normal';
-          if(tags)tags.value=Array.isArray(task.tags)?task.tags.join(', '):(task.tags||'');
+          const fields={name:task.name||'',subject:task.subject||'',type:task.type||'',date:task.dueDate?String(task.dueDate).slice(0,10):'',priority:task.priority||'Normal',tags:Array.isArray(task.tags)?task.tags.join(', '):(task.tags||'')};
+          const n=document.querySelector('#taskName'),s=document.querySelector('#taskSubject'),ty=document.querySelector('#taskType'),d=document.querySelector('#taskDueDate'),p=document.querySelector('#taskPriority'),g=document.querySelector('#taskTags');
+          if(n)n.value=fields.name;if(s)s.value=fields.subject;if(ty)ty.value=fields.type;if(d)d.value=fields.date;if(p)p.value=fields.priority;if(g)g.value=fields.tags;
           window.setRecurrence(task);
         },0);
       }
@@ -49,36 +78,7 @@
     window.openTaskModal=patched;
   }
 
-  function patchCreate(){
-    if(typeof window.createTask!=='function'||window.createTask.__recurrencePatched)return;
-    const original=window.createTask;
-    const patched=function(){
-      ensure();
-      const recurrence=values();
-      const count=typeof plannerData!=='undefined'&&Array.isArray(plannerData.tasks)?plannerData.tasks.length:0;
-      const result=original.apply(this,arguments);
-      if(typeof plannerData!=='undefined'&&Array.isArray(plannerData.tasks)&&plannerData.tasks.length>count){
-        Object.assign(plannerData.tasks[plannerData.tasks.length-1],recurrence);
-        savePlannerData();
-        if(typeof renderCalendar==='function')renderCalendar();
-      }
-      return result;
-    };
-    patched.__recurrencePatched=true;
-    window.createTask=patched;
-  }
-
-  function patchEdit(){
-    const names=['saveEditedPlannerTask','saveTaskEdit','saveTaskChanges'];
-    names.forEach(name=>{
-      if(typeof window[name]!=='function'||window[name].__recurrencePatched)return;
-      const original=window[name];
-      const patched=function(id){const recurrence=values();const result=original.apply(this,arguments);const task=typeof plannerData!=='undefined'&&plannerData.tasks?.find(t=>String(t.id)===String(id));if(task){Object.assign(task,recurrence);savePlannerData();if(typeof renderCalendar==='function')renderCalendar();}return result;};
-      patched.__recurrencePatched=true;window[name]=patched;
-    });
-  }
-
-  function boot(){ensure();patchOpen();patchCreate();patchEdit();}
+  function boot(){patchSave();patchCreate();patchOpen();ensure();}
   document.addEventListener('DOMContentLoaded',boot);
   window.addEventListener('load',boot);
   boot();
