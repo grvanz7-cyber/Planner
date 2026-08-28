@@ -44,7 +44,9 @@ function renderAllTasks() {
     }
 
     let filtered = tasks.filter(task => {
-        const haystack = `${task.name || ''} ${task.subject || ''} ${task.type || ''}`.toLowerCase();
+        const tagText = Array.isArray(task.tags) ? task.tags.join(' ') : (task.tags || '');
+        const haystack = [task.name, task.subject, task.type, task.description, task.notes, task.details, tagText]
+            .filter(Boolean).join(' ').toLowerCase();
         const status = task.completed ? 'Completed' : (task.status || 'Not Started');
         return (!search || haystack.includes(search)) &&
                (!subjectFilter || task.subject === subjectFilter) &&
