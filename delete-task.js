@@ -24,8 +24,6 @@
 
         if (typeof closeTaskModal === 'function') closeTaskModal();
 
-        // Refresh every view that currently exists. The checks make this safe
-        // even when a page-specific renderer is not loaded.
         ['renderTasks', 'renderAllTasks', 'renderDashboard', 'renderCalendar', 'renderAssignments', 'updateDashboard']
             .forEach(fn => {
                 if (typeof window[fn] === 'function') {
@@ -59,13 +57,9 @@
         };
     }
 
-    // Expose the action for any future UI that wants to use it.
     window.deleteTaskById = deleteTaskById;
     window.addDeleteButtonToTaskModal = addDeleteButton;
 
-    // The existing edit modal is opened by several different pages. Observe
-    // the modal for its task id and add the button without replacing the
-    // existing modal or save logic.
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.querySelector('#taskModal');
         if (!modal) return;
@@ -82,12 +76,19 @@
             attributeFilter: ['class', 'data-editing-task-id', 'data-task-id']
         });
 
-        // Also check shortly after opening, in case the existing editor fills
-        // its fields without changing a watched attribute.
         modal.addEventListener('click', function () {
             if (!modal.classList.contains('open')) return;
             const taskId = modal.dataset.editingTaskId || modal.getAttribute('data-task-id');
             if (taskId) addDeleteButton(taskId);
         }, true);
     });
+})();
+
+// Load the status consistency layer after all existing task/editor scripts.
+// This keeps the current script order intact while adding the new behavior.
+(function loadStatusConsistency() {
+    const script = document.createElement('script');
+    script.src = 'status-consistency.js';
+    script.defer = false;
+    document.head.appendChild(script);
 })();
