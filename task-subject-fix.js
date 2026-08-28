@@ -56,6 +56,8 @@ window.openEditTaskModal = function (taskId) {
         if (field) field.value = value;
     });
 
+    modal.dataset.editingTaskId = String(task.id);
+    modal.dataset.taskId = String(task.id);
     modal.classList.add('open');
     const title = modal.querySelector('.modal-header h2');
     if (title) title.textContent = 'Edit Task';
@@ -65,6 +67,8 @@ window.openEditTaskModal = function (taskId) {
         saveButton.textContent = 'Save Changes';
         saveButton.onclick = () => saveEditedPlannerTask(task.id);
     }
+
+    addDeleteButtonToTaskModal(task.id);
 };
 
 function saveEditedPlannerTask(taskId) {
@@ -83,7 +87,11 @@ function saveEditedPlannerTask(taskId) {
     savePlannerData();
 
     const modal = document.querySelector('#taskModal');
-    if (modal) modal.classList.remove('open');
+    if (modal) {
+        modal.classList.remove('open');
+        delete modal.dataset.editingTaskId;
+        delete modal.dataset.taskId;
+    }
     const title = modal?.querySelector('.modal-header h2');
     if (title) title.textContent = 'New Task';
     const saveButton = modal?.querySelector('.save-button');
@@ -94,4 +102,51 @@ function saveEditedPlannerTask(taskId) {
 
     if (typeof renderTasks === 'function') renderTasks();
     if (typeof renderCalendar === 'function') renderCalendar();
+    if (typeof renderAllTasks === 'function') renderAllTasks();
+    if (typeof renderAssignments === 'function') renderAssignments();
 }
+
+// ========================================
+// TASK DELETION
+// ========================================
+
+function addDeleteButtonToTaskModal(taskId) {
+    const modal = document.querySelector('#taskModal');
+    const actions = modal?.querySelector('.modal-actions');
+    if (!actions) return;
+
+    let button = actions.querySelector('.delete-task-button');
+    if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'delete-task-button';
+        button.textContent = 'Delete task';
+        actions.insertBefore(button, actions.firstChild);
+    }
+
+    button.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const task = plannerData.tasks?.find(t => String(t.id) === String(taskId));
+        if (!task) return;
+
+        if (!window.confirm(`Delete “${task.name || 'this task'}”?\n\nThis cannot be undone.`)) return;
+
+        plannerData.tasks = plannerData.tasks.filter(t => String(t.id) !== String(taskId));
+        savePlannerData();
+
+        if (modal) {
+            modal.classList.remove('open');
+            delete modal.dataset.editingTaskId;
+            delete modal.dataset.taskId;
+        }
+
+        if (typeof renderTasks === 'function') renderTasks();
+        if (typeof renderCalendar === 'function') renderCalendar();
+        if (typeof renderAllTasks === 'function') renderAllTasks();
+        if (typeof renderAssignments === 'function') renderAssignments();
+    };
+}
+
+window.addDeleteButtonToTaskModal = addDeleteButtonToTaskModal;
