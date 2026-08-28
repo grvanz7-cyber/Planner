@@ -19,21 +19,20 @@
     window.getRecurrenceValues=getValues;
     window.applyRecurrenceToTask=function(task){if(task)Object.assign(task,getValues());};
     window.setRecurrence=function(task){ensureRecurrenceControls();const r=document.querySelector('#taskRecurrence');if(!r)return;r.value=task?.recurrence||'';const day=document.querySelector('#taskRecurrenceDay');if(day)day.value=String(task?.recurrenceDay??(task?.dueDate?new Date(task.dueDate+'T00:00:00').getDay():0));const md=document.querySelector('#taskRecurrenceMonthDay');if(md)md.value=task?.recurrenceMonthDay||(task?.dueDate?Number(task.dueDate.slice(8,10)):1);const i=document.querySelector('#taskRecurrenceInterval');if(i)i.value=task?.recurrenceInterval||1;const u=document.querySelector('#taskRecurrenceUnit');if(u)u.value=task?.recurrenceUnit||'days';updateRecurrenceVisibility();};
-    window.nextRecurringDate=function(dateString,task){const d=new Date(dateString+'T00:00:00');if(Number.isNaN(d.getTime()))return null;const r=task.recurrence;if(r==='daily')d.setDate(d.getDate()+1);else if(r==='weekday'){do{d.setDate(d.getDate()+1);}while(d.getDay()===0||d.getDay()===6);}else if(r==='weekly'||r==='biweekly'){d.setDate(d.getDate()+(r==='weekly'?7:14));if(task.recurrenceDay!=null)d.setDate(d.getDate()+((Number(task.recurrenceDay)-d.getDay()+7)%7));}else if(r==='monthly'){d.setMonth(d.getMonth()+1);const target=Math.min(31,Math.max(1,Number(task.recurrenceMonthDay)||d.getDate()));d.setDate(1);d.setDate(Math.min(target,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));}else if(r==='custom'){const n=Math.max(1,Number(task.recurrenceInterval)||1);if(task.recurrenceUnit==='weeks')d.setDate(d.getDate()+n*7);else if(task.recurrenceUnit==='months')d.setMonth(d.getMonth()+n);else d.setDate(d.getDate()+n);}else return null;return d.toISOString().slice(0,10);};
 
+    // The plannerData variable is declared with `let`, so it is NOT a window property.
+    // Always use the real global variable when persisting recurrence data.
     function patchSaveFunctions(){
-        // Capture recurrence BEFORE the normal save closes/clears the modal.
         if(typeof window.createTask==='function'&&!window.createTask.__recurrencePatched){
             const original=window.createTask;
             window.createTask=function(){
                 ensureRecurrenceControls();
                 const recurrence=getValues();
-                const before=Array.isArray(window.plannerData?.tasks)?window.plannerData.tasks.length:0;
+                const before=Array.isArray(plannerData?.tasks)?plannerData.tasks.length:0;
                 const result=original.apply(this,arguments);
-                const tasks=window.plannerData?.tasks;
-                if(Array.isArray(tasks)&&tasks.length>before){
-                    Object.assign(tasks[tasks.length-1],recurrence);
-                    if(typeof window.savePlannerData==='function')window.savePlannerData();
+                if(Array.isArray(plannerData?.tasks)&&plannerData.tasks.length>before){
+                    Object.assign(plannerData.tasks[plannerData.tasks.length-1],recurrence);
+                    savePlannerData();
                     if(typeof window.renderCalendar==='function')window.renderCalendar();
                 }
                 return result;
@@ -46,8 +45,8 @@
                 ensureRecurrenceControls();
                 const recurrence=getValues();
                 const result=original.apply(this,arguments);
-                const task=window.plannerData?.tasks?.find(t=>String(t.id)===String(taskId));
-                if(task){Object.assign(task,recurrence);if(typeof window.savePlannerData==='function')window.savePlannerData();if(typeof window.renderCalendar==='function')window.renderCalendar();}
+                const task=plannerData?.tasks?.find(t=>String(t.id)===String(taskId));
+                if(task){Object.assign(task,recurrence);savePlannerData();if(typeof window.renderCalendar==='function')window.renderCalendar();}
                 return result;
             };
             window.saveEditedPlannerTask.__recurrencePatched=true;
