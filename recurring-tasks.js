@@ -19,9 +19,36 @@
   window.applyRecurrenceToTask=t=>{if(t)Object.assign(t,values());};
   window.setRecurrence=function(t){ensure();const r=document.querySelector('#taskRecurrence');if(!r)return;r.value=t?.recurrence||'';const d=document.querySelector('#taskRecurrenceDay');if(d)d.value=String(t?.recurrenceDay??(t?.dueDate?new Date(t.dueDate+'T00:00:00').getDay():0));const md=document.querySelector('#taskRecurrenceMonthDay');if(md)md.value=t?.recurrenceMonthDay||(t?.dueDate?Number(String(t.dueDate).slice(8,10)):1);const i=document.querySelector('#taskRecurrenceInterval');if(i)i.value=t?.recurrenceInterval||1;const u=document.querySelector('#taskRecurrenceUnit');if(u)u.value=t?.recurrenceUnit||'days';visibility();};
 
-  // Replace createTask after script.js has loaded. The original createTask creates
-  // a task without recurrence fields, so wrapping it and then saving the last task
-  // is the reliable way to persist the selected recurrence.
+  // Make Calendar's call openTaskModal(task) actually load the existing task's
+  // recurrence settings instead of opening a fresh blank modal.
+  function patchOpen(){
+    if(typeof window.openTaskModal!=='function'||window.openTaskModal.__recurrenceOpenPatched)return;
+    const original=window.openTaskModal;
+    const patched=function(task){
+      const result=original.apply(this,arguments);
+      if(task){
+        setTimeout(()=>{
+          const name=document.querySelector('#taskName');
+          const subject=document.querySelector('#taskSubject');
+          const type=document.querySelector('#taskType');
+          const date=document.querySelector('#taskDueDate');
+          const priority=document.querySelector('#taskPriority');
+          const tags=document.querySelector('#taskTags');
+          if(name)name.value=task.name||'';
+          if(subject)subject.value=task.subject||'';
+          if(type)type.value=task.type||'';
+          if(date)date.value=task.dueDate?String(task.dueDate).slice(0,10):'';
+          if(priority)priority.value=task.priority||'Normal';
+          if(tags)tags.value=Array.isArray(task.tags)?task.tags.join(', '):(task.tags||'');
+          window.setRecurrence(task);
+        },0);
+      }
+      return result;
+    };
+    patched.__recurrenceOpenPatched=true;
+    window.openTaskModal=patched;
+  }
+
   function patchCreate(){
     if(typeof window.createTask!=='function'||window.createTask.__recurrencePatched)return;
     const original=window.createTask;
@@ -51,7 +78,8 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded',()=>{ensure();patchCreate();patchEdit();});
-  window.addEventListener('load',()=>{ensure();patchCreate();patchEdit();});
-  ensure();patchCreate();patchEdit();
+  function boot(){ensure();patchOpen();patchCreate();patchEdit();}
+  document.addEventListener('DOMContentLoaded',boot);
+  window.addEventListener('load',boot);
+  boot();
 })();
