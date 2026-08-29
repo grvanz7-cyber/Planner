@@ -26,3 +26,40 @@ function deleteCalendarTask(){
     window.deleteTask(id);
   }
 }
+
+// Persist recurrence values when the universal task modal creates a task.
+(function installRecurrencePersistence(){
+  function readRecurrence(){
+    const select = document.querySelector('#taskRecurrence');
+    const value = select ? select.value : '';
+    return {
+      recurrence: value || '',
+      recurrenceDay: (value === 'weekly' || value === 'biweekly') ? Number(document.querySelector('#taskRecurrenceDay')?.value ?? 0) : null,
+      recurrenceMonthDay: value === 'monthly' ? Number(document.querySelector('#taskRecurrenceMonthDay')?.value ?? 1) : null,
+      recurrenceInterval: value === 'custom' ? Number(document.querySelector('#taskRecurrenceInterval')?.value ?? 1) : null,
+      recurrenceUnit: value === 'custom' ? (document.querySelector('#taskRecurrenceUnit')?.value || 'days') : null
+    };
+  }
+
+  function patchCreate(){
+    if (typeof window.createTask !== 'function' || window.__recurrenceCreatePatched) return !!window.__recurrenceCreatePatched;
+    const original = window.createTask;
+    window.createTask = function(){
+      const recurrence = readRecurrence();
+      const before = Array.isArray(plannerData?.tasks) ? plannerData.tasks.length : 0;
+      original.apply(this, arguments);
+      if (Array.isArray(plannerData?.tasks) && plannerData.tasks.length > before) {
+        Object.assign(plannerData.tasks[plannerData.tasks.length - 1], recurrence);
+        savePlannerData();
+        if (typeof renderCalendar === 'function') renderCalendar();
+      }
+    };
+    window.__recurrenceCreatePatched = true;
+    return true;
+  }
+
+  if (!patchCreate()) {
+    const timer = setInterval(() => { if (patchCreate()) clearInterval(timer); }, 50);
+    setTimeout(() => clearInterval(timer), 10000);
+  }
+})();
