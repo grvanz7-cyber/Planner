@@ -1,6 +1,6 @@
 // ========================================
-// TASK STATUS CONSISTENCY
-// Keeps completed + status fields synchronized everywhere.
+// TASK STATUS CONSISTENCY + VALIDATION
+// Keeps task data valid and status fields synchronized everywhere.
 // ========================================
 
 (function () {
@@ -45,6 +45,58 @@
         else priority.closest('.form-row')?.after(group);
     }
 
+    function validateTaskForm() {
+        const name = document.querySelector('#taskName')?.value.trim() || '';
+        if (!name) {
+            alert('Please enter a task name.');
+            document.querySelector('#taskName')?.focus();
+            return false;
+        }
+        if (name.length > 200) {
+            alert('Task names can be up to 200 characters.');
+            document.querySelector('#taskName')?.focus();
+            return false;
+        }
+        const due = document.querySelector('#taskDueDate')?.value || '';
+        if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) {
+            alert('Please enter a valid due date.');
+            return false;
+        }
+        const priority = document.querySelector('#taskPriority')?.value || 'Normal';
+        if (!['Low', 'Normal', 'High'].includes(priority)) {
+            alert('Please choose a valid priority.');
+            return false;
+        }
+        const recurrence = document.querySelector('#taskRecurrence')?.value || '';
+        if (!['', 'daily', 'weekday', 'weekly', 'biweekly', 'monthly', 'custom'].includes(recurrence)) {
+            alert('Please choose a valid repeat option.');
+            return false;
+        }
+        if (recurrence === 'weekly' || recurrence === 'biweekly') {
+            const day = Number(document.querySelector('#taskRecurrenceDay')?.value);
+            if (!Number.isInteger(day) || day < 0 || day > 6) {
+                alert('Please choose a valid recurring day.');
+                return false;
+            }
+        }
+        if (recurrence === 'monthly') {
+            const day = Number(document.querySelector('#taskRecurrenceMonthDay')?.value);
+            if (!Number.isInteger(day) || day < 1 || day > 31) {
+                alert('Please choose a valid day of the month.');
+                return false;
+            }
+        }
+        if (recurrence === 'custom') {
+            const interval = Number(document.querySelector('#taskRecurrenceInterval')?.value);
+            const unit = document.querySelector('#taskRecurrenceUnit')?.value || '';
+            if (!Number.isInteger(interval) || interval < 1 || !['days', 'weeks', 'months'].includes(unit)) {
+                alert('Please enter a valid custom repeat interval.');
+                return false;
+            }
+        }
+        return true;
+    }
+
     const originalOpen = window.openTaskModal;
     window.openTaskModal = function () {
         if (typeof originalOpen === 'function') originalOpen();
@@ -68,6 +120,7 @@
     const originalSaveEdit = window.saveEditedPlannerTask;
     if (typeof originalSaveEdit === 'function') {
         window.saveEditedPlannerTask = function (taskId) {
+            if (!validateTaskForm()) return;
             addStatusField();
             const status = document.querySelector('#taskStatus')?.value || 'Not Started';
             const task = plannerData?.tasks?.find(t => String(t.id) === String(taskId));
@@ -94,8 +147,23 @@
         };
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function patchCreate() {
+        if (typeof window.createTask !== 'function' || window.createTask.__validationPatched) return;
+        const originalCreate = window.createTask;
+        window.createTask = function () {
+            if (!validateTaskForm()) return false;
+            return originalCreate.apply(this, arguments);
+        };
+        window.createTask.__validationPatched = true;
+    }
+
+    function boot() {
+        patchCreate();
         normalizeAllStatuses();
         addStatusField();
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', boot);
+    window.addEventListener('load', boot);
+    boot();
 })();
