@@ -56,6 +56,10 @@ window.openEditTaskModal = function (taskId) {
         if (field) field.value = value;
     });
 
+    if (typeof window.setRecurrence === 'function') {
+        window.setRecurrence(task);
+    }
+
     modal.dataset.editingTaskId = String(task.id);
     modal.dataset.taskId = String(task.id);
     modal.classList.add('open');
@@ -83,6 +87,10 @@ function saveEditedPlannerTask(taskId) {
     task.priority = document.querySelector('#taskPriority')?.value || 'Normal';
     const tags = document.querySelector('#taskTags')?.value || '';
     task.tags = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+
+    if (typeof window.getRecurrenceValues === 'function') {
+        Object.assign(task, window.getRecurrenceValues());
+    }
 
     savePlannerData();
 
