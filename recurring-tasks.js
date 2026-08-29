@@ -25,17 +25,8 @@
       ensure();
       const recurrence=values();
       let beforeIds=[];
-      try{
-        const stored=JSON.parse(localStorage.getItem('plannerData')||'null');
-        beforeIds=Array.isArray(stored?.tasks)?stored.tasks.map(t=>String(t.id)):[];
-      }catch(e){}
-
+      try{const stored=JSON.parse(localStorage.getItem('plannerData')||'null');beforeIds=Array.isArray(stored?.tasks)?stored.tasks.map(t=>String(t.id)):[];}catch(e){}
       const result=original.apply(this,arguments);
-
-      // The original createTask has already saved plannerData. Re-read that
-      // persisted copy, identify the task it just created, attach recurrence,
-      // and write it back. This avoids relying on another script wrapping the
-      // lexical savePlannerData function.
       try{
         const stored=JSON.parse(localStorage.getItem('plannerData')||'null');
         if(stored&&Array.isArray(stored.tasks)&&stored.tasks.length){
@@ -48,8 +39,6 @@
           }
         }
       }catch(e){console.error('Could not persist recurrence:',e);}
-
-      // Keep the live in-memory data in sync too.
       if(typeof plannerData!=='undefined'&&Array.isArray(plannerData.tasks)){
         const task=plannerData.tasks.find(t=>!beforeIds.includes(String(t.id)))||plannerData.tasks[plannerData.tasks.length-1];
         if(task)Object.assign(task,recurrence);
@@ -63,15 +52,32 @@
   function patchOpen(){
     if(typeof window.openTaskModal!=='function'||window.openTaskModal.__recurrenceOpenPatched)return;
     const original=window.openTaskModal;
-    window.openTaskModal=function(task){
-      const result=original.apply(this,arguments);
-      if(task)setTimeout(()=>window.setRecurrence(task),0);
-      return result;
-    };
+    window.openTaskModal=function(task){const result=original.apply(this,arguments);if(task)setTimeout(()=>window.setRecurrence(task),0);return result;};
     window.openTaskModal.__recurrenceOpenPatched=true;
   }
 
-  function boot(){ensure();patchCreate();patchOpen();}
+  // Calendar/task edit uses this function. Always persist the current value,
+  // including an empty string, which explicitly means "Does not repeat".
+  function patchEditSave(){
+    if(typeof window.saveEditedPlannerTask!=='function'||window.saveEditedPlannerTask.__recurrencePatched)return;
+    const original=window.saveEditedPlannerTask;
+    window.saveEditedPlannerTask=function(taskId){
+      ensure();
+      const recurrence=values();
+      const result=original.apply(this,arguments);
+      const task=typeof plannerData!=='undefined'&&Array.isArray(plannerData.tasks)?plannerData.tasks.find(t=>String(t.id)===String(taskId)):null;
+      if(task){
+        Object.assign(task,recurrence);
+        savePlannerData();
+        try{const stored=JSON.parse(localStorage.getItem('plannerData')||'null');if(stored&&Array.isArray(stored.tasks)){const st=stored.tasks.find(t=>String(t.id)===String(taskId));if(st){Object.assign(st,recurrence);localStorage.setItem('plannerData',JSON.stringify(stored));localStorage.setItem('plannerTasks',JSON.stringify(stored.tasks));}}}catch(e){}
+        if(typeof renderCalendar==='function')renderCalendar();
+      }
+      return result;
+    };
+    window.saveEditedPlannerTask.__recurrencePatched=true;
+  }
+
+  function boot(){ensure();patchCreate();patchOpen();patchEditSave();}
   document.addEventListener('DOMContentLoaded',boot);
   window.addEventListener('load',boot);
   boot();
