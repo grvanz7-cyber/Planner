@@ -15,15 +15,12 @@
         const overdueA = typeof isOverdue === 'function' && isOverdue(a);
         const overdueB = typeof isOverdue === 'function' && isOverdue(b);
         if (overdueA !== overdueB) return overdueA ? -1 : 1;
-
         const priorityA = priorityRank[a?.priority] ?? 1;
         const priorityB = priorityRank[b?.priority] ?? 1;
         if (priorityA !== priorityB) return priorityA - priorityB;
-
         const dateA = dateValue(a);
         const dateB = dateValue(b);
         if (dateA !== dateB) return dateA - dateB;
-
         const createdA = new Date(a?.createdAt || 0).getTime();
         const createdB = new Date(b?.createdAt || 0).getTime();
         return createdB - createdA;
@@ -31,28 +28,17 @@
 
     function renderPrioritizedDashboard() {
         if (!Array.isArray(window.plannerData?.tasks)) return;
-
         const todayContainer = document.querySelector('.today-tasks');
         const upcomingContainer = document.querySelector('.upcoming-tasks');
         if (!todayContainer || !upcomingContainer) return;
-
         const active = plannerData.tasks.filter(task => !task.completed);
-        const todayTasks = active
-            .filter(task => !task.dueDate || isToday(task) || isOverdue(task))
-            .sort(compareTasks);
-        const upcomingTasks = active
-            .filter(task => isUpcoming(task))
-            .sort(compareTasks);
-
+        const todayTasks = active.filter(task => !task.dueDate || isToday(task) || isOverdue(task)).sort(compareTasks);
+        const upcomingTasks = active.filter(task => isUpcoming(task)).sort(compareTasks);
         function renderList(container, tasks, emptyText, factory) {
             container.innerHTML = '';
-            if (!tasks.length) {
-                container.innerHTML = `<p class="empty-message">${emptyText}</p>`;
-                return;
-            }
+            if (!tasks.length) { container.innerHTML = `<p class="empty-message">${emptyText}</p>`; return; }
             tasks.forEach(task => container.appendChild(factory(task)));
         }
-
         renderList(todayContainer, todayTasks, 'Nothing here yet!', createTaskElement);
         renderList(upcomingContainer, upcomingTasks, 'Nothing upcoming!', createUpcomingElement);
     }
@@ -61,7 +47,6 @@
         const dashboard = document.querySelector('#dashboardPage');
         const grid = dashboard?.querySelector('.dashboard-grid');
         if (!grid || document.querySelector('#dashboardStatsCard')) return;
-
         const card = document.createElement('section');
         card.className = 'card dashboard-stats-card';
         card.id = 'dashboardStatsCard';
@@ -90,15 +75,18 @@
         const upcoming = active.filter(task => isUpcoming(task));
         const total = tasks.length;
         const percent = total ? Math.round((completed.length / total) * 100) : 0;
-
-        const set = (id, value) => { const el = document.querySelector('#' + id); if (el) el.textContent = value; };
+        const set = (id, value) => { const node = document.querySelector('#' + id); if (node) node.textContent = value; };
         set('dashboardStatToday', today.length);
         set('dashboardStatUpcoming', upcoming.length);
         set('dashboardStatOverdue', overdue.length);
         set('dashboardStatCompleted', completed.length);
         set('dashboardProgressText', `${percent}% complete`);
         const bar = document.querySelector('#dashboardProgressBar');
-        if (bar) bar.style.width = `${percent}%`;
+        if (bar) {
+            bar.style.width = `${percent}%`;
+            bar.setAttribute('aria-valuenow', String(percent));
+            bar.setAttribute('title', `${percent}% complete`);
+        }
     }
 
     function refreshDashboard() {
@@ -110,7 +98,6 @@
     function install() {
         if (window.__dashboardPriorityStatsInstalled) return true;
         if (typeof window.renderTasks !== 'function') return false;
-
         const originalRender = window.renderTasks;
         window.renderTasks = function () {
             originalRender.apply(this, arguments);
@@ -120,20 +107,25 @@
         return true;
     }
 
+    // Some completion paths update plannerData without calling renderTasks.
+    // Refresh the statistics independently so the progress bar always follows
+    // the current completion state.
+    function installLiveUpdates() {
+        if (window.__dashboardStatsLiveUpdatesInstalled) return;
+        window.__dashboardStatsLiveUpdatesInstalled = true;
+        document.addEventListener('click', () => setTimeout(refreshDashboard, 0));
+        document.addEventListener('change', () => setTimeout(refreshDashboard, 0));
+        window.addEventListener('storage', refreshDashboard);
+        setInterval(refreshDashboard, 500);
+    }
+
     const timer = setInterval(() => {
-        if (install()) {
-            clearInterval(timer);
-            refreshDashboard();
-        }
+        if (install()) clearInterval(timer);
+        refreshDashboard();
     }, 25);
 
     setTimeout(() => clearInterval(timer), 10000);
-    document.addEventListener('DOMContentLoaded', () => {
-        install();
-        refreshDashboard();
-    });
-    window.addEventListener('load', () => {
-        install();
-        refreshDashboard();
-    });
+    document.addEventListener('DOMContentLoaded', () => { install(); installLiveUpdates(); refreshDashboard(); });
+    window.addEventListener('load', () => { install(); installLiveUpdates(); refreshDashboard(); });
+    installLiveUpdates();
 })();
