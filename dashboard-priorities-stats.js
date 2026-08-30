@@ -5,6 +5,10 @@
 (function () {
     const priorityRank = { High: 0, Normal: 1, Low: 2 };
 
+    function getTaskData() {
+        return (typeof plannerData !== 'undefined' && Array.isArray(plannerData.tasks)) ? plannerData.tasks : [];
+    }
+
     function dateValue(task) {
         if (!task?.dueDate) return Number.POSITIVE_INFINITY;
         const value = new Date(task.dueDate + 'T00:00:00').getTime();
@@ -27,17 +31,22 @@
     }
 
     function renderPrioritizedDashboard() {
-        if (!Array.isArray(window.plannerData?.tasks)) return;
+        const tasks = getTaskData();
+        if (!tasks.length) return;
         const todayContainer = document.querySelector('.today-tasks');
         const upcomingContainer = document.querySelector('.upcoming-tasks');
         if (!todayContainer || !upcomingContainer) return;
-        const active = plannerData.tasks.filter(task => !task.completed);
+        const active = tasks.filter(task => !task.completed);
         const todayTasks = active.filter(task => !task.dueDate || isToday(task) || isOverdue(task)).sort(compareTasks);
         const upcomingTasks = active.filter(task => isUpcoming(task)).sort(compareTasks);
-        function renderList(container, tasks, emptyText, factory) {
+
+        function renderList(container, list, emptyText, factory) {
             container.innerHTML = '';
-            if (!tasks.length) { container.innerHTML = `<p class="empty-message">${emptyText}</p>`; return; }
-            tasks.forEach(task => container.appendChild(factory(task)));
+            if (!list.length) {
+                container.innerHTML = `<p class="empty-message">${emptyText}</p>`;
+                return;
+            }
+            list.forEach(task => container.appendChild(factory(task)));
         }
         renderList(todayContainer, todayTasks, 'Nothing here yet!', createTaskElement);
         renderList(upcomingContainer, upcomingTasks, 'Nothing upcoming!', createUpcomingElement);
@@ -65,9 +74,9 @@
     }
 
     function updateStats() {
-        if (!Array.isArray(window.plannerData?.tasks)) return;
+        const tasks = getTaskData();
+        if (!document.querySelector('#dashboardPage')) return;
         ensureStatsCard();
-        const tasks = plannerData.tasks;
         const active = tasks.filter(task => !task.completed);
         const completed = tasks.filter(task => task.completed);
         const today = active.filter(task => task.dueDate && isToday(task));
@@ -75,12 +84,17 @@
         const upcoming = active.filter(task => isUpcoming(task));
         const total = tasks.length;
         const percent = total ? Math.round((completed.length / total) * 100) : 0;
-        const set = (id, value) => { const node = document.querySelector('#' + id); if (node) node.textContent = value; };
+
+        const set = (id, value) => {
+            const node = document.querySelector('#' + id);
+            if (node) node.textContent = value;
+        };
         set('dashboardStatToday', today.length);
         set('dashboardStatUpcoming', upcoming.length);
         set('dashboardStatOverdue', overdue.length);
         set('dashboardStatCompleted', completed.length);
         set('dashboardProgressText', `${percent}% complete`);
+
         const bar = document.querySelector('#dashboardProgressBar');
         if (bar) {
             bar.style.width = `${percent}%`;
@@ -107,9 +121,6 @@
         return true;
     }
 
-    // Some completion paths update plannerData without calling renderTasks.
-    // Refresh the statistics independently so the progress bar always follows
-    // the current completion state.
     function installLiveUpdates() {
         if (window.__dashboardStatsLiveUpdatesInstalled) return;
         window.__dashboardStatsLiveUpdatesInstalled = true;
@@ -125,7 +136,15 @@
     }, 25);
 
     setTimeout(() => clearInterval(timer), 10000);
-    document.addEventListener('DOMContentLoaded', () => { install(); installLiveUpdates(); refreshDashboard(); });
-    window.addEventListener('load', () => { install(); installLiveUpdates(); refreshDashboard(); });
+    document.addEventListener('DOMContentLoaded', () => {
+        install();
+        installLiveUpdates();
+        refreshDashboard();
+    });
+    window.addEventListener('load', () => {
+        install();
+        installLiveUpdates();
+        refreshDashboard();
+    });
     installLiveUpdates();
 })();
