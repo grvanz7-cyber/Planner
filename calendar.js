@@ -29,3 +29,7 @@ function renderCalendar(){
   cell.addEventListener('click',()=>createCalendarTask(date));grid.appendChild(cell);
  }
 }
+
+// Load the event UI after the calendar module so the existing index.html
+// does not need to be rewritten just to add another script tag.
+if(!window.__calendarEventsScriptLoaded){window.__calendarEventsScriptLoaded=true;const s=document.createElement('script');s.src='calendar-events.js';document.head.appendChild(s);}
