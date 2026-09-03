@@ -1,13 +1,19 @@
-const CACHE_NAME = 'planner-app-v1';
+const CACHE_NAME = 'planner-app-v2';
 const APP_SHELL = [
+  './',
+  './index.html',
   './app-shell.html',
   './manifest.webmanifest',
+  './planner-icon.svg',
   './app-data.js',
   './app-navigation.js',
   './app-calendar.js',
   './app-tasks.js',
   './app-school.js',
-  './app-settings.js'
+  './app-settings.js',
+  './app-mobile-ui.js',
+  './app-add.js',
+  './app-entry.js'
 ];
 
 self.addEventListener('install', event => {
@@ -26,13 +32,14 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        }
         return response;
       });
     }).catch(() => caches.match('./app-shell.html'))
