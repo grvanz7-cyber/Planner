@@ -1,42 +1,24 @@
 (() => {
-  const navItems = document.querySelectorAll('.bottom button');
   const views = ['today', 'calendar', 'tasks', 'school', 'more'];
+  const buttons = document.querySelectorAll('.bottom button');
 
   function render(view) {
-    if (window.PlannerAppNavigation && typeof window.PlannerAppNavigation.render === 'function') {
-      window.PlannerAppNavigation.render(view);
-    }
-
-    if (view === 'more' && window.PlannerAppSettings) {
-      const content = document.getElementById('content');
-      if (content) window.PlannerAppSettings.render(content);
-    }
-
-    if (view === 'school' && window.PlannerAppSchool) {
-      const content = document.getElementById('content');
-      if (content) window.PlannerAppSchool.render(content);
-    }
-
-    if (view === 'tasks' && window.PlannerAppTasks) {
-      const content = document.getElementById('content');
-      if (content) window.PlannerAppTasks.render(content);
-    }
-
-    if (view === 'calendar' && window.PlannerAppCalendar) {
-      const content = document.getElementById('content');
-      if (content) window.PlannerAppCalendar.render(content);
-    }
+    if (window.PlannerAppNavigation?.render) window.PlannerAppNavigation.render(view);
+    const content = document.getElementById('content');
+    if (!content) return;
+    if (view === 'today' && window.PlannerMobileUI) window.PlannerMobileUI.renderToday(content);
+    else if (view === 'tasks' && window.PlannerMobileUI) window.PlannerMobileUI.renderTasks(content);
+    else if (view === 'more' && window.PlannerMobileUI) window.PlannerMobileUI.renderMore(content);
+    else if (view === 'school' && window.PlannerAppSchool) window.PlannerAppSchool.render(content);
+    else if (view === 'calendar' && window.PlannerAppCalendar) window.PlannerAppCalendar.render(content);
   }
 
-  navItems.forEach((button, index) => {
-    button.dataset.view = views[index];
-    button.addEventListener('click', () => render(views[index]));
+  buttons.forEach((button, i) => {
+    button.dataset.view = views[i];
+    button.onclick = () => render(views[i]);
   });
-
   if (window.PlannerAppSettings) window.PlannerAppSettings.apply();
   render('today');
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
-  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(() => {});
 })();
