@@ -35,4 +35,8 @@
 
   if (window.PlannerAppSettings) window.PlannerAppSettings.apply();
   render('today');
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  }
 })();
