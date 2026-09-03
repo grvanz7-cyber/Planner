@@ -8,5 +8,12 @@
   "orientation": "portrait",
   "background_color": "#f7f7f4",
   "theme_color": "#7fa58a",
-  "icons": []
+  "icons": [
+    {
+      "src": "./planner-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
