@@ -32,3 +32,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+# Trigger a fresh deployment from app-development after environment permissions change.
+# This comment is intentionally harmless and keeps deployment isolated from main.
