@@ -1,0 +1,19 @@
+{
+  "name": "Planner",
+  "short_name": "Planner",
+  "description": "A personal planner for tasks, calendar, school, and more.",
+  "start_url": "./mobile/app-shell.html",
+  "scope": "./mobile/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f4",
+  "theme_color": "#7fa58a",
+  "icons": [
+    {
+      "src": "./mobile/planner-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
