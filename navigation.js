@@ -20,3 +20,11 @@ function showPage(page, updateHistory = true) {
 }
 function loadSavedPage(){const hash=window.location.hash.replace('#','').toLowerCase();showPage(VALID_PAGES.includes(hash)?hash:'dashboard',false);}
 window.addEventListener('hashchange',loadSavedPage);document.addEventListener('DOMContentLoaded',loadSavedPage);
+(function loadTestsExamsPage(){
+  function load(){
+    if(window.__testsExamsPageLoaded)return;
+    if(document.querySelector('script[data-tests-exams-page]'))return;
+    const s=document.createElement('script');s.src='tests-exams-page.js';s.dataset.testsExamsPage='true';document.body.appendChild(s);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load);else load();
+})();
