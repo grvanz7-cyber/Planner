@@ -1,33 +1,28 @@
 (() => {
-  function data() { return window.PlannerAppData ? window.PlannerAppData.getTasks() : []; }
-  function escape(v) { return String(v || 'Untitled').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function dueTime(t) { return t.dueDate ? new Date(t.dueDate + 'T00:00:00').getTime() : Infinity; }
-
-  window.PlannerAppTasks = {
-    render(container) {
-      let filter = 'active';
-      const draw = () => {
-        const tasks = data().filter(t => filter === 'active' ? !t.completed : !!t.completed)
-          .sort((a,b) => dueTime(a) - dueTime(b));
-        container.innerHTML = `<div class="taskFilters"><button data-filter="active" class="selected">Active</button><button data-filter="completed">Completed</button></div><div class="taskList"></div>`;
-        const list = container.querySelector('.taskList');
-        list.innerHTML = tasks.length ? tasks.map(t => `<button class="taskRow" data-id="${escape(t.id)}"><span class="taskCheck">${t.completed ? '✓' : ''}</span><span class="taskInfo"><strong>${escape(t.name)}</strong><small>${escape(t.dueDate || 'No due date')}${t.type ? ' · '+escape(t.type) : ''}${t.subject ? ' · '+escape(t.subject) : ''}</small></span></button>`).join('') : '<div class="empty">No '+filter+' tasks.</div>';
-        container.querySelectorAll('[data-filter]').forEach(b => b.onclick = () => { filter=b.dataset.filter; draw(); });
-        container.querySelectorAll('.taskRow').forEach(b => b.onclick = () => {
-          const task = data().find(t => String(t.id) === b.dataset.id);
-          if (task) window.PlannerAppTasks.showDetails(task);
-        });
-      };
-      draw();
-    },
-    showDetails(task) {
-      const existing = document.getElementById('taskDetailSheet');
-      if (existing) existing.remove();
-      const sheet = document.createElement('div');
-      sheet.id = 'taskDetailSheet'; sheet.className = 'sheetBackdrop';
-      sheet.innerHTML = `<div class="sheet"><button class="sheetClose">×</button><h2>${escape(task.name)}</h2><p>${escape(task.dueDate || 'No due date')}</p><p>${escape(task.type || 'Task')}${task.subject ? ' · '+escape(task.subject) : ''}</p><button class="sheetAction">${task.completed ? 'Mark active' : 'Mark complete'}</button></div>`;
-      document.body.appendChild(sheet);
-      sheet.onclick = e => { if (e.target === sheet || e.target.classList.contains('sheetClose')) sheet.remove(); };
-    }
-  };
+  const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const data = () => window.PlannerAppData ? window.PlannerAppData.getTasks() : [];
+  const save = next => { try { localStorage.setItem('plannerTasks', JSON.stringify(next)); const raw=JSON.parse(localStorage.getItem('plannerData')||'null'); if(raw&&typeof raw==='object'){raw.tasks=next;localStorage.setItem('plannerData',JSON.stringify(raw));} } catch(e){} window.PlannerAppData?.refresh?.(); };
+  const dateOnly = v => { if(!v)return null; const d=new Date(String(v).slice(0,10)+'T00:00:00'); return Number.isNaN(d.getTime())?null:d; };
+  const fmt = v => { const d=dateOnly(v); if(!d)return 'No due date'; const n=new Date();n.setHours(0,0,0,0);const diff=Math.round((d-n)/86400000);if(diff===0)return 'Today';if(diff===1)return 'Tomorrow';if(diff===-1)return 'Yesterday';return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); };
+  const icon = t => ({task:'✓',event:'◷',note:'📝',assignment:'📄',quiz:'❓',test:'🧪',exam:'🎓'})[String(t.type||'task').toLowerCase()]||'✓';
+  function ensureStyles(){if(document.getElementById('taskStyles'))return;const s=document.createElement('style');s.id='taskStyles';s.textContent=`.tasks-toolbar{display:flex;gap:7px;margin-bottom:12px}.tasks-filter{flex:1;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:11px;padding:10px 7px;font:inherit;font-size:12px}.tasks-sort{width:42px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:11px;font-size:17px}.task-group{margin-bottom:12px}.task-group-title{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 8px}.task-group-title strong{font-size:13px}.task-group-title span{font-size:11px;color:var(--muted)}.task-item{width:100%;display:flex;gap:11px;align-items:center;text-align:left;border:0;border-top:1px solid var(--border);background:transparent;color:inherit;padding:12px 0}.task-item:first-child{border-top:0}.task-item-check{width:28px;height:28px;flex:0 0 28px;border:2px solid #0002;border-radius:50%;display:grid;place-items:center;font-size:13px}.task-item-check.high{border-color:#c96d5c}.task-item.done .task-item-check{background:var(--accent);border-color:var(--accent);color:#fff}.task-item-body{min-width:0;flex:1}.task-item-body strong{display:block;font-size:14px;line-height:1.25}.task-item-body small{display:block;color:var(--muted);font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.task-item.done strong{text-decoration:line-through;color:var(--muted)}.task-chevron{color:var(--muted);font-size:20px}.task-empty{padding:18px 4px;text-align:center}.task-empty strong{display:block;font-size:14px}.task-empty small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.task-detail-icon{width:42px;height:42px;border-radius:13px;background:var(--soft);display:grid;place-items:center;font-size:21px;margin-bottom:8px}`;document.head.appendChild(s)}
+  function detail(task){
+    const existing=document.getElementById('taskDetailSheet');if(existing)existing.remove();
+    const sheet=document.createElement('div');sheet.id='taskDetailSheet';sheet.className='sheetBackdrop';
+    sheet.innerHTML=`<div class="sheet"><button class="sheetClose">×</button><div class="task-detail-icon">${icon(task)}</div><h2>${esc(task.name||'Untitled')}</h2><p>${fmt(task.dueDate)}${task.dueDate?' · '+esc(task.dueDate):''}</p><p>${esc(task.type||'Task')}${task.subject?' · '+esc(task.subject):''}${task.priority&&task.priority!=='Normal'?' · '+esc(task.priority)+' priority':''}</p><button class="sheetAction" id="detailToggle">${task.completed?'Mark active':'Mark complete'}</button></div>`;
+    document.body.appendChild(sheet);
+    sheet.querySelector('#detailToggle').onclick=()=>{const list=data();const i=list.findIndex(t=>String(t.id||t.name)===String(task.id||task.name));if(i>=0){list[i].completed=!list[i].completed;if('status'in list[i])list[i].status=list[i].completed?'Completed':'Not Started';save(list);sheet.remove();renderCurrent();}};
+    sheet.onclick=e=>{if(e.target===sheet||e.target.classList.contains('sheetClose'))sheet.remove()};
+  }
+  let currentRoot=null;
+  function renderCurrent(){if(currentRoot)render(currentRoot)}
+  function render(container){ensureStyles();currentRoot=container;let filter='active',sort='due';
+    const draw=()=>{const all=data();let list=all.filter(t=>filter==='active'?!t.completed:filter==='completed'?!!t.completed:true);if(sort==='due')list.sort((a,b)=>(dateOnly(a.dueDate)?.getTime()??Infinity)-(dateOnly(b.dueDate)?.getTime()??Infinity));else if(sort==='name')list.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));else list.sort((a,b)=>Number(b.priority==='High')-Number(a.priority==='High'));
+      const today=new Date();today.setHours(0,0,0,0);const overdue=list.filter(t=>!t.completed&&dateOnly(t.dueDate)&&dateOnly(t.dueDate)<today);const undated=list.filter(t=>!dateOnly(t.dueDate));const dated=list.filter(t=>dateOnly(t.dueDate)&&!overdue.includes(t));
+      const group=(title,items)=>items.length?`<section class="card task-group"><div class="task-group-title"><strong>${title}</strong><span>${items.length}</span></div>${items.map(t=>`<button class="task-item ${t.completed?'done':''}" data-id="${esc(t.id||t.name)}"><span class="task-item-check ${String(t.priority).toLowerCase()==='high'?'high':''}">${t.completed?'✓':icon(t)}</span><span class="task-item-body"><strong>${esc(t.name||'Untitled')}</strong><small>${esc(fmt(t.dueDate))}${t.type?' · '+esc(t.type):''}${t.subject?' · '+esc(t.subject):''}</small></span><span class="task-chevron">›</span></button>`).join('')}</section>`:'';
+      container.innerHTML=`<div class="greeting"><h1>Tasks</h1><p>${all.filter(t=>!t.completed).length} active · ${all.filter(t=>t.completed).length} completed</p></div><div class="tasks-toolbar"><select class="tasks-filter" id="taskFilter"><option value="active">Active tasks</option><option value="all">All tasks</option><option value="completed">Completed</option></select><button class="tasks-sort" id="taskSort" aria-label="Change sort">↕</button></div>${list.length?(filter==='active'?group('Overdue',overdue)+group('Upcoming',dated)+group('No due date',undated):group(filter==='completed'?'Completed':'All tasks',list)):`<section class="card task-empty"><strong>${filter==='completed'?'No completed tasks yet.':'You’re all caught up.'}</strong><small>${filter==='completed'?'Completed tasks will appear here.':'Add something with the + button.'}</small></section>`}`;
+      container.querySelector('#taskFilter').value=filter;container.querySelector('#taskFilter').onchange=e=>{filter=e.target.value;draw()};container.querySelector('#taskSort').onclick=()=>{sort=sort==='due'?'name':sort==='name'?'priority':'due';draw()};container.querySelectorAll('.task-item').forEach(b=>b.onclick=()=>{const t=data().find(x=>String(x.id||x.name)===b.dataset.id);if(t)detail(t)});
+    };draw();
+  }
+  window.PlannerAppTasks={render,showDetails:detail};
 })();
