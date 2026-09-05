@@ -2,6 +2,7 @@
 // TESTS & EXAMS PAGE
 // ========================================
 (function(){
+  window.__testsExamsPageLoaded=true;
   function el(id){return document.getElementById(id);}
   function ensurePage(){
     if(el('testsExamsPage'))return;
@@ -63,6 +64,6 @@
     document.head.appendChild(s);
   }
   window.renderAssessments=renderAssessments;window.openAssessmentModal=openAssessmentModal;window.closeAssessmentModal=closeAssessmentModal;window.createAssessment=createAssessment;
-  function install(){ensurePage();ensureModal();installNav();installStyles();}
-  document.addEventListener('DOMContentLoaded',install);window.addEventListener('load',install);setInterval(install,500);
+  function install(){ensurePage();ensureModal();installNav();installStyles();if(window.location.hash.toLowerCase()==='#tests-exams'&&typeof showPage==='function')showPage('tests-exams',false);}
+  install();document.addEventListener('DOMContentLoaded',install);window.addEventListener('load',install);setInterval(install,500);
 })();
