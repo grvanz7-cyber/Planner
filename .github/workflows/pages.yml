@@ -1,4 +1,4 @@
-name: Deploy Planner PWA
+name: Deploy Planner
 
 on:
   push:
@@ -21,17 +21,29 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
+      - name: Checkout desktop Planner
         uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Overlay mobile app from app-development
+        run: |
+          git clone --depth 1 --branch app-development https://github.com/${{ github.repository }}.git .mobile-source
+          cp .mobile-source/app-shell.html ./app-shell.html
+          cp .mobile-source/manifest.webmanifest ./manifest.webmanifest
+          cp .mobile-source/service-worker.js ./service-worker.js
+          cp .mobile-source/planner-icon.svg ./planner-icon.svg
+          cp .mobile-source/app-*.js ./
+          rm -rf .mobile-source
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-# Trigger a fresh deployment from app-development after environment permissions change.
-# This comment is intentionally harmless and keeps deployment isolated from main.
