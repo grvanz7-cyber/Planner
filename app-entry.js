@@ -10,7 +10,7 @@
     );
 
     if (view === 'today' && window.PlannerMobileUI) window.PlannerMobileUI.renderToday(content);
-    else if (view === 'tasks' && window.PlannerMobileUI) window.PlannerMobileUI.renderTasks(content);
+    else if (view === 'tasks' && window.PlannerAppTasks) window.PlannerAppTasks.render(content);
     else if (view === 'more' && window.PlannerMobileUI) window.PlannerMobileUI.renderMore(content);
     else if (view === 'school' && window.PlannerAppSchool) window.PlannerAppSchool.render(content);
     else if (view === 'calendar' && window.PlannerAppCalendar) window.PlannerAppCalendar.mount(content);
