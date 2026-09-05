@@ -1,0 +1,81 @@
+// ========================================
+// GRADES PAGE
+// ========================================
+(function(){
+  function el(id){return document.getElementById(id);}
+  function ensureData(){
+    if(!plannerData.grades) plannerData.grades=[];
+    if(!plannerData.gradeCategories) plannerData.gradeCategories=['Assignments','Quizzes','Tests','Exams'];
+  }
+  function ensurePage(){
+    if(el('gradesPage'))return;
+    const page=document.createElement('div');
+    page.id='gradesPage';page.className='page-hidden';
+    page.innerHTML=`<header class="header grades-page-header"><div><h1>Grades</h1><p>Track your marks and see where you stand in each subject.</p></div><button class="save-button" type="button" id="gradeAddButton">+ Add Grade</button></header><div class="grade-summary"><div class="grade-stat"><span id="overallGrade">—</span><small>Overall average</small></div><div class="grade-stat"><span id="gradeCount">0</span><small>Grades entered</small></div><div class="grade-stat"><span id="subjectCount">0</span><small>Subjects with grades</small></div></div><section class="card grades-card"><div class="grade-filters"><select id="gradeSubjectFilter"><option value="">All subjects</option></select></div><div id="gradeSubjects" class="grade-subjects"></div></section>`;
+    document.querySelector('.main')?.appendChild(page);
+    el('gradeAddButton').onclick=openGradeModal;
+    el('gradeSubjectFilter').onchange=renderGrades;
+  }
+  function ensureModal(){
+    if(el('gradeModal'))return;
+    const wrap=document.createElement('div');wrap.className='modal-overlay';wrap.id='gradeModal';
+    wrap.innerHTML=`<div class="modal"><div class="modal-header"><h2>Add Grade</h2><button class="close-button" type="button" id="gradeClose">×</button></div><div class="form-group"><label for="gradeName">Name</label><input id="gradeName" type="text" placeholder="e.g. Chapter 3 Test"></div><div class="form-row"><div class="form-group"><label for="gradeSubject">Subject</label><select id="gradeSubject"></select></div><div class="form-group"><label for="gradeCategory">Category</label><select id="gradeCategory"></select></div></div><div class="form-row"><div class="form-group"><label for="gradeMark">Mark</label><div class="grade-mark-input"><input id="gradeMark" type="number" min="0" max="100" step="0.1" placeholder="85"><span>%</span></div></div><div class="form-group"><label for="gradeWeight">Weight</label><div class="grade-mark-input"><input id="gradeWeight" type="number" min="0" max="100" step="0.1" placeholder="Optional"><span>%</span></div></div></div><div class="form-group"><label for="gradeNotes">Notes</label><textarea id="gradeNotes" rows="3" placeholder="Optional notes..."></textarea></div><div class="modal-actions"><button class="cancel-button" type="button" id="gradeCancel">Cancel</button><button class="save-button" type="button" id="gradeSave">Add Grade</button></div></div>`;
+    document.body.appendChild(wrap);
+    el('gradeClose').onclick=closeGradeModal;el('gradeCancel').onclick=closeGradeModal;el('gradeSave').onclick=createGrade;
+    wrap.addEventListener('click',e=>{if(e.target===wrap)closeGradeModal();});
+  }
+  function activeSubjects(){return (plannerData.settings?.subjects||[]).filter(s=>s&&s.active!==false);}
+  function populateSubjects(){
+    const s=el('gradeSubject');if(!s)return;
+    s.innerHTML='<option value="">Choose a subject</option>';
+    activeSubjects().forEach(x=>{const o=document.createElement('option');o.value=x.name||'';o.textContent=`${x.emoji||'📚'} ${x.name||''}`;s.appendChild(o);});
+  }
+  function populateCategories(){
+    const s=el('gradeCategory');if(!s)return;
+    ensureData();s.innerHTML='';
+    plannerData.gradeCategories.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;s.appendChild(o);});
+  }
+  function populateFilter(){
+    const s=el('gradeSubjectFilter');if(!s)return;const cur=s.value;
+    s.innerHTML='<option value="">All subjects</option>';
+    activeSubjects().forEach(x=>{const o=document.createElement('option');o.value=x.name||'';o.textContent=`${x.emoji||'📚'} ${x.name||''}`;s.appendChild(o);});
+    if([...s.options].some(o=>o.value===cur))s.value=cur;
+  }
+  function calc(entries){
+    let weighted=0,totalWeight=0,unweighted=0;
+    entries.forEach(g=>{const mark=Number(g.mark);if(!Number.isFinite(mark))return;const w=Number(g.weight);if(Number.isFinite(w)&&w>0){weighted+=mark*w;totalWeight+=w;}else{unweighted+=mark;}});
+    if(totalWeight>0 && unweighted>0){const unweightedEntries=entries.filter(g=>!(Number(g.weight)>0)&&Number.isFinite(Number(g.mark)));return (weighted+unweightedEntries.reduce((a,g)=>a+Number(g.mark),0)*totalWeight/unweightedEntries.length)/(totalWeight+totalWeight);} 
+    if(totalWeight>0)return weighted/totalWeight;
+    if(entries.length)return entries.reduce((a,g)=>a+Number(g.mark),0)/entries.length;
+    return null;
+  }
+  function renderGrades(){
+    ensureData();const list=el('gradeSubjects');if(!list)return;populateFilter();
+    const filter=el('gradeSubjectFilter')?.value||'';const grades=plannerData.grades.filter(g=>!filter||g.subject===filter);
+    const subjectNames=[...new Set(grades.map(g=>g.subject).filter(Boolean))];
+    const allCalc=calc(plannerData.grades);el('overallGrade').textContent=allCalc==null?'—':`${allCalc.toFixed(1)}%`;el('gradeCount').textContent=plannerData.grades.length;el('subjectCount').textContent=new Set(plannerData.grades.map(g=>g.subject).filter(Boolean)).size;
+    list.innerHTML='';
+    if(!grades.length){list.innerHTML='<div class="empty-grades">No grades entered yet. Add your first grade to start tracking your progress.</div>';return;}
+    const subjects=activeSubjects();
+    subjectNames.forEach(name=>{
+      const entries=grades.filter(g=>g.subject===name);const avg=calc(entries);const subject=subjects.find(s=>s.name===name);const section=document.createElement('div');section.className='grade-subject';
+      section.innerHTML=`<div class="grade-subject-head"><div class="grade-subject-title"><span class="grade-subject-icon"></span><div><h2></h2><small></small></div></div><strong class="grade-average"></strong></div><div class="grade-progress"><span></span></div><div class="grade-entries"></div>`;
+      section.querySelector('.grade-subject-icon').textContent=subject?.emoji||'📚';section.querySelector('h2').textContent=name;section.querySelector('small').textContent=`${entries.length} grade${entries.length===1?'':'s'}`;section.querySelector('.grade-average').textContent=avg==null?'—':`${avg.toFixed(1)}%`;section.querySelector('.grade-progress span').style.width=`${Math.max(0,Math.min(100,avg||0))}%`;
+      const entryBox=section.querySelector('.grade-entries');entries.slice().sort((a,b)=>(Number(b.mark)||0)-(Number(a.mark)||0)).forEach(g=>{const row=document.createElement('div');row.className='grade-entry';row.innerHTML=`<div><strong></strong><small></small></div><span></span><button type="button" aria-label="Delete grade">×</button>`;row.querySelector('strong').textContent=g.name||g.category||'Grade';row.querySelector('small').textContent=`${g.category||'Other'}${g.weight>0?' • '+g.weight+'% weight':''}`;row.querySelector('span').textContent=`${Number(g.mark).toFixed(1)}%`;row.querySelector('button').onclick=()=>deleteGrade(g.id);entryBox.appendChild(row);});list.appendChild(section);
+    });
+  }
+  function openGradeModal(){ensureModal();populateSubjects();populateCategories();el('gradeName').value='';el('gradeSubject').value='';el('gradeMark').value='';el('gradeWeight').value='';el('gradeNotes').value='';el('gradeModal').classList.add('open');el('gradeName').focus();}
+  function closeGradeModal(){el('gradeModal')?.classList.remove('open');}
+  function createGrade(){
+    ensureData();const name=el('gradeName').value.trim(),subject=el('gradeSubject').value,category=el('gradeCategory').value,mark=Number(el('gradeMark').value),weight=el('gradeWeight').value===''?'':Number(el('gradeWeight').value);
+    if(!name){alert('Please enter a grade name.');return;}if(!subject){alert('Please choose a subject.');return;}if(!Number.isFinite(mark)||mark<0||mark>100){alert('Please enter a mark from 0 to 100.');return;}if(weight!==''&&(!Number.isFinite(weight)||weight<0||weight>100)){alert('Please enter a weight from 0 to 100.');return;}
+    plannerData.grades.push({id:Date.now(),name,subject,category,mark,weight,notes:el('gradeNotes').value.trim(),createdAt:new Date().toISOString()});savePlannerData();closeGradeModal();renderGrades();
+  }
+  function deleteGrade(id){if(!confirm('Delete this grade?'))return;plannerData.grades=plannerData.grades.filter(g=>g.id!==id);savePlannerData();renderGrades();}
+  function installStyles(){if(el('gradesStyles'))return;const s=document.createElement('style');s.id='gradesStyles';s.textContent=`.grades-page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:28px;margin-bottom:24px}.grade-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px}.grade-stat{background:var(--card-bg,#fff);border:1px solid var(--border-color,#e6e1da);border-radius:18px;padding:20px 22px}.grade-stat span{display:block;font-size:28px;font-weight:700}.grade-stat small{color:var(--muted-text,#777)}.grades-card{padding:24px}.grade-filters{display:flex;gap:14px;margin-bottom:24px}.grade-filters select{min-width:200px}.grade-subjects{display:grid;gap:18px}.grade-subject{border:1px solid var(--border-color,#e6e1da);border-radius:18px;padding:20px;background:var(--card-bg,#fff)}.grade-subject-head{display:flex;justify-content:space-between;align-items:center;gap:16px}.grade-subject-title{display:flex;align-items:center;gap:12px}.grade-subject-icon{font-size:26px}.grade-subject-title h2{margin:0;font-size:18px}.grade-subject-title small{color:var(--muted-text,#777)}.grade-average{font-size:24px}.grade-progress{height:8px;background:#0000000d;border-radius:99px;margin:16px 0}.grade-progress span{display:block;height:100%;border-radius:99px;background:var(--assessment-color,#7fa58a)}.grade-entries{display:grid;gap:1px}.grade-entry{display:grid;grid-template-columns:1fr auto auto;gap:18px;align-items:center;padding:12px 0;border-top:1px solid var(--border-color,#e6e1da)}.grade-entry strong,.grade-entry small{display:block}.grade-entry small{font-size:12px;color:var(--muted-text,#777);margin-top:3px}.grade-entry>span{font-weight:700}.grade-entry button{border:0;background:transparent;color:#999;font-size:20px;cursor:pointer}.empty-grades{text-align:center;padding:40px;color:var(--muted-text,#777)}.grade-mark-input{display:flex;align-items:center;position:relative}.grade-mark-input input{padding-right:30px;width:100%}.grade-mark-input span{position:absolute;right:12px;color:var(--muted-text,#777);pointer-events:none}@media(max-width:700px){.grade-summary{grid-template-columns:1fr}.grades-page-header{flex-direction:column}.grade-entry{grid-template-columns:1fr auto}.grade-entry button{grid-column:3;grid-row:1 / span 2}}`;
+    document.head.appendChild(s);
+  }
+  window.renderGrades=renderGrades;window.openGradeModal=openGradeModal;window.closeGradeModal=closeGradeModal;window.createGrade=createGrade;
+  function install(){ensureData();ensurePage();ensureModal();installStyles();const nav=[...document.querySelectorAll('.nav-item')].find(a=>a.textContent.includes('Grades'));if(nav){nav.dataset.page='grades';nav.href='#grades';nav.onclick=()=>{showPage('grades');return false;};}if(window.location.hash.toLowerCase()==='#grades'&&typeof showPage==='function')showPage('grades',false);}
+  install();document.addEventListener('DOMContentLoaded',install);window.addEventListener('load',install);setInterval(install,500);
+})();
