@@ -1,19 +1,8 @@
-const CACHE_NAME = 'planner-app-v4';
+const CACHE_NAME = 'planner-app-v5';
 const APP_SHELL = [
-  './',
-  './index.html',
-  './app-shell.html',
-  './manifest.webmanifest',
-  './planner-icon.svg',
-  './app-data.js',
-  './app-navigation.js',
-  './app-calendar.js',
-  './app-tasks.js',
-  './app-school.js',
-  './app-settings.js',
-  './app-mobile-ui.js?v=3',
-  './app-add.js',
-  './app-entry.js'
+  './','./index.html','./app-shell.html','./manifest.webmanifest','./planner-icon.svg',
+  './app-data.js','./app-navigation.js','./app-calendar.js','./app-tasks.js','./app-school.js',
+  './app-settings.js','./app-mobile-ui.js?v=3','./app-add.js','./app-entry.js'
 ];
 self.addEventListener('install', event => { event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))); self.clients.claim(); });
