@@ -50,9 +50,11 @@
 
     function applySize(node,size,orientation){
         const value=SIZES.includes(size)?size:'medium';
+        const orient=orientation==='vertical'?'vertical':'horizontal';
         node.dataset.widgetSize=value;
+        node.dataset.widgetOrientation=orient;
         node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-medium-vertical','dashboard-widget-large');
-        if(value==='medium'&&orientation==='vertical')node.classList.add('dashboard-widget-medium-vertical');
+        if(value==='medium'&&orient==='vertical')node.classList.add('dashboard-widget-medium-vertical');
         else node.classList.add('dashboard-widget-'+value);
     }
 
@@ -146,50 +148,87 @@
         const node=widgetElements()[id];if(node)applySize(node,item.size,item.orientation);
     }
 
+    // Resize is based on the 2x2 slot shape rather than cycling through
+    // Small -> Medium -> Large. The direction of the gesture chooses the
+    // medium orientation, so dragging DOWN actually makes a widget taller.
     function installResizeHandle(handle,node,id){
-        let startX=0,startY=0,startIndex=1,startOrientation='horizontal',resizing=false,previewIndex=1,previewOrientation='horizontal';
+        let startX=0,startY=0,startSize='medium',startOrientation='horizontal',resizing=false;
+        let previewSize='medium',previewOrientation='horizontal';
+        const threshold=55;
+
         const finish=event=>{
-            if(!resizing)return;if(event)event.stopPropagation();resizing=false;
+            if(!resizing)return;
+            if(event)event.stopPropagation();
+            resizing=false;
             node.classList.remove('dashboard-widget-resizing');
-            setWidgetSize(id,SIZES[previewIndex],previewOrientation);
-            delete node.dataset.previewSize;delete node.dataset.previewOrientation;
-            window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',finish);window.removeEventListener('pointercancel',finish);
+            setWidgetSize(id,previewSize,previewOrientation);
+            delete node.dataset.previewSize;
+            delete node.dataset.previewOrientation;
+            window.removeEventListener('pointermove',move);
+            window.removeEventListener('pointerup',finish);
+            window.removeEventListener('pointercancel',finish);
         };
+
         const move=event=>{
             if(!resizing)return;
             const dx=event.clientX-startX,dy=event.clientY-startY;
-            // Use the dominant drag axis. Horizontal movement controls width;
-            // vertical movement controls height/orientation. The invisible
-            // dashboard is treated as a 2x2 space.
-            const dominant=Math.abs(dx)>=Math.abs(dy)?dx:dy;
-            const steps=dominant>=0?Math.floor(dominant/70):-Math.floor(Math.abs(dominant)/70);
-            let nextIndex=startIndex+steps;
-            nextIndex=Math.max(0,Math.min(2,nextIndex));
-            let orientation=startOrientation;
-            // Medium has two forms. From a small widget, dragging mostly
-            // downward creates a vertical medium; dragging right creates a
-            // horizontal medium. From medium, continuing in the same axis
-            // reaches large.
-            if(nextIndex===1&&Math.abs(dy)>Math.abs(dx)+25)orientation='vertical';
-            else if(nextIndex===1&&Math.abs(dx)>Math.abs(dy)+25)orientation='horizontal';
-            else if(startIndex===1&&nextIndex===1)orientation=startOrientation;
-            if(nextIndex===2)orientation='horizontal';
-            previewIndex=nextIndex;previewOrientation=orientation;
-            const size=SIZES[previewIndex];
+            const ax=Math.abs(dx),ay=Math.abs(dy);
+            let size=startSize,orientation=startOrientation;
+
+            if(startSize==='small'){
+                if(Math.max(ax,ay)<threshold)return;
+                if(ax>ay+15){
+                    size=dx>=0?'medium':'small';
+                    orientation='horizontal';
+                }else if(ay>ax+15){
+                    size=dy>=0?'medium':'small';
+                    orientation='vertical';
+                }
+                // A second slot in the same direction makes the widget large.
+                if(size==='medium'&&((orientation==='horizontal'&&dx>=threshold*2)||(orientation==='vertical'&&dy>=threshold*2))){
+                    size='large';orientation='horizontal';
+                }
+            }else if(startSize==='medium'){
+                if(ax>ay+15){
+                    if(dx< -threshold){size='small';orientation='horizontal';}
+                    else if(dx>threshold){size='large';orientation='horizontal';}
+                }else if(ay>ax+15){
+                    if(dy< -threshold){size='small';orientation='vertical';}
+                    else if(dy>threshold){size='medium';orientation='vertical';}
+                    // Continue downward from the vertical medium to large.
+                    if(dy>threshold*2){size='large';orientation='horizontal';}
+                }
+            }else if(startSize==='large'){
+                if(ay>ax+15&&dy< -threshold){size='medium';orientation='vertical';}
+                else if(ax>ay+15&&dx< -threshold){size='medium';orientation='horizontal';}
+                else if(ay>ax+15&&dy>threshold){size='large';orientation='horizontal';}
+            }
+
+            previewSize=size;
+            previewOrientation=orientation;
             if(node.dataset.previewSize!==size||node.dataset.previewOrientation!==orientation){
-                node.dataset.previewSize=size;node.dataset.previewOrientation=orientation;applySize(node,size,orientation);
+                node.dataset.previewSize=size;
+                node.dataset.previewOrientation=orientation;
+                applySize(node,size,orientation);
             }
         };
+
         handle.addEventListener('pointerdown',event=>{
             if(!moveMode||event.button!==0)return;
             event.preventDefault();event.stopPropagation();
             const current=getConfig().find(x=>x.id===id)||{};
-            startIndex=Math.max(0,SIZES.indexOf(current.size||'medium'));
+            startSize=SIZES.includes(current.size)?current.size:'medium';
             startOrientation=current.orientation==='vertical'?'vertical':'horizontal';
-            previewIndex=startIndex;previewOrientation=startOrientation;startX=event.clientX;startY=event.clientY;resizing=true;
+            previewSize=startSize;
+            previewOrientation=startOrientation;
+            startX=event.clientX;
+            startY=event.clientY;
+            resizing=true;
             node.classList.add('dashboard-widget-resizing');
             if(handle.setPointerCapture){try{handle.setPointerCapture(event.pointerId);}catch(e){}}
-            window.addEventListener('pointermove',move);window.addEventListener('pointerup',finish);window.addEventListener('pointercancel',finish);
+            window.addEventListener('pointermove',move);
+            window.addEventListener('pointerup',finish);
+            window.addEventListener('pointercancel',finish);
         });
     }
 
