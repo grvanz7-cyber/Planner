@@ -71,21 +71,7 @@
             if(!s||!u||!l)return null;
             const existing=d.tasks.find(t=>String(t?.roadmapLessonId)===String(lessonId)&&!t.completed);
             if(existing)return existing;
-            const task={
-                id:Date.now()+Math.random(),
-                name:l.name,
-                subject:s.name,
-                type:'Task',
-                priority:'Normal',
-                dueDate:null,
-                tags:['#School'],
-                completed:false,
-                createdAt:new Date().toISOString(),
-                roadmapUnitId:u.id,
-                roadmapLessonId:l.id,
-                roadmapUnit:u.name,
-                roadmapLesson:l.name
-            };
+            const task={id:Date.now()+Math.random(),name:l.name,subject:s.name,type:'Task',priority:'Normal',dueDate:null,tags:['#School'],completed:false,createdAt:new Date().toISOString(),roadmapUnitId:u.id,roadmapLessonId:l.id,roadmapUnit:u.name,roadmapLesson:l.name};
             d.tasks.push(task);
             save();
             return task;
@@ -116,20 +102,30 @@
                 const row=document.createElement('div'); row.className='roadmap-lesson';
                 row.innerHTML=`<label><input type="checkbox" ${l.completed?'checked':''}><span>${esc(l.name)}</span></label><button class="small-button roadmap-study" type="button">Study</button>`;
                 row.querySelector('input').onchange=()=>window.SubjectRoadmap.toggleLesson(s.name,u.id,l.id);
-                row.querySelector('.roadmap-study').onclick=()=>{
-                    const task=window.SubjectRoadmap.startLesson(s.name,u.id,l.id);
-                    if(task&&typeof openEditTaskModal==='function')openEditTaskModal(task.id);
-                };
+                row.querySelector('.roadmap-study').onclick=()=>{const task=window.SubjectRoadmap.startLesson(s.name,u.id,l.id);if(task&&typeof openEditTaskModal==='function')openEditTaskModal(task.id);};
                 list.appendChild(row);
             });
             box.querySelector('.roadmap-delete').onclick=()=>{if(confirm(`Delete ${u.name||'this unit'}?`)){window.SubjectRoadmap.removeUnit(s.name,u.id);renderDetail(s.name);}};
-            const inp=box.querySelector('input[type="text"]'); box.querySelector('.roadmap-add-lesson button').onclick=()=>{if(inp.value.trim()){window.SubjectRoadmap.addLesson(s.name,u.id,inp.value);renderDetail(s.name);}};
+            const inp=box.querySelector('input[type="text"]');
+            const addLesson=()=>{const name=inp.value.trim();if(!name)return;window.SubjectRoadmap.addLesson(s.name,u.id,name);renderDetail(s.name);setTimeout(()=>{const inputs=document.querySelectorAll('#roadmapUnits .roadmap-add-lesson input');const target=Array.from(inputs).find(x=>x.dataset.unitId===String(u.id));if(target){target.focus();}},0);};
+            inp.dataset.unitId=u.id;
+            inp.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addLesson();}});
+            box.querySelector('.roadmap-add-lesson button').onclick=addLesson;
             units.appendChild(box);
         });
         if(!(s.roadmap||[]).length)units.innerHTML='<div class="roadmap-empty">No units yet. Add your first unit to start building the roadmap.</div>';
-        modal.querySelector('#roadmapAddUnit').onclick=()=>{
-            const name=prompt('Unit name:'); if(!name?.trim())return;
-            window.SubjectRoadmap.addUnit(s,{name:name.trim(),lessons:[]}); renderDetail(s.name);
+        const addUnitButton=modal.querySelector('#roadmapAddUnit');
+        addUnitButton.onclick=()=>{
+            if(modal.querySelector('.roadmap-unit-add-form'))return;
+            const form=document.createElement('div');form.className='roadmap-unit-add-form';
+            form.innerHTML='<input type="text" placeholder="Unit name..."><button class="save-button" type="button">Add Unit</button><button class="cancel-button" type="button">Cancel</button>';
+            modal.querySelector('#roadmapUnits').prepend(form);
+            const input=form.querySelector('input');input.focus();
+            const cancel=()=>form.remove();
+            const submit=()=>{const name=input.value.trim();if(!name){input.focus();return;}window.SubjectRoadmap.addUnit(s,{name,lessons:[]});renderDetail(s.name);};
+            form.querySelector('.save-button').onclick=submit;
+            form.querySelector('.cancel-button').onclick=cancel;
+            input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();submit();}if(event.key==='Escape'){event.preventDefault();cancel();}});
         };
         modal.classList.add('open');
     }
