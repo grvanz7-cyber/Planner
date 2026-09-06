@@ -3,30 +3,17 @@
 // ========================================
 
 // Repair old/corrupted local planner data before the main UI tries to use it.
-// This is intentionally conservative: valid data is left alone.
 (function repairPlannerStorage(){
-  try {
+  try{
     const raw=localStorage.getItem('plannerData');
     if(!raw)return;
     const data=JSON.parse(raw);
     let changed=false;
     if(!data||typeof data!=='object'||Array.isArray(data))return;
-    if(!data.settings||typeof data.settings!=='object'||Array.isArray(data.settings)){
-      data.settings={};
-      changed=true;
-    }
-    if(!Array.isArray(data.settings.subjects)){
-      data.settings.subjects=[];
-      changed=true;
-    }
-    if(!Array.isArray(data.settings.types)){
-      data.settings.types=[];
-      changed=true;
-    }
-    if(!Array.isArray(data.tasks)){
-      data.tasks=[];
-      changed=true;
-    }
+    if(!data.settings||typeof data.settings!=='object'||Array.isArray(data.settings)){data.settings={};changed=true;}
+    if(!Array.isArray(data.settings.subjects)){data.settings.subjects=[];changed=true;}
+    if(!Array.isArray(data.settings.types)){data.settings.types=[];changed=true;}
+    if(!Array.isArray(data.tasks)){data.tasks=[];changed=true;}
     if(changed){
       localStorage.setItem('plannerData',JSON.stringify(data));
       localStorage.setItem('plannerTasks',JSON.stringify(data.tasks));
@@ -92,9 +79,17 @@ function showPage(page,updateHistory=true){
   if(updateHistory)history.replaceState(null,'',`#${page}`);
 }
 
+function setCurrentDate(){
+  const dateElement=document.querySelector('#currentDate');
+  if(dateElement&&dateElement.textContent==='Loading date...'){
+    dateElement.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  }
+}
+
 function loadSavedPage(){
   const hash=window.location.hash.replace('#','').toLowerCase();
   showPage(VALID_PAGES.includes(hash)?hash:'dashboard',false);
+  setCurrentDate();
 }
 
 window.addEventListener('hashchange',loadSavedPage);
