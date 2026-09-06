@@ -2,7 +2,6 @@
 // PAGE NAVIGATION
 // ========================================
 
-// Repair old/corrupted local planner data before the main UI tries to use it.
 (function repairPlannerStorage(){
   try{
     const raw=localStorage.getItem('plannerData');
@@ -39,7 +38,37 @@ function setActiveNav(page){
   document.querySelectorAll('.nav-item').forEach(item=>item.classList.toggle('active',item.dataset.page===page));
 }
 
+function getSubjectHash(){
+  const raw=window.location.hash.replace(/^#/,'');
+  return raw.toLowerCase().startsWith('subject/') ? raw.slice(8) : null;
+}
+
+function restoreSubjectFromHash(){
+  const encoded=getSubjectHash();
+  if(encoded==null)return false;
+  let subjectName='';
+  try{subjectName=decodeURIComponent(encoded);}catch(e){return false;}
+  if(!subjectName)return false;
+  if(typeof window.openSubjectPage==='function'){
+    window.openSubjectPage(subjectName,false);
+    setCurrentDate();
+    return true;
+  }
+  setTimeout(()=>{
+    if(getSubjectHash()===encoded&&typeof window.openSubjectPage==='function'){
+      window.openSubjectPage(subjectName,false);
+      setCurrentDate();
+    }
+  },100);
+  return true;
+}
+
 function showPage(page,updateHistory=true){
+  // Do not let startup rendering overwrite a saved subject-detail URL.
+  if(!updateHistory&&getSubjectHash()!=null){
+    restoreSubjectFromHash();
+    return;
+  }
   if(!VALID_PAGES.includes(page))page='dashboard';
   const pages={
     dashboard:document.querySelector('#dashboardPage'),
@@ -89,16 +118,9 @@ function setCurrentDate(){
 }
 
 function loadSavedPage(){
+  if(restoreSubjectFromHash())return;
   const rawHash=window.location.hash.replace(/^#/,'');
   const lower=rawHash.toLowerCase();
-  if(lower.startsWith('subject/')){
-    const subjectName=decodeURIComponent(rawHash.slice(8));
-    if(subjectName&&typeof window.openSubjectPage==='function'){
-      window.openSubjectPage(subjectName,false);
-      setCurrentDate();
-      return;
-    }
-  }
   showPage(VALID_PAGES.includes(lower)?lower:'dashboard',false);
   setCurrentDate();
 }
