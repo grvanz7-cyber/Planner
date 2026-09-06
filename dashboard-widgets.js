@@ -33,9 +33,7 @@
         }catch(e){return DEFAULTS.map(x=>({...x}));}
     }
 
-    function saveConfig(config){
-        localStorage.setItem(STORAGE_KEY,JSON.stringify(config));
-    }
+    function saveConfig(config){localStorage.setItem(STORAGE_KEY,JSON.stringify(config));}
 
     function widgetElements(){
         const dashboard=document.querySelector('#dashboardPage');
@@ -58,8 +56,6 @@
     }
 
     function ensureWidgetControls(node,item){
-        // Each widget owns its own controls. Never use :scope so this also works
-        // in browsers with inconsistent :scope support.
         node.style.position='relative';
 
         let del=[...node.children].find(child=>child.dataset&&child.dataset.widgetDelete==='true');
@@ -126,8 +122,7 @@
     }
 
     function removeWidget(id){
-        const config=getConfig();
-        const item=config.find(x=>x.id===id);
+        const config=getConfig(),item=config.find(x=>x.id===id);
         if(!item)return;
         item.visible=false;
         saveConfig(config);
@@ -135,8 +130,7 @@
     }
 
     function addWidget(id){
-        const config=getConfig();
-        const item=config.find(x=>x.id===id);
+        const config=getConfig(),item=config.find(x=>x.id===id);
         if(!item)return;
         item.visible=true;
         saveConfig(config);
@@ -182,7 +176,6 @@
     function addButton(){
         const header=document.querySelector('#dashboardPage .header');
         if(!header||document.querySelector('#dashboardWidgetControls'))return;
-
         const controls=document.createElement('div');
         controls.id='dashboardWidgetControls';
         controls.className='dashboard-widget-controls';
@@ -210,7 +203,6 @@
             updateAddButton();
             if(!add.disabled)pop.classList.toggle('open');
         });
-
         document.addEventListener('click',event=>{
             if(!event.target.closest('.dashboard-add-widget-wrap'))pop.classList.remove('open');
         });
@@ -218,8 +210,7 @@
 
     function setWidgetSize(id,size){
         if(!SIZES.includes(size))return;
-        const config=getConfig();
-        const item=config.find(x=>x.id===id);
+        const config=getConfig(),item=config.find(x=>x.id===id);
         if(!item)return;
         if(item.size===size)return;
         item.size=size;
@@ -230,6 +221,7 @@
 
     function installResizeHandle(handle,node,id){
         let startX=0;
+        let startY=0;
         let startIndex=1;
         let resizing=false;
         let previewIndex=1;
@@ -249,11 +241,17 @@
         const move=event=>{
             if(!resizing)return;
             const dx=event.clientX-startX;
-            if(Math.abs(dx)<25)return;
-            previewIndex=dx>0?Math.min(2,startIndex+1):Math.max(0,startIndex-1);
+            const dy=event.clientY-startY;
+            // One size step per ~65px of drag. This lets a single gesture
+            // move small -> medium -> large (or back again).
+            const distance=Math.max(dx,dy);
+            const steps=distance>=0?Math.floor(distance/65):-Math.floor(Math.abs(distance)/65);
+            previewIndex=Math.max(0,Math.min(2,startIndex+steps));
             const size=SIZES[previewIndex];
-            node.dataset.previewSize=size;
-            applySize(node,size);
+            if(node.dataset.previewSize!==size){
+                node.dataset.previewSize=size;
+                applySize(node,size);
+            }
         };
 
         handle.addEventListener('pointerdown',event=>{
@@ -264,6 +262,7 @@
             startIndex=Math.max(0,SIZES.indexOf(current));
             previewIndex=startIndex;
             startX=event.clientX;
+            startY=event.clientY;
             resizing=true;
             node.classList.add('dashboard-widget-resizing');
             if(handle.setPointerCapture){
@@ -282,25 +281,17 @@
 
         grid.addEventListener('pointerdown',event=>{
             if(!moveMode||event.button!==0||dragged)return;
-
             const node=event.target.closest('[data-widget-id]');
             if(!node||!grid.contains(node))return;
             if(event.target.closest('button,input,select,textarea,a,.dashboard-widget-resize-handle'))return;
 
             const rect=node.getBoundingClientRect();
-            dragPointer={
-                startX:event.clientX,
-                startY:event.clientY,
-                offsetX:event.clientX-rect.left,
-                offsetY:event.clientY-rect.top,
-                moved:false
-            };
+            dragPointer={startX:event.clientX,startY:event.clientY,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top,moved:false};
 
             dragMoveHandler=moveEvent=>{
                 if(!dragPointer||!node)return;
                 const dx=moveEvent.clientX-dragPointer.startX;
                 const dy=moveEvent.clientY-dragPointer.startY;
-
                 if(!dragPointer.moved){
                     if(Math.hypot(dx,dy)<6)return;
                     dragPointer.moved=true;
@@ -313,7 +304,6 @@
                     node.parentNode.insertBefore(placeholder,node);
                     node.classList.add('dashboard-widget-dragging');
                 }
-
                 node.style.position='fixed';
                 node.style.width=rect.width+'px';
                 node.style.left=(moveEvent.clientX-dragPointer.offsetX)+'px';
@@ -335,38 +325,24 @@
                 window.removeEventListener('pointermove',dragMoveHandler);
                 window.removeEventListener('pointerup',dragUpHandler);
                 window.removeEventListener('pointercancel',dragUpHandler);
-
                 if(!dragPointer)return;
                 const didMove=dragPointer.moved;
-
                 if(dragged){
                     if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);
-                    dragged.style.position='';
-                    dragged.style.width='';
-                    dragged.style.left='';
-                    dragged.style.top='';
-                    dragged.style.zIndex='';
-                    dragged.style.pointerEvents='';
+                    dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';
                     dragged.classList.remove('dashboard-widget-dragging');
                 }
-
                 if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);
                 placeholder=null;
-
                 if(didMove){
                     const order=[...grid.querySelectorAll('[data-widget-id]')].map(n=>n.dataset.widgetId);
                     const config=getConfig();
                     config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
                     saveConfig(config);
                 }
-
-                dragged=null;
-                dragPointer=null;
-                dragMoveHandler=null;
-                dragUpHandler=null;
+                dragged=null;dragPointer=null;dragMoveHandler=null;dragUpHandler=null;
                 applyLayout();
             };
-
             window.addEventListener('pointermove',dragMoveHandler);
             window.addEventListener('pointerup',dragUpHandler);
             window.addEventListener('pointercancel',dragUpHandler);
@@ -377,36 +353,18 @@
         if(dragMoveHandler)window.removeEventListener('pointermove',dragMoveHandler);
         if(dragUpHandler)window.removeEventListener('pointerup',dragUpHandler);
         window.removeEventListener('pointercancel',dragUpHandler);
-
         if(dragged){
             if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);
-            dragged.style.position='';
-            dragged.style.width='';
-            dragged.style.left='';
-            dragged.style.top='';
-            dragged.style.zIndex='';
-            dragged.style.pointerEvents='';
+            dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';
             dragged.classList.remove('dashboard-widget-dragging');
         }
         if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);
-        dragged=null;
-        placeholder=null;
-        dragPointer=null;
-        dragMoveHandler=null;
-        dragUpHandler=null;
+        dragged=null;placeholder=null;dragPointer=null;dragMoveHandler=null;dragUpHandler=null;
     }
 
-    function boot(){
-        addButton();
-        applyLayout();
-        installDirectDrag();
-    }
-
+    function boot(){addButton();applyLayout();installDirectDrag();}
     document.addEventListener('DOMContentLoaded',boot,{once:true});
     window.addEventListener('load',boot,{once:true});
     document.addEventListener('planner-data-changed',applyLayout);
-    document.addEventListener('dashboard-widget-added',()=>{
-        applyLayout();
-        installDirectDrag();
-    });
+    document.addEventListener('dashboard-widget-added',()=>{applyLayout();installDirectDrag();});
 })();
