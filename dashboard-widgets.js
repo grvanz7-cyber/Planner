@@ -15,7 +15,7 @@
     let moveMode=false;
     let dragged=null;
     let placeholder=null;
-    let dragFrame=null;
+    let dragPointer=null;
 
     function getConfig(){
         try{
@@ -30,306 +30,70 @@
             });
         }catch(e){return DEFAULTS.map(x=>({...x}));}
     }
-
     function saveConfig(config){localStorage.setItem(STORAGE_KEY,JSON.stringify(config));}
-
     function widgetElements(){
-        const dashboard=document.querySelector('#dashboardPage');
-        if(!dashboard)return{};
-        return{
-            today:dashboard.querySelector('.today-tasks')?.closest('.card'),
-            upcoming:dashboard.querySelector('.upcoming-tasks')?.closest('.card'),
-            stats:dashboard.querySelector('#dashboardStatsCard'),
-            school:dashboard.querySelector('#dashboardSchoolWidget'),
-            subjects:dashboard.querySelector('#dashboardSubjectSnapshotWidget'),
-            'study-load':dashboard.querySelector('#dashboardStudyLoadWidget')
-        };
+        const dashboard=document.querySelector('#dashboardPage');if(!dashboard)return{};
+        return{today:dashboard.querySelector('.today-tasks')?.closest('.card'),upcoming:dashboard.querySelector('.upcoming-tasks')?.closest('.card'),stats:dashboard.querySelector('#dashboardStatsCard'),school:dashboard.querySelector('#dashboardSchoolWidget'),subjects:dashboard.querySelector('#dashboardSubjectSnapshotWidget'),'study-load':dashboard.querySelector('#dashboardStudyLoadWidget')};
     }
-
     function applySize(node,size){
         const value=SIZES.includes(size)?size:'medium';
         node.dataset.widgetSize=value;
         node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-large');
         node.classList.add('dashboard-widget-'+value);
     }
-
-    function applyLayout(){
-        const config=getConfig(),elements=widgetElements(),grid=document.querySelector('#dashboardPage .dashboard-grid');
-        if(!grid)return;
-        config.forEach(item=>{
-            const node=elements[item.id];
-            if(!node)return;
-            node.classList.toggle('dashboard-widget-hidden',!item.visible);
-            node.dataset.widgetId=item.id;
-            node.classList.toggle('dashboard-widget-editing',moveMode);
-            node.draggable=moveMode;
-            applySize(node,item.size);
-            ensureWidgetControls(node,item);
-        });
-        config.forEach(item=>{
-            const node=elements[item.id];
-            if(node&&!dragged)grid.appendChild(node);
-        });
-        updateMoveButton();
-        updateAddButton();
-    }
-
     function ensureWidgetControls(node,item){
-        // Controls are direct children of each widget, so every widget gets its own controls.
-        let deleteButton=node.querySelector(':scope > .dashboard-widget-delete');
-        if(!deleteButton){
-            deleteButton=document.createElement('button');
-            deleteButton.type='button';
-            deleteButton.className='dashboard-widget-delete';
-            deleteButton.textContent='×';
-            deleteButton.title='Remove widget';
-            deleteButton.setAttribute('aria-label','Remove '+item.label+' widget');
-            node.appendChild(deleteButton);
-            deleteButton.addEventListener('click',event=>{
-                event.preventDefault();
-                event.stopPropagation();
-                removeWidget(item.id);
-            });
+        let del=node.querySelector(':scope > .dashboard-widget-delete');
+        if(!del){
+            del=document.createElement('button');del.type='button';del.className='dashboard-widget-delete';del.textContent='×';del.title='Remove widget';del.setAttribute('aria-label','Remove '+item.label+' widget');
+            del.addEventListener('pointerdown',e=>e.stopPropagation());del.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();removeWidget(item.id);});node.appendChild(del);
         }
-
-        let resizeHandle=node.querySelector(':scope > .dashboard-widget-resize-handle');
-        if(!resizeHandle){
-            resizeHandle=document.createElement('div');
-            resizeHandle.className='dashboard-widget-resize-handle';
-            resizeHandle.title='Drag to resize';
-            resizeHandle.setAttribute('aria-label','Resize '+item.label+' widget');
-            node.appendChild(resizeHandle);
-            installResizeHandle(resizeHandle,node,item.id);
+        let handle=node.querySelector(':scope > .dashboard-widget-resize-handle');
+        if(!handle){
+            handle=document.createElement('div');handle.className='dashboard-widget-resize-handle';handle.title='Drag to resize';handle.setAttribute('aria-label','Resize '+item.label+' widget');node.appendChild(handle);installResizeHandle(handle,node,item.id);
         }
-        deleteButton.hidden=!moveMode;
-        resizeHandle.hidden=!moveMode;
+        del.style.display=moveMode?'flex':'none';handle.style.display=moveMode?'block':'none';
     }
-
-    function removeWidget(id){
-        const config=getConfig(),item=config.find(x=>x.id===id);
-        if(!item)return;
-        item.visible=false;
-        saveConfig(config);
-        applyLayout();
+    function applyLayout(){
+        const config=getConfig(),elements=widgetElements(),grid=document.querySelector('#dashboardPage .dashboard-grid');if(!grid)return;
+        config.forEach(item=>{const node=elements[item.id];if(!node)return;node.classList.toggle('dashboard-widget-hidden',!item.visible);node.dataset.widgetId=item.id;node.classList.toggle('dashboard-widget-editing',moveMode);applySize(node,item.size);ensureWidgetControls(node,item);});
+        if(!dragged)config.forEach(item=>{const node=elements[item.id];if(node)grid.appendChild(node);});
+        updateMoveButton();updateAddButton();
     }
-
-    function addWidget(id){
-        const config=getConfig(),item=config.find(x=>x.id===id);
-        if(!item)return;
-        item.visible=true;
-        saveConfig(config);
-        applyLayout();
-    }
-
-    function updateMoveButton(){
-        const button=document.querySelector('#dashboardMoveToggle');
-        if(!button)return;
-        button.classList.toggle('active',moveMode);
-        button.setAttribute('aria-pressed',moveMode?'true':'false');
-        const text=button.querySelector('.dashboard-toggle-text');
-        if(text)text.textContent=moveMode?'Done moving':'Move widgets';
-    }
-
+    function removeWidget(id){const config=getConfig(),item=config.find(x=>x.id===id);if(!item)return;item.visible=false;saveConfig(config);applyLayout();}
+    function addWidget(id){const config=getConfig(),item=config.find(x=>x.id===id);if(!item)return;item.visible=true;saveConfig(config);applyLayout();}
+    function updateMoveButton(){const b=document.querySelector('#dashboardMoveToggle');if(!b)return;b.classList.toggle('active',moveMode);b.setAttribute('aria-pressed',String(moveMode));const t=b.querySelector('.dashboard-toggle-text');if(t)t.textContent=moveMode?'Done moving':'Move widgets';}
     function updateAddButton(){
-        const button=document.querySelector('#dashboardAddWidgetButton');
-        const popover=document.querySelector('#dashboardAddWidgetPopover');
-        if(!button||!popover)return;
-        const hidden=getConfig().filter(x=>!x.visible);
-        button.disabled=hidden.length===0;
-        popover.innerHTML='';
-        if(!hidden.length){
-            const empty=document.createElement('div');
-            empty.className='dashboard-add-empty';
-            empty.textContent='All widgets are already on your dashboard.';
-            popover.appendChild(empty);
-            return;
-        }
-        hidden.forEach(item=>{
-            const option=document.createElement('button');
-            option.type='button';
-            option.className='dashboard-add-option';
-            option.textContent='+ '+item.label;
-            option.addEventListener('click',()=>{
-                addWidget(item.id);
-                popover.classList.remove('open');
-            });
-            popover.appendChild(option);
-        });
+        const b=document.querySelector('#dashboardAddWidgetButton'),p=document.querySelector('#dashboardAddWidgetPopover');if(!b||!p)return;const hidden=getConfig().filter(x=>!x.visible);b.disabled=!hidden.length;p.innerHTML='';
+        if(!hidden.length){const e=document.createElement('div');e.className='dashboard-add-empty';e.textContent='All widgets are already on your dashboard.';p.appendChild(e);return;}
+        hidden.forEach(item=>{const o=document.createElement('button');o.type='button';o.className='dashboard-add-option';o.textContent='+ '+item.label;o.addEventListener('click',()=>{addWidget(item.id);p.classList.remove('open');});p.appendChild(o);});
     }
-
     function addButton(){
-        const header=document.querySelector('#dashboardPage .header');
-        if(!header||document.querySelector('#dashboardWidgetControls'))return;
-        const controls=document.createElement('div');
-        controls.id='dashboardWidgetControls';
-        controls.className='dashboard-widget-controls';
-        controls.innerHTML=`
-            <div class="dashboard-add-widget-wrap">
-                <button type="button" id="dashboardAddWidgetButton" class="dashboard-widget-action">+ Add</button>
-                <div id="dashboardAddWidgetPopover" class="dashboard-add-widget-popover" role="menu"></div>
-            </div>
-            <button type="button" id="dashboardMoveToggle" class="dashboard-move-toggle" aria-pressed="false">
-                <span class="dashboard-toggle-track"><span class="dashboard-toggle-thumb"></span></span>
-                <span class="dashboard-toggle-text">Move widgets</span>
-            </button>`;
-        header.appendChild(controls);
-
-        controls.querySelector('#dashboardMoveToggle').addEventListener('click',()=>{
-            moveMode=!moveMode;
-            if(!moveMode)cancelDrag();
-            applyLayout();
-        });
-        const add=controls.querySelector('#dashboardAddWidgetButton');
-        const popover=controls.querySelector('#dashboardAddWidgetPopover');
-        add.addEventListener('click',event=>{
-            event.stopPropagation();
-            updateAddButton();
-            if(!add.disabled)popover.classList.toggle('open');
-        });
-        document.addEventListener('click',event=>{
-            if(!event.target.closest('.dashboard-add-widget-wrap'))popover.classList.remove('open');
-        });
+        const header=document.querySelector('#dashboardPage .header');if(!header||document.querySelector('#dashboardWidgetControls'))return;
+        const controls=document.createElement('div');controls.id='dashboardWidgetControls';controls.className='dashboard-widget-controls';controls.innerHTML='<div class="dashboard-add-widget-wrap"><button type="button" id="dashboardAddWidgetButton" class="dashboard-widget-action">+ Add</button><div id="dashboardAddWidgetPopover" class="dashboard-add-widget-popover" role="menu"></div></div><button type="button" id="dashboardMoveToggle" class="dashboard-move-toggle" aria-pressed="false"><span class="dashboard-toggle-track"><span class="dashboard-toggle-thumb"></span></span><span class="dashboard-toggle-text">Move widgets</span></button>';header.appendChild(controls);
+        controls.querySelector('#dashboardMoveToggle').addEventListener('click',()=>{moveMode=!moveMode;cancelDrag();applyLayout();});
+        const add=controls.querySelector('#dashboardAddWidgetButton'),pop=controls.querySelector('#dashboardAddWidgetPopover');
+        add.addEventListener('click',e=>{e.stopPropagation();updateAddButton();if(!add.disabled)pop.classList.toggle('open');});
+        document.addEventListener('click',e=>{if(!e.target.closest('.dashboard-add-widget-wrap'))pop.classList.remove('open');});
     }
-
-    function setWidgetSize(id,size){
-        if(!SIZES.includes(size))return;
-        const config=getConfig(),item=config.find(x=>x.id===id);
-        if(!item||item.size===size)return;
-        item.size=size;
-        saveConfig(config);
-        const node=widgetElements()[id];
-        if(node)applySize(node,size);
-    }
-
+    function setWidgetSize(id,size){if(!SIZES.includes(size))return;const config=getConfig(),item=config.find(x=>x.id===id);if(!item)return;item.size=size;saveConfig(config);const node=widgetElements()[id];if(node)applySize(node,size);}
     function installResizeHandle(handle,node,id){
-        let startX=0,startY=0,startSizeIndex=1;
-        let resizing=false;
-
-        const finish=()=>{
-            if(!resizing)return;
-            resizing=false;
-            node.classList.remove('dashboard-widget-resizing');
-            const size=node.dataset.previewSize||SIZES[startSizeIndex];
-            delete node.dataset.previewSize;
-            setWidgetSize(id,size);
-            window.removeEventListener('pointermove',move);
-            window.removeEventListener('pointerup',finish);
-            window.removeEventListener('pointercancel',finish);
-        };
-
-        const move=event=>{
-            if(!resizing)return;
-            const dx=event.clientX-startX;
-            const dy=event.clientY-startY;
-            // Resize is based on horizontal drag distance, with vertical movement also helping.
-            const distance=(dx+dy)/2;
-            let index=startSizeIndex;
-            if(distance>75)index=Math.min(2,startSizeIndex+1);
-            if(distance<-75)index=Math.max(0,startSizeIndex-1);
-            const size=SIZES[index];
-            node.dataset.previewSize=size;
-            applySize(node,size);
-        };
-
-        handle.addEventListener('pointerdown',event=>{
-            if(!moveMode)return;
-            event.preventDefault();
-            event.stopPropagation();
-            const current=getConfig().find(x=>x.id===id)?.size||'medium';
-            startSizeIndex=Math.max(0,SIZES.indexOf(current));
-            startX=event.clientX;
-            startY=event.clientY;
-            resizing=true;
-            node.classList.add('dashboard-widget-resizing');
-            window.addEventListener('pointermove',move);
-            window.addEventListener('pointerup',finish);
-            window.addEventListener('pointercancel',finish);
-        });
+        let startX=0,startY=0,startIndex=1,resizing=false;
+        const move=e=>{if(!resizing)return;const distance=Math.max(e.clientX-startX,e.clientY-startY);let i=startIndex;if(distance>45)i=Math.min(2,startIndex+1);else if(distance<-45)i=Math.max(0,startIndex-1);node.dataset.previewSize=SIZES[i];applySize(node,SIZES[i]);};
+        const finish=()=>{if(!resizing)return;resizing=false;node.classList.remove('dashboard-widget-resizing');setWidgetSize(id,node.dataset.previewSize||SIZES[startIndex]);delete node.dataset.previewSize;window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',finish);window.removeEventListener('pointercancel',finish);};
+        handle.addEventListener('pointerdown',e=>{if(!moveMode)return;e.preventDefault();e.stopPropagation();const current=getConfig().find(x=>x.id===id)?.size||'medium';startIndex=Math.max(0,SIZES.indexOf(current));startX=e.clientX;startY=e.clientY;resizing=true;node.classList.add('dashboard-widget-resizing');window.addEventListener('pointermove',move);window.addEventListener('pointerup',finish);window.addEventListener('pointercancel',finish);});
     }
-
     function installDirectDrag(){
-        const grid=document.querySelector('#dashboardPage .dashboard-grid');
-        if(!grid||grid.__widgetDragInstalled)return;
-        grid.__widgetDragInstalled=true;
-
-        grid.addEventListener('dragstart',event=>{
-            if(!moveMode)return;
-            const node=event.target.closest('[data-widget-id]');
-            if(!node||event.target.closest('button,input,select,a,.dashboard-widget-resize-handle'))return;
-            dragged=node;
-            node.classList.add('dashboard-widget-dragging');
-            placeholder=document.createElement('div');
-            placeholder.className='dashboard-widget-placeholder';
-            placeholder.style.height=node.getBoundingClientRect().height+'px';
-            placeholder.dataset.widgetPlaceholder='true';
-            node.parentNode.insertBefore(placeholder,node);
-            event.dataTransfer.effectAllowed='move';
-            event.dataTransfer.setData('text/plain',node.dataset.widgetId||'widget');
-            requestAnimationFrame(()=>{if(dragged)dragged.style.opacity='.45';});
+        const grid=document.querySelector('#dashboardPage .dashboard-grid');if(!grid||grid.__widgetPointerDragInstalled)return;grid.__widgetPointerDragInstalled=true;
+        grid.addEventListener('pointerdown',event=>{
+            if(!moveMode||event.button!==0)return;const node=event.target.closest('[data-widget-id]');if(!node||!grid.contains(node)||event.target.closest('button,input,select,a,.dashboard-widget-resize-handle'))return;
+            dragged=node;dragPointer={x:event.clientX,y:event.clientY,offsetX:event.clientX-node.getBoundingClientRect().left,offsetY:event.clientY-node.getBoundingClientRect().top,moved:false};
+            const rect=node.getBoundingClientRect();placeholder=document.createElement('div');placeholder.className='dashboard-widget-placeholder';placeholder.style.height=rect.height+'px';placeholder.style.gridColumn=getComputedStyle(node).gridColumn;node.parentNode.insertBefore(placeholder,node);node.classList.add('dashboard-widget-dragging');event.preventDefault();
+            const move=e=>{if(!dragged)return;const dx=e.clientX-dragPointer.x,dy=e.clientY-dragPointer.y;if(!dragPointer.moved&&Math.abs(dx)+Math.abs(dy)<6)return;dragPointer.moved=true;dragged.style.position='fixed';dragged.style.width=rect.width+'px';dragged.style.left=(e.clientX-dragPointer.offsetX)+'px';dragged.style.top=(e.clientY-dragPointer.offsetY)+'px';dragged.style.zIndex='1000';dragged.style.pointerEvents='none';const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-widget-id]');if(!target||target===dragged||target.classList.contains('dashboard-widget-hidden'))return;const r=target.getBoundingClientRect();if(e.clientY<r.top+r.height/2){if(placeholder.nextSibling!==target)grid.insertBefore(placeholder,target);}else if(target.nextSibling!==placeholder)grid.insertBefore(placeholder,target.nextSibling);};
+            const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);if(!dragged)return;if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';dragged.classList.remove('dashboard-widget-dragging');if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);placeholder=null;if(dragPointer.moved){const order=[...grid.querySelectorAll('[data-widget-id]')].map(n=>n.dataset.widgetId),config=getConfig();config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));saveConfig(config);}dragged=null;dragPointer=null;applyLayout();};
+            window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
         });
-
-        grid.addEventListener('dragover',event=>{
-            if(!moveMode||!dragged||!placeholder)return;
-            event.preventDefault();
-            if(dragFrame)return;
-            dragFrame=requestAnimationFrame(()=>{
-                dragFrame=null;
-                const target=event.target.closest('[data-widget-id]');
-                if(!target||target===dragged||target.classList.contains('dashboard-widget-hidden'))return;
-                const rect=target.getBoundingClientRect();
-                const before=event.clientY<rect.top+rect.height/2;
-                if(before)grid.insertBefore(placeholder,target);
-                else if(target.nextSibling!==placeholder)grid.insertBefore(placeholder,target.nextSibling);
-            });
-        });
-
-        grid.addEventListener('drop',event=>{
-            if(!moveMode||!dragged)return;
-            event.preventDefault();
-        });
-
-        grid.addEventListener('dragend',()=>finishDrag(grid));
     }
-
-    function finishDrag(grid){
-        if(!dragged)return;
-        if(placeholder&&placeholder.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);
-        dragged.style.opacity='';
-        dragged.classList.remove('dashboard-widget-dragging');
-        if(placeholder&&placeholder.parentNode)placeholder.parentNode.removeChild(placeholder);
-        placeholder=null;
-        const order=[...grid.querySelectorAll('[data-widget-id]')].map(node=>node.dataset.widgetId);
-        const config=getConfig();
-        config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
-        saveConfig(config);
-        dragged=null;
-        applyLayout();
-    }
-
-    function cancelDrag(){
-        if(dragged){
-            dragged.style.opacity='';
-            dragged.classList.remove('dashboard-widget-dragging');
-        }
-        if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);
-        dragged=null;
-        placeholder=null;
-    }
-
-    function makeWidgetsDraggable(){
-        const elements=widgetElements();
-        Object.values(elements).forEach(node=>{if(node)node.draggable=moveMode;});
-        installDirectDrag();
-    }
-
-    function boot(){
-        addButton();
-        applyLayout();
-        makeWidgetsDraggable();
-    }
-
-    document.addEventListener('DOMContentLoaded',boot,{once:true});
-    window.addEventListener('load',boot,{once:true});
-    document.addEventListener('planner-data-changed',applyLayout);
-    document.addEventListener('dashboard-widget-added',()=>{applyLayout();makeWidgetsDraggable();});
+    function cancelDrag(){if(dragged){if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';dragged.classList.remove('dashboard-widget-dragging');}if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);dragged=null;placeholder=null;dragPointer=null;}
+    function boot(){addButton();applyLayout();installDirectDrag();}
+    document.addEventListener('DOMContentLoaded',boot,{once:true});window.addEventListener('load',boot,{once:true});document.addEventListener('planner-data-changed',applyLayout);document.addEventListener('dashboard-widget-added',()=>{applyLayout();installDirectDrag();});
 })();
