@@ -67,9 +67,15 @@
     }
 
     function openQuickReview(parsed){
+        // Make sure the old task modal is not left visible underneath Quick Add.
+        const taskModal=document.getElementById('taskModal');
+        if(taskModal)taskModal.classList.remove('open');
+
         let modal=document.getElementById('quickAddReviewModal');
         if(!modal){
-            modal=document.createElement('div');modal.id='quickAddReviewModal';modal.className='modal-overlay';
+            modal=document.createElement('div');
+            modal.id='quickAddReviewModal';
+            modal.className='modal-overlay quick-add-review-modal';
             modal.innerHTML='<div class="modal"><div class="modal-header"><h2>Quick Add</h2><button class="close-button" type="button" id="quickAddReviewClose">×</button></div><p class="quick-add-review-hint">I understood this as:</p><div class="quick-add-preview" id="quickAddPreview"></div><div class="quick-add-review-actions"><button class="cancel-button" type="button" id="quickAddReviewEdit">Edit</button><button class="save-button" type="button" id="quickAddReviewSave">Add Task</button></div></div>';
             document.body.appendChild(modal);
             document.getElementById('quickAddReviewClose').onclick=()=>modal.classList.remove('open');
@@ -96,9 +102,6 @@
     }
 
     window.quickAdd=handleQuickAdd;
-
-    // The original dashboard button calls addTask(). Override that public
-    // entry point too, so Quick Add cannot fall back to the old task modal.
     window.addTask=handleQuickAdd;
 
     function install(){
@@ -107,7 +110,12 @@
         if(!input||!button)return;
         button.onclick=handleQuickAdd;
         if(!input.__quickAddKeyInstalled){input.__quickAddKeyInstalled=true;input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleQuickAdd();}});}
-        if(!document.getElementById('quickAddStyles')){const style=document.createElement('style');style.id='quickAddStyles';style.textContent='.quick-add-review-hint{margin:0 0 14px;color:var(--muted-text,#777);font-size:13px}.quick-add-preview{display:flex;flex-direction:column;border:1px solid var(--border-color,#ddd);border-radius:12px;overflow:hidden}.quick-add-preview-row{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-bottom:1px solid var(--border-color,#eee);font-size:13px}.quick-add-preview-row:last-child{border-bottom:0}.quick-add-preview-row span{opacity:.65}.quick-add-review-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}';document.head.appendChild(style);}
+        if(!document.getElementById('quickAddStyles')){
+            const style=document.createElement('style');
+            style.id='quickAddStyles';
+            style.textContent='.quick-add-review-modal{z-index:10000!important}.quick-add-review-hint{margin:0 0 14px;color:var(--muted-text,#777);font-size:13px}.quick-add-preview{display:flex;flex-direction:column;border:1px solid var(--border-color,#ddd);border-radius:12px;overflow:hidden}.quick-add-preview-row{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;border-bottom:1px solid var(--border-color,#eee);font-size:13px}.quick-add-preview-row:last-child{border-bottom:0}.quick-add-preview-row span{opacity:.65}.quick-add-review-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}';
+            document.head.appendChild(style);
+        }
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
