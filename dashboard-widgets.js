@@ -12,6 +12,7 @@
         {id:'study-load',label:'Study Load',visible:true,size:'medium'}
     ];
     const SIZES=['small','medium','large'];
+    let moveMode=false;
 
     function getConfig(){
         try{
@@ -53,70 +54,182 @@
             node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-large');
             node.classList.add('dashboard-widget-'+(item.size||'medium'));
             node.dataset.widgetId=item.id;
+            node.classList.toggle('dashboard-widget-editing',moveMode);
+            node.draggable=moveMode;
+            ensureWidgetControls(node,item);
         });
-        config.forEach(item=>{const node=elements[item.id];if(node)grid.appendChild(node);});
+        config.forEach(item=>{
+            const node=elements[item.id];
+            if(node)grid.appendChild(node);
+        });
+        updateMoveButton();
+        updateAddButton();
     }
 
-    function openCustomizer(){
-        let modal=document.querySelector('#dashboardWidgetModal');
-        if(!modal){
-            modal=document.createElement('div');
-            modal.className='modal-overlay';
-            modal.id='dashboardWidgetModal';
-            modal.innerHTML='<div class="modal dashboard-widget-modal"><div class="modal-header"><h2>Customize Dashboard</h2><button type="button" class="close-button" id="closeDashboardWidgetModal">×</button></div><p class="widget-modal-help">Choose what appears, pick a widget size, and drag widgets to change their order.</p><div id="dashboardWidgetOptions" class="dashboard-widget-options"></div><div class="modal-actions"><button type="button" class="cancel-button" id="resetDashboardWidgets">Reset</button><button type="button" class="save-button" id="saveDashboardWidgets">Done</button></div></div>';
-            document.body.appendChild(modal);
-            modal.querySelector('#closeDashboardWidgetModal').onclick=()=>modal.classList.remove('open');
-            modal.querySelector('#saveDashboardWidgets').onclick=()=>{saveConfig(readOptions());applyLayout();modal.classList.remove('open');};
-            modal.querySelector('#resetDashboardWidgets').onclick=()=>{saveConfig(DEFAULTS.map(x=>({...x})));buildOptions();applyLayout();};
-            modal.addEventListener('click',event=>{if(event.target===modal)modal.classList.remove('open');});
-        }
-        buildOptions();
-        modal.classList.add('open');
-    }
-
-    function buildOptions(){
-        const container=document.querySelector('#dashboardWidgetOptions');
-        if(!container)return;
-        container.innerHTML='';
-        getConfig().forEach(item=>{
-            const row=document.createElement('div');
-            row.className='dashboard-widget-option';
-            row.draggable=true;
-            row.dataset.widgetId=item.id;
-            row.innerHTML=`<span class="widget-drag-handle" aria-hidden="true">☷</span><label><input type="checkbox" data-widget-visible="${item.id}" ${item.visible?'checked':''}><span>${item.label}</span></label><select class="widget-size-select" data-widget-size="${item.id}" aria-label="${item.label} size"><option value="small" ${item.size==='small'?'selected':''}>Small</option><option value="medium" ${item.size==='medium'?'selected':''}>Medium</option><option value="large" ${item.size==='large'?'selected':''}>Large</option></select>`;
-            container.appendChild(row);
-        });
-        let dragged=null;
-        container.querySelectorAll('.dashboard-widget-option').forEach(row=>{
-            row.addEventListener('dragstart',()=>{dragged=row;row.classList.add('dragging');});
-            row.addEventListener('dragend',()=>{row.classList.remove('dragging');dragged=null;});
-            row.addEventListener('dragover',event=>{
+    function ensureWidgetControls(node,item){
+        let deleteButton=node.querySelector('.dashboard-widget-delete');
+        let resizeHandle=node.querySelector('.dashboard-widget-resize-handle');
+        if(!deleteButton){
+            deleteButton=document.createElement('button');
+            deleteButton.type='button';
+            deleteButton.className='dashboard-widget-delete';
+            deleteButton.textContent='×';
+            deleteButton.title='Remove widget';
+            deleteButton.setAttribute('aria-label','Remove '+item.label+' widget');
+            deleteButton.addEventListener('click',event=>{
                 event.preventDefault();
-                if(!dragged||dragged===row)return;
-                const rect=row.getBoundingClientRect();
-                container.insertBefore(dragged,event.clientY>rect.top+rect.height/2?row.nextSibling:row);
+                event.stopPropagation();
+                removeWidget(item.id);
             });
-        });
+            node.appendChild(deleteButton);
+        }
+        if(!resizeHandle){
+            resizeHandle=document.createElement('div');
+            resizeHandle.className='dashboard-widget-resize-handle';
+            resizeHandle.title='Drag to change size';
+            resizeHandle.setAttribute('aria-label','Resize '+item.label+' widget');
+            node.appendChild(resizeHandle);
+            installResizeHandle(resizeHandle,node,item.id);
+        }
+        deleteButton.hidden=!moveMode;
+        resizeHandle.hidden=!moveMode;
     }
 
-    function readOptions(){
-        return[...document.querySelectorAll('#dashboardWidgetOptions .dashboard-widget-option')].map(row=>{
-            const id=row.dataset.widgetId,original=DEFAULTS.find(x=>x.id===id);
-            return{id,label:original?original.label:id,visible:row.querySelector('input')?.checked!==false,size:SIZES.includes(row.querySelector('.widget-size-select')?.value)?row.querySelector('.widget-size-select').value:(original?.size||'medium')};
+    function removeWidget(id){
+        const config=getConfig();
+        const item=config.find(x=>x.id===id);
+        if(!item)return;
+        item.visible=false;
+        saveConfig(config);
+        applyLayout();
+    }
+
+    function addWidget(id){
+        const config=getConfig();
+        const item=config.find(x=>x.id===id);
+        if(!item)return;
+        item.visible=true;
+        saveConfig(config);
+        applyLayout();
+    }
+
+    function updateMoveButton(){
+        const button=document.querySelector('#dashboardMoveToggle');
+        if(!button)return;
+        button.classList.toggle('active',moveMode);
+        button.setAttribute('aria-pressed',moveMode?'true':'false');
+        const text=button.querySelector('.dashboard-toggle-text');
+        if(text)text.textContent=moveMode?'Moving enabled':'Move widgets';
+    }
+
+    function updateAddButton(){
+        const button=document.querySelector('#dashboardAddWidgetButton');
+        const popover=document.querySelector('#dashboardAddWidgetPopover');
+        if(!button||!popover)return;
+        const hidden=getConfig().filter(x=>!x.visible);
+        button.disabled=hidden.length===0;
+        popover.innerHTML='';
+        if(!hidden.length){
+            const empty=document.createElement('div');
+            empty.className='dashboard-add-empty';
+            empty.textContent='All widgets are already on your dashboard.';
+            popover.appendChild(empty);
+            return;
+        }
+        hidden.forEach(item=>{
+            const option=document.createElement('button');
+            option.type='button';
+            option.className='dashboard-add-option';
+            option.textContent='+ '+item.label;
+            option.addEventListener('click',()=>{
+                addWidget(item.id);
+                popover.classList.remove('open');
+            });
+            popover.appendChild(option);
         });
     }
 
     function addButton(){
         const header=document.querySelector('#dashboardPage .header');
-        if(!header||document.querySelector('#customizeDashboardButton'))return;
-        const button=document.createElement('button');
-        button.type='button';
-        button.className='dashboard-customize-button';
-        button.id='customizeDashboardButton';
-        button.textContent='⚙ Customize';
-        button.title='Customize dashboard widgets';
-        button.onclick=openCustomizer;
-        header.appendChild(button);
+        if(!header)return;
+        if(document.querySelector('#dashboardWidgetControls'))return;
+
+        const controls=document.createElement('div');
+        controls.id='dashboardWidgetControls';
+        controls.className='dashboard-widget-controls';
+        controls.innerHTML=`
+            <div class="dashboard-add-widget-wrap">
+                <button type="button" id="dashboardAddWidgetButton" class="dashboard-widget-action">+ Add</button>
+                <div id="dashboardAddWidgetPopover" class="dashboard-add-widget-popover" role="menu"></div>
+            </div>
+            <button type="button" id="dashboardMoveToggle" class="dashboard-move-toggle" aria-pressed="false">
+                <span class="dashboard-toggle-track"><span class="dashboard-toggle-thumb"></span></span>
+                <span class="dashboard-toggle-text">Move widgets</span>
+            </button>`;
+        header.appendChild(controls);
+
+        controls.querySelector('#dashboardMoveToggle').addEventListener('click',()=>{
+            moveMode=!moveMode;
+            applyLayout();
+        });
+        const add=controls.querySelector('#dashboardAddWidgetButton');
+        const popover=controls.querySelector('#dashboardAddWidgetPopover');
+        add.addEventListener('click',event=>{
+            event.stopPropagation();
+            updateAddButton();
+            if(!add.disabled)popover.classList.toggle('open');
+        });
+        document.addEventListener('click',event=>{
+            if(!event.target.closest('.dashboard-add-widget-wrap'))popover.classList.remove('open');
+        });
+    }
+
+    function setWidgetSize(id,size){
+        if(!SIZES.includes(size))return;
+        const config=getConfig();
+        const item=config.find(x=>x.id===id);
+        if(!item)return;
+        if(item.size===size)return;
+        item.size=size;
+        saveConfig(config);
+        applyLayout();
+    }
+
+    function installResizeHandle(handle,node,id){
+        let startX=0,startY=0,startSize='medium';
+        const onMove=event=>{
+            if(!node.classList.contains('dashboard-widget-resizing'))return;
+            const dx=event.clientX-startX;
+            const dy=event.clientY-startY;
+            const distance=Math.max(dx,dy);
+            let size=startSize;
+            if(distance>=150)size='large';
+            else if(distance<=-60)size='small';
+            else size='medium';
+            node.dataset.previewSize=size;
+            node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-large');
+            node.classList.add('dashboard-widget-'+size);
+        };
+        const onUp=()=>{
+            if(!node.classList.contains('dashboard-widget-resizing'))return;
+            node.classList.remove('dashboard-widget-resizing');
+            const size=node.dataset.previewSize||startSize;
+            delete node.dataset.previewSize;
+            setWidgetSize(id,size);
+            window.removeEventListener('pointermove',onMove);
+            window.removeEventListener('pointerup',onUp);
+        };
+        handle.addEventListener('pointerdown',event=>{
+            if(!moveMode)return;
+            event.preventDefault();
+            event.stopPropagation();
+            startX=event.clientX;
+            startY=event.clientY;
+            startSize=getConfig().find(x=>x.id===id)?.size||'medium';
+            node.classList.add('dashboard-widget-resizing');
+            window.addEventListener('pointermove',onMove);
+            window.addEventListener('pointerup',onUp,{once:true});
+        });
     }
 
     function installDirectDrag(){
@@ -125,17 +238,18 @@
         grid.__widgetDragInstalled=true;
         let dragged=null;
         grid.addEventListener('dragstart',event=>{
+            if(!moveMode)return;
             const node=event.target.closest('[data-widget-id]');
-            if(!node||event.target.closest('button,input,select,a'))return;
+            if(!node||event.target.closest('button,input,select,a,.dashboard-widget-resize-handle'))return;
             dragged=node;
             node.classList.add('dashboard-widget-dragging');
             event.dataTransfer.effectAllowed='move';
         });
         grid.addEventListener('dragover',event=>{
-            if(!dragged)return;
+            if(!moveMode||!dragged)return;
             event.preventDefault();
             const target=event.target.closest('[data-widget-id]');
-            if(!target||target===dragged)return;
+            if(!target||target===dragged||target.classList.contains('dashboard-widget-hidden'))return;
             const rect=target.getBoundingClientRect();
             grid.insertBefore(dragged,event.clientY>rect.top+rect.height/2?target.nextSibling:target);
         });
@@ -148,16 +262,22 @@
             config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
             saveConfig(config);
             dragged=null;
+            applyLayout();
         });
     }
 
     function makeWidgetsDraggable(){
         const elements=widgetElements();
-        Object.values(elements).forEach(node=>{if(node){node.draggable=true;}});
+        Object.values(elements).forEach(node=>{if(node)node.draggable=moveMode;});
         installDirectDrag();
     }
 
-    function boot(){addButton();applyLayout();makeWidgetsDraggable();}
+    function boot(){
+        addButton();
+        applyLayout();
+        makeWidgetsDraggable();
+    }
+
     document.addEventListener('DOMContentLoaded',boot,{once:true});
     window.addEventListener('load',boot,{once:true});
     document.addEventListener('planner-data-changed',applyLayout);
