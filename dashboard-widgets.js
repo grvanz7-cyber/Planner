@@ -13,6 +13,9 @@
     ];
     const SIZES=['small','medium','large'];
     let moveMode=false;
+    let dragged=null;
+    let placeholder=null;
+    let dragFrame=null;
 
     function getConfig(){
         try{
@@ -43,6 +46,13 @@
         };
     }
 
+    function applySize(node,size){
+        const value=SIZES.includes(size)?size:'medium';
+        node.dataset.widgetSize=value;
+        node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-large');
+        node.classList.add('dashboard-widget-'+value);
+    }
+
     function applyLayout(){
         const config=getConfig(),elements=widgetElements(),grid=document.querySelector('#dashboardPage .dashboard-grid');
         if(!grid)return;
@@ -50,25 +60,23 @@
             const node=elements[item.id];
             if(!node)return;
             node.classList.toggle('dashboard-widget-hidden',!item.visible);
-            node.dataset.widgetSize=item.size||'medium';
-            node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-large');
-            node.classList.add('dashboard-widget-'+(item.size||'medium'));
             node.dataset.widgetId=item.id;
             node.classList.toggle('dashboard-widget-editing',moveMode);
             node.draggable=moveMode;
+            applySize(node,item.size);
             ensureWidgetControls(node,item);
         });
         config.forEach(item=>{
             const node=elements[item.id];
-            if(node)grid.appendChild(node);
+            if(node&&!dragged)grid.appendChild(node);
         });
         updateMoveButton();
         updateAddButton();
     }
 
     function ensureWidgetControls(node,item){
-        let deleteButton=node.querySelector('.dashboard-widget-delete');
-        let resizeHandle=node.querySelector('.dashboard-widget-resize-handle');
+        // Controls are direct children of each widget, so every widget gets its own controls.
+        let deleteButton=node.querySelector(':scope > .dashboard-widget-delete');
         if(!deleteButton){
             deleteButton=document.createElement('button');
             deleteButton.type='button';
@@ -76,17 +84,19 @@
             deleteButton.textContent='×';
             deleteButton.title='Remove widget';
             deleteButton.setAttribute('aria-label','Remove '+item.label+' widget');
+            node.appendChild(deleteButton);
             deleteButton.addEventListener('click',event=>{
                 event.preventDefault();
                 event.stopPropagation();
                 removeWidget(item.id);
             });
-            node.appendChild(deleteButton);
         }
+
+        let resizeHandle=node.querySelector(':scope > .dashboard-widget-resize-handle');
         if(!resizeHandle){
             resizeHandle=document.createElement('div');
             resizeHandle.className='dashboard-widget-resize-handle';
-            resizeHandle.title='Drag to change size';
+            resizeHandle.title='Drag to resize';
             resizeHandle.setAttribute('aria-label','Resize '+item.label+' widget');
             node.appendChild(resizeHandle);
             installResizeHandle(resizeHandle,node,item.id);
@@ -96,8 +106,7 @@
     }
 
     function removeWidget(id){
-        const config=getConfig();
-        const item=config.find(x=>x.id===id);
+        const config=getConfig(),item=config.find(x=>x.id===id);
         if(!item)return;
         item.visible=false;
         saveConfig(config);
@@ -105,8 +114,7 @@
     }
 
     function addWidget(id){
-        const config=getConfig();
-        const item=config.find(x=>x.id===id);
+        const config=getConfig(),item=config.find(x=>x.id===id);
         if(!item)return;
         item.visible=true;
         saveConfig(config);
@@ -119,7 +127,7 @@
         button.classList.toggle('active',moveMode);
         button.setAttribute('aria-pressed',moveMode?'true':'false');
         const text=button.querySelector('.dashboard-toggle-text');
-        if(text)text.textContent=moveMode?'Moving enabled':'Move widgets';
+        if(text)text.textContent=moveMode?'Done moving':'Move widgets';
     }
 
     function updateAddButton(){
@@ -151,9 +159,7 @@
 
     function addButton(){
         const header=document.querySelector('#dashboardPage .header');
-        if(!header)return;
-        if(document.querySelector('#dashboardWidgetControls'))return;
-
+        if(!header||document.querySelector('#dashboardWidgetControls'))return;
         const controls=document.createElement('div');
         controls.id='dashboardWidgetControls';
         controls.className='dashboard-widget-controls';
@@ -170,6 +176,7 @@
 
         controls.querySelector('#dashboardMoveToggle').addEventListener('click',()=>{
             moveMode=!moveMode;
+            if(!moveMode)cancelDrag();
             applyLayout();
         });
         const add=controls.querySelector('#dashboardAddWidgetButton');
@@ -186,49 +193,57 @@
 
     function setWidgetSize(id,size){
         if(!SIZES.includes(size))return;
-        const config=getConfig();
-        const item=config.find(x=>x.id===id);
-        if(!item)return;
-        if(item.size===size)return;
+        const config=getConfig(),item=config.find(x=>x.id===id);
+        if(!item||item.size===size)return;
         item.size=size;
         saveConfig(config);
-        applyLayout();
+        const node=widgetElements()[id];
+        if(node)applySize(node,size);
     }
 
     function installResizeHandle(handle,node,id){
-        let startX=0,startY=0,startSize='medium';
-        const onMove=event=>{
-            if(!node.classList.contains('dashboard-widget-resizing'))return;
-            const dx=event.clientX-startX;
-            const dy=event.clientY-startY;
-            const distance=Math.max(dx,dy);
-            let size=startSize;
-            if(distance>=150)size='large';
-            else if(distance<=-60)size='small';
-            else size='medium';
-            node.dataset.previewSize=size;
-            node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-large');
-            node.classList.add('dashboard-widget-'+size);
-        };
-        const onUp=()=>{
-            if(!node.classList.contains('dashboard-widget-resizing'))return;
+        let startX=0,startY=0,startSizeIndex=1;
+        let resizing=false;
+
+        const finish=()=>{
+            if(!resizing)return;
+            resizing=false;
             node.classList.remove('dashboard-widget-resizing');
-            const size=node.dataset.previewSize||startSize;
+            const size=node.dataset.previewSize||SIZES[startSizeIndex];
             delete node.dataset.previewSize;
             setWidgetSize(id,size);
-            window.removeEventListener('pointermove',onMove);
-            window.removeEventListener('pointerup',onUp);
+            window.removeEventListener('pointermove',move);
+            window.removeEventListener('pointerup',finish);
+            window.removeEventListener('pointercancel',finish);
         };
+
+        const move=event=>{
+            if(!resizing)return;
+            const dx=event.clientX-startX;
+            const dy=event.clientY-startY;
+            // Resize is based on horizontal drag distance, with vertical movement also helping.
+            const distance=(dx+dy)/2;
+            let index=startSizeIndex;
+            if(distance>75)index=Math.min(2,startSizeIndex+1);
+            if(distance<-75)index=Math.max(0,startSizeIndex-1);
+            const size=SIZES[index];
+            node.dataset.previewSize=size;
+            applySize(node,size);
+        };
+
         handle.addEventListener('pointerdown',event=>{
             if(!moveMode)return;
             event.preventDefault();
             event.stopPropagation();
+            const current=getConfig().find(x=>x.id===id)?.size||'medium';
+            startSizeIndex=Math.max(0,SIZES.indexOf(current));
             startX=event.clientX;
             startY=event.clientY;
-            startSize=getConfig().find(x=>x.id===id)?.size||'medium';
+            resizing=true;
             node.classList.add('dashboard-widget-resizing');
-            window.addEventListener('pointermove',onMove);
-            window.addEventListener('pointerup',onUp,{once:true});
+            window.addEventListener('pointermove',move);
+            window.addEventListener('pointerup',finish);
+            window.addEventListener('pointercancel',finish);
         });
     }
 
@@ -236,34 +251,69 @@
         const grid=document.querySelector('#dashboardPage .dashboard-grid');
         if(!grid||grid.__widgetDragInstalled)return;
         grid.__widgetDragInstalled=true;
-        let dragged=null;
+
         grid.addEventListener('dragstart',event=>{
             if(!moveMode)return;
             const node=event.target.closest('[data-widget-id]');
             if(!node||event.target.closest('button,input,select,a,.dashboard-widget-resize-handle'))return;
             dragged=node;
             node.classList.add('dashboard-widget-dragging');
+            placeholder=document.createElement('div');
+            placeholder.className='dashboard-widget-placeholder';
+            placeholder.style.height=node.getBoundingClientRect().height+'px';
+            placeholder.dataset.widgetPlaceholder='true';
+            node.parentNode.insertBefore(placeholder,node);
             event.dataTransfer.effectAllowed='move';
+            event.dataTransfer.setData('text/plain',node.dataset.widgetId||'widget');
+            requestAnimationFrame(()=>{if(dragged)dragged.style.opacity='.45';});
         });
+
         grid.addEventListener('dragover',event=>{
+            if(!moveMode||!dragged||!placeholder)return;
+            event.preventDefault();
+            if(dragFrame)return;
+            dragFrame=requestAnimationFrame(()=>{
+                dragFrame=null;
+                const target=event.target.closest('[data-widget-id]');
+                if(!target||target===dragged||target.classList.contains('dashboard-widget-hidden'))return;
+                const rect=target.getBoundingClientRect();
+                const before=event.clientY<rect.top+rect.height/2;
+                if(before)grid.insertBefore(placeholder,target);
+                else if(target.nextSibling!==placeholder)grid.insertBefore(placeholder,target.nextSibling);
+            });
+        });
+
+        grid.addEventListener('drop',event=>{
             if(!moveMode||!dragged)return;
             event.preventDefault();
-            const target=event.target.closest('[data-widget-id]');
-            if(!target||target===dragged||target.classList.contains('dashboard-widget-hidden'))return;
-            const rect=target.getBoundingClientRect();
-            grid.insertBefore(dragged,event.clientY>rect.top+rect.height/2?target.nextSibling:target);
         });
-        grid.addEventListener('dragend',()=>{
-            if(!dragged)return;
+
+        grid.addEventListener('dragend',()=>finishDrag(grid));
+    }
+
+    function finishDrag(grid){
+        if(!dragged)return;
+        if(placeholder&&placeholder.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);
+        dragged.style.opacity='';
+        dragged.classList.remove('dashboard-widget-dragging');
+        if(placeholder&&placeholder.parentNode)placeholder.parentNode.removeChild(placeholder);
+        placeholder=null;
+        const order=[...grid.querySelectorAll('[data-widget-id]')].map(node=>node.dataset.widgetId);
+        const config=getConfig();
+        config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+        saveConfig(config);
+        dragged=null;
+        applyLayout();
+    }
+
+    function cancelDrag(){
+        if(dragged){
+            dragged.style.opacity='';
             dragged.classList.remove('dashboard-widget-dragging');
-            const elements=widgetElements();
-            const config=getConfig();
-            const order=[...grid.querySelectorAll('[data-widget-id]')].map(node=>node.dataset.widgetId);
-            config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
-            saveConfig(config);
-            dragged=null;
-            applyLayout();
-        });
+        }
+        if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);
+        dragged=null;
+        placeholder=null;
     }
 
     function makeWidgetsDraggable(){
