@@ -12,12 +12,7 @@
         {id:'study-load',label:'Study Load',visible:true,size:'medium'}
     ];
     const SIZES=['small','medium','large'];
-    let moveMode=false;
-    let dragged=null;
-    let placeholder=null;
-    let dragPointer=null;
-    let dragMoveHandler=null;
-    let dragUpHandler=null;
+    let moveMode=false,dragged=null,placeholder=null,dragPointer=null,dragMoveHandler=null,dragUpHandler=null;
 
     function getConfig(){
         try{
@@ -32,12 +27,9 @@
             });
         }catch(e){return DEFAULTS.map(x=>({...x}));}
     }
-
     function saveConfig(config){localStorage.setItem(STORAGE_KEY,JSON.stringify(config));}
-
     function widgetElements(){
-        const dashboard=document.querySelector('#dashboardPage');
-        if(!dashboard)return{};
+        const dashboard=document.querySelector('#dashboardPage');if(!dashboard)return{};
         return{
             today:dashboard.querySelector('.today-tasks')?.closest('.card'),
             upcoming:dashboard.querySelector('.upcoming-tasks')?.closest('.card'),
@@ -47,225 +39,92 @@
             'study-load':dashboard.querySelector('#dashboardStudyLoadWidget')
         };
     }
-
     function applySize(node,size,orientation){
-        const value=SIZES.includes(size)?size:'medium';
-        const orient=orientation==='vertical'?'vertical':'horizontal';
-        node.dataset.widgetSize=value;
-        node.dataset.widgetOrientation=orient;
+        const value=SIZES.includes(size)?size:'medium',orient=orientation==='vertical'?'vertical':'horizontal';
+        node.dataset.widgetSize=value;node.dataset.widgetOrientation=orient;
         node.classList.remove('dashboard-widget-small','dashboard-widget-medium','dashboard-widget-medium-vertical','dashboard-widget-large');
-        if(value==='medium'&&orient==='vertical')node.classList.add('dashboard-widget-medium-vertical');
-        else node.classList.add('dashboard-widget-'+value);
+        node.classList.add(value==='medium'&&orient==='vertical'?'dashboard-widget-medium-vertical':'dashboard-widget-'+value);
     }
-
     function ensureWidgetControls(node,item){
         node.style.position='relative';
-
         let del=[...node.children].find(child=>child.dataset&&child.dataset.widgetDelete==='true');
-        if(!del){
-            del=document.createElement('button');
-            del.type='button';
-            del.className='dashboard-widget-delete';
-            del.dataset.widgetDelete='true';
-            del.textContent='×';
-            del.title='Remove widget';
-            del.setAttribute('aria-label','Remove '+item.label+' widget');
-            del.addEventListener('pointerdown',event=>{event.preventDefault();event.stopPropagation();});
-            del.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();removeWidget(item.id);});
-            node.appendChild(del);
-        }
-
+        if(!del){del=document.createElement('button');del.type='button';del.className='dashboard-widget-delete';del.dataset.widgetDelete='true';del.textContent='×';del.title='Remove widget';del.setAttribute('aria-label','Remove '+item.label+' widget');del.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();});del.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();removeWidget(item.id);});node.appendChild(del);}
         let handle=[...node.children].find(child=>child.dataset&&child.dataset.widgetResize==='true');
-        if(!handle){
-            handle=document.createElement('div');
-            handle.className='dashboard-widget-resize-handle';
-            handle.dataset.widgetResize='true';
-            handle.title='Drag to resize';
-            handle.setAttribute('aria-label','Resize '+item.label+' widget');
-            node.appendChild(handle);
-            installResizeHandle(handle,node,item.id);
-        }
-        del.hidden=!moveMode;
-        handle.hidden=!moveMode;
+        if(!handle){handle=document.createElement('div');handle.className='dashboard-widget-resize-handle';handle.dataset.widgetResize='true';handle.title='Drag to resize';handle.setAttribute('aria-label','Resize '+item.label+' widget');node.appendChild(handle);installResizeHandle(handle,node,item.id);}
+        del.hidden=!moveMode;handle.hidden=!moveMode;
     }
-
     function applyLayout(){
-        const config=getConfig();
-        const elements=widgetElements();
-        const grid=document.querySelector('#dashboardPage .dashboard-grid');
-        if(!grid)return;
-        config.forEach(item=>{
-            const node=elements[item.id];
-            if(!node)return;
-            node.dataset.widgetId=item.id;
-            node.classList.toggle('dashboard-widget-hidden',!item.visible);
-            node.classList.toggle('dashboard-widget-editing',moveMode);
-            applySize(node,item.size,item.orientation);
-            ensureWidgetControls(node,item);
-        });
-        if(!dragged){
-            config.forEach(item=>{const node=elements[item.id];if(node)grid.appendChild(node);});
-        }
-        updateMoveButton();
-        updateAddButton();
+        const config=getConfig(),elements=widgetElements(),grid=document.querySelector('#dashboardPage .dashboard-grid');if(!grid)return;
+        config.forEach(item=>{const node=elements[item.id];if(!node)return;node.dataset.widgetId=item.id;node.classList.toggle('dashboard-widget-hidden',!item.visible);node.classList.toggle('dashboard-widget-editing',moveMode);applySize(node,item.size,item.orientation);ensureWidgetControls(node,item);});
+        if(!dragged)config.forEach(item=>{const node=elements[item.id];if(node)grid.appendChild(node);});
+        updateMoveButton();updateAddButton();
     }
-
     function removeWidget(id){const config=getConfig(),item=config.find(x=>x.id===id);if(!item)return;item.visible=false;saveConfig(config);applyLayout();}
     function addWidget(id){const config=getConfig(),item=config.find(x=>x.id===id);if(!item)return;item.visible=true;saveConfig(config);applyLayout();}
-
-    function updateMoveButton(){
-        const button=document.querySelector('#dashboardMoveToggle');if(!button)return;
-        button.classList.toggle('active',moveMode);button.setAttribute('aria-pressed',String(moveMode));
-        const text=button.querySelector('.dashboard-toggle-text');if(text)text.textContent=moveMode?'Done moving':'Move widgets';
-    }
-
+    function updateMoveButton(){const b=document.querySelector('#dashboardMoveToggle');if(!b)return;b.classList.toggle('active',moveMode);b.setAttribute('aria-pressed',String(moveMode));const t=b.querySelector('.dashboard-toggle-text');if(t)t.textContent=moveMode?'Done moving':'Move widgets';}
     function updateAddButton(){
-        const button=document.querySelector('#dashboardAddWidgetButton'),popover=document.querySelector('#dashboardAddWidgetPopover');
-        if(!button||!popover)return;
-        const hidden=getConfig().filter(x=>!x.visible);button.disabled=!hidden.length;popover.innerHTML='';
-        if(!hidden.length){const empty=document.createElement('div');empty.className='dashboard-add-empty';empty.textContent='All widgets are already on your dashboard.';popover.appendChild(empty);return;}
-        hidden.forEach(item=>{const option=document.createElement('button');option.type='button';option.className='dashboard-add-option';option.textContent='+ '+item.label;option.addEventListener('click',()=>{addWidget(item.id);popover.classList.remove('open');});popover.appendChild(option);});
+        const b=document.querySelector('#dashboardAddWidgetButton'),p=document.querySelector('#dashboardAddWidgetPopover');if(!b||!p)return;const hidden=getConfig().filter(x=>!x.visible);b.disabled=!hidden.length;p.innerHTML='';
+        if(!hidden.length){const e=document.createElement('div');e.className='dashboard-add-empty';e.textContent='All widgets are already on your dashboard.';p.appendChild(e);return;}
+        hidden.forEach(item=>{const o=document.createElement('button');o.type='button';o.className='dashboard-add-option';o.textContent='+ '+item.label;o.addEventListener('click',()=>{addWidget(item.id);p.classList.remove('open');});p.appendChild(o);});
     }
-
     function addButton(){
         const header=document.querySelector('#dashboardPage .header');if(!header||document.querySelector('#dashboardWidgetControls'))return;
         const controls=document.createElement('div');controls.id='dashboardWidgetControls';controls.className='dashboard-widget-controls';
-        controls.innerHTML=`<div class="dashboard-add-widget-wrap"><button type="button" id="dashboardAddWidgetButton" class="dashboard-widget-action">+ Add</button><div id="dashboardAddWidgetPopover" class="dashboard-add-widget-popover" role="menu"></div></div><button type="button" id="dashboardMoveToggle" class="dashboard-move-toggle" aria-pressed="false"><span class="dashboard-toggle-track"><span class="dashboard-toggle-thumb"></span></span><span class="dashboard-toggle-text">Move widgets</span></button>`;
-        header.appendChild(controls);
-        controls.querySelector('#dashboardMoveToggle').addEventListener('click',()=>{moveMode=!moveMode;cancelDrag();applyLayout();});
-        const add=controls.querySelector('#dashboardAddWidgetButton'),pop=controls.querySelector('#dashboardAddWidgetPopover');
-        add.addEventListener('click',event=>{event.stopPropagation();updateAddButton();if(!add.disabled)pop.classList.toggle('open');});
-        document.addEventListener('click',event=>{if(!event.target.closest('.dashboard-add-widget-wrap'))pop.classList.remove('open');});
+        controls.innerHTML='<div class="dashboard-add-widget-wrap"><button type="button" id="dashboardAddWidgetButton" class="dashboard-widget-action">+ Add</button><div id="dashboardAddWidgetPopover" class="dashboard-add-widget-popover" role="menu"></div></div><button type="button" id="dashboardMoveToggle" class="dashboard-move-toggle" aria-pressed="false"><span class="dashboard-toggle-track"><span class="dashboard-toggle-thumb"></span></span><span class="dashboard-toggle-text">Move widgets</span></button>';
+        header.appendChild(controls);controls.querySelector('#dashboardMoveToggle').addEventListener('click',()=>{moveMode=!moveMode;cancelDrag();applyLayout();});
+        const add=controls.querySelector('#dashboardAddWidgetButton'),pop=controls.querySelector('#dashboardAddWidgetPopover');add.addEventListener('click',e=>{e.stopPropagation();updateAddButton();if(!add.disabled)pop.classList.toggle('open');});document.addEventListener('click',e=>{if(!e.target.closest('.dashboard-add-widget-wrap'))pop.classList.remove('open');});
     }
-
     function setWidgetSize(id,size,orientation){
-        if(!SIZES.includes(size))return;
-        const config=getConfig(),item=config.find(x=>x.id===id);if(!item)return;
-        item.size=size;
-        if(size==='medium')item.orientation=orientation==='vertical'?'vertical':'horizontal';
-        else item.orientation='horizontal';
-        saveConfig(config);
-        const node=widgetElements()[id];if(node)applySize(node,item.size,item.orientation);
+        if(!SIZES.includes(size))return;const config=getConfig(),item=config.find(x=>x.id===id);if(!item)return;item.size=size;item.orientation=size==='medium'&&orientation==='vertical'?'vertical':'horizontal';saveConfig(config);const node=widgetElements()[id];if(node)applySize(node,item.size,item.orientation);
     }
 
-    // Resize is based on the 2x2 slot shape rather than cycling through
-    // Small -> Medium -> Large. The direction of the gesture chooses the
-    // medium orientation, so dragging DOWN actually makes a widget taller.
+    // The resize handle locks to the first clear direction of the gesture.
+    // Slightly diagonal movement therefore cannot flip the widget between
+    // horizontal and vertical while the user is still dragging.
     function installResizeHandle(handle,node,id){
-        let startX=0,startY=0,startSize='medium',startOrientation='horizontal',resizing=false;
-        let previewSize='medium',previewOrientation='horizontal';
-        const threshold=55;
-
-        const finish=event=>{
-            if(!resizing)return;
-            if(event)event.stopPropagation();
-            resizing=false;
-            node.classList.remove('dashboard-widget-resizing');
-            setWidgetSize(id,previewSize,previewOrientation);
-            delete node.dataset.previewSize;
-            delete node.dataset.previewOrientation;
-            window.removeEventListener('pointermove',move);
-            window.removeEventListener('pointerup',finish);
-            window.removeEventListener('pointercancel',finish);
-        };
-
+        let startX=0,startY=0,startSize='medium',startOrientation='horizontal',axis=null,resizing=false,previewSize='medium',previewOrientation='horizontal';
+        const lockDistance=14,stepDistance=58;
+        const finish=event=>{if(!resizing)return;if(event)event.stopPropagation();resizing=false;node.classList.remove('dashboard-widget-resizing');setWidgetSize(id,previewSize,previewOrientation);delete node.dataset.previewSize;delete node.dataset.previewOrientation;window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',finish);window.removeEventListener('pointercancel',finish);};
         const move=event=>{
-            if(!resizing)return;
-            const dx=event.clientX-startX,dy=event.clientY-startY;
-            const ax=Math.abs(dx),ay=Math.abs(dy);
-            let size=startSize,orientation=startOrientation;
-
+            if(!resizing)return;const dx=event.clientX-startX,dy=event.clientY-startY,ax=Math.abs(dx),ay=Math.abs(dy);
+            if(!axis){if(Math.max(ax,ay)<lockDistance)return;axis=ax>=ay?'horizontal':'vertical';}
+            const travel=axis==='horizontal'?dx:dy,dir=travel>=0?1:-1,steps=Math.floor(Math.abs(travel)/stepDistance);let size=startSize,orientation=startOrientation;
             if(startSize==='small'){
-                if(Math.max(ax,ay)<threshold)return;
-                if(ax>ay+15){
-                    size=dx>=0?'medium':'small';
-                    orientation='horizontal';
-                }else if(ay>ax+15){
-                    size=dy>=0?'medium':'small';
-                    orientation='vertical';
-                }
-                // A second slot in the same direction makes the widget large.
-                if(size==='medium'&&((orientation==='horizontal'&&dx>=threshold*2)||(orientation==='vertical'&&dy>=threshold*2))){
-                    size='large';orientation='horizontal';
-                }
+                if(dir>0&&steps>=1){size='medium';orientation=axis==='vertical'?'vertical':'horizontal';}
+                if(dir>0&&steps>=2){size='large';orientation='horizontal';}
             }else if(startSize==='medium'){
-                if(ax>ay+15){
-                    if(dx< -threshold){size='small';orientation='horizontal';}
-                    else if(dx>threshold){size='large';orientation='horizontal';}
-                }else if(ay>ax+15){
-                    if(dy< -threshold){size='small';orientation='vertical';}
-                    else if(dy>threshold){size='medium';orientation='vertical';}
-                    // Continue downward from the vertical medium to large.
-                    if(dy>threshold*2){size='large';orientation='horizontal';}
+                if(startOrientation==='horizontal'){
+                    if(axis==='horizontal'&&dir<0&&steps>=1)size='small';
+                    else if(axis==='horizontal'&&dir>0&&steps>=1)size='large';
+                    else if(axis==='vertical'&&dir>0&&steps>=1){size='medium';orientation='vertical';}
+                    else if(axis==='vertical'&&dir<0&&steps>=1){size='small';orientation='horizontal';}
+                }else{
+                    if(axis==='vertical'&&dir<0&&steps>=1){size='small';orientation='horizontal';}
+                    else if(axis==='vertical'&&dir>0&&steps>=1)size='large';
+                    else if(axis==='horizontal'&&dir>0&&steps>=1){size='medium';orientation='horizontal';}
+                    else if(axis==='horizontal'&&dir<0&&steps>=1){size='small';orientation='horizontal';}
                 }
             }else if(startSize==='large'){
-                if(ay>ax+15&&dy< -threshold){size='medium';orientation='vertical';}
-                else if(ax>ay+15&&dx< -threshold){size='medium';orientation='horizontal';}
-                else if(ay>ax+15&&dy>threshold){size='large';orientation='horizontal';}
+                if(axis==='horizontal'&&dir<0&&steps>=1){size='medium';orientation='horizontal';}
+                else if(axis==='vertical'&&dir<0&&steps>=1){size='medium';orientation='vertical';}
             }
-
-            previewSize=size;
-            previewOrientation=orientation;
-            if(node.dataset.previewSize!==size||node.dataset.previewOrientation!==orientation){
-                node.dataset.previewSize=size;
-                node.dataset.previewOrientation=orientation;
-                applySize(node,size,orientation);
-            }
+            previewSize=size;previewOrientation=orientation;
+            if(node.dataset.previewSize!==size||node.dataset.previewOrientation!==orientation){node.dataset.previewSize=size;node.dataset.previewOrientation=orientation;applySize(node,size,orientation);}
         };
-
         handle.addEventListener('pointerdown',event=>{
-            if(!moveMode||event.button!==0)return;
-            event.preventDefault();event.stopPropagation();
-            const current=getConfig().find(x=>x.id===id)||{};
-            startSize=SIZES.includes(current.size)?current.size:'medium';
-            startOrientation=current.orientation==='vertical'?'vertical':'horizontal';
-            previewSize=startSize;
-            previewOrientation=startOrientation;
-            startX=event.clientX;
-            startY=event.clientY;
-            resizing=true;
-            node.classList.add('dashboard-widget-resizing');
-            if(handle.setPointerCapture){try{handle.setPointerCapture(event.pointerId);}catch(e){}}
-            window.addEventListener('pointermove',move);
-            window.addEventListener('pointerup',finish);
-            window.addEventListener('pointercancel',finish);
+            if(!moveMode||event.button!==0)return;event.preventDefault();event.stopPropagation();const current=getConfig().find(x=>x.id===id)||{};startSize=SIZES.includes(current.size)?current.size:'medium';startOrientation=current.orientation==='vertical'?'vertical':'horizontal';previewSize=startSize;previewOrientation=startOrientation;axis=null;startX=event.clientX;startY=event.clientY;resizing=true;node.classList.add('dashboard-widget-resizing');if(handle.setPointerCapture){try{handle.setPointerCapture(event.pointerId);}catch(e){}}window.addEventListener('pointermove',move);window.addEventListener('pointerup',finish);window.addEventListener('pointercancel',finish);
         });
     }
-
     function installDirectDrag(){
         const grid=document.querySelector('#dashboardPage .dashboard-grid');if(!grid||grid.__widgetPointerDragInstalled)return;grid.__widgetPointerDragInstalled=true;
         grid.addEventListener('pointerdown',event=>{
-            if(!moveMode||event.button!==0||dragged)return;
-            const node=event.target.closest('[data-widget-id]');if(!node||!grid.contains(node))return;
-            if(event.target.closest('button,input,select,textarea,a,.dashboard-widget-resize-handle'))return;
-            const rect=node.getBoundingClientRect();
-            dragPointer={startX:event.clientX,startY:event.clientY,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top,moved:false};
-            dragMoveHandler=moveEvent=>{
-                if(!dragPointer||!node)return;const dx=moveEvent.clientX-dragPointer.startX,dy=moveEvent.clientY-dragPointer.startY;
-                if(!dragPointer.moved){if(Math.hypot(dx,dy)<6)return;dragPointer.moved=true;dragged=node;placeholder=document.createElement('div');placeholder.className='dashboard-widget-placeholder';placeholder.style.height=rect.height+'px';placeholder.style.minHeight=rect.height+'px';placeholder.style.gridColumn=getComputedStyle(node).gridColumn;placeholder.style.gridRow=getComputedStyle(node).gridRow;node.parentNode.insertBefore(placeholder,node);node.classList.add('dashboard-widget-dragging');}
-                node.style.position='fixed';node.style.width=rect.width+'px';node.style.left=(moveEvent.clientX-dragPointer.offsetX)+'px';node.style.top=(moveEvent.clientY-dragPointer.offsetY)+'px';node.style.zIndex='1000';node.style.pointerEvents='none';
-                const target=document.elementFromPoint(moveEvent.clientX,moveEvent.clientY)?.closest('[data-widget-id]');if(!target||target===node||target.classList.contains('dashboard-widget-hidden')||!grid.contains(target))return;
-                const targetRect=target.getBoundingClientRect();
-                if(moveEvent.clientY<targetRect.top+targetRect.height/2){if(placeholder.nextSibling!==target)grid.insertBefore(placeholder,target);}else if(target.nextSibling!==placeholder)grid.insertBefore(placeholder,target.nextSibling);
-            };
-            dragUpHandler=()=>{
-                window.removeEventListener('pointermove',dragMoveHandler);window.removeEventListener('pointerup',dragUpHandler);window.removeEventListener('pointercancel',dragUpHandler);if(!dragPointer)return;
-                const didMove=dragPointer.moved;
-                if(dragged){if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';dragged.classList.remove('dashboard-widget-dragging');}
-                if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);placeholder=null;
-                if(didMove){const order=[...grid.querySelectorAll('[data-widget-id]')].map(n=>n.dataset.widgetId),config=getConfig();config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));saveConfig(config);}
-                dragged=null;dragPointer=null;dragMoveHandler=null;dragUpHandler=null;applyLayout();
-            };
+            if(!moveMode||event.button!==0||dragged)return;const node=event.target.closest('[data-widget-id]');if(!node||!grid.contains(node))return;if(event.target.closest('button,input,select,textarea,a,.dashboard-widget-resize-handle'))return;const rect=node.getBoundingClientRect();dragPointer={startX:event.clientX,startY:event.clientY,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top,moved:false};
+            dragMoveHandler=moveEvent=>{if(!dragPointer||!node)return;const dx=moveEvent.clientX-dragPointer.startX,dy=moveEvent.clientY-dragPointer.startY;if(!dragPointer.moved){if(Math.hypot(dx,dy)<6)return;dragPointer.moved=true;dragged=node;placeholder=document.createElement('div');placeholder.className='dashboard-widget-placeholder';placeholder.style.height=rect.height+'px';placeholder.style.minHeight=rect.height+'px';placeholder.style.gridColumn=getComputedStyle(node).gridColumn;placeholder.style.gridRow=getComputedStyle(node).gridRow;node.parentNode.insertBefore(placeholder,node);node.classList.add('dashboard-widget-dragging');}node.style.position='fixed';node.style.width=rect.width+'px';node.style.left=(moveEvent.clientX-dragPointer.offsetX)+'px';node.style.top=(moveEvent.clientY-dragPointer.offsetY)+'px';node.style.zIndex='1000';node.style.pointerEvents='none';const target=document.elementFromPoint(moveEvent.clientX,moveEvent.clientY)?.closest('[data-widget-id]');if(!target||target===node||target.classList.contains('dashboard-widget-hidden')||!grid.contains(target))return;const targetRect=target.getBoundingClientRect();if(moveEvent.clientY<targetRect.top+targetRect.height/2){if(placeholder.nextSibling!==target)grid.insertBefore(placeholder,target);}else if(target.nextSibling!==placeholder)grid.insertBefore(placeholder,target.nextSibling);};
+            dragUpHandler=()=>{window.removeEventListener('pointermove',dragMoveHandler);window.removeEventListener('pointerup',dragUpHandler);window.removeEventListener('pointercancel',dragUpHandler);if(!dragPointer)return;const didMove=dragPointer.moved;if(dragged){if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';dragged.classList.remove('dashboard-widget-dragging');}if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);placeholder=null;if(didMove){const order=[...grid.querySelectorAll('[data-widget-id]')].map(n=>n.dataset.widgetId),config=getConfig();config.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));saveConfig(config);}dragged=null;dragPointer=null;dragMoveHandler=null;dragUpHandler=null;applyLayout();};
             window.addEventListener('pointermove',dragMoveHandler);window.addEventListener('pointerup',dragUpHandler);window.addEventListener('pointercancel',dragUpHandler);
         });
     }
-
-    function cancelDrag(){
-        if(dragMoveHandler)window.removeEventListener('pointermove',dragMoveHandler);if(dragUpHandler)window.removeEventListener('pointerup',dragUpHandler);window.removeEventListener('pointercancel',dragUpHandler);
-        if(dragged){if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';dragged.classList.remove('dashboard-widget-dragging');}
-        if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);dragged=null;placeholder=null;dragPointer=null;dragMoveHandler=null;dragUpHandler=null;
-    }
-
+    function cancelDrag(){if(dragMoveHandler)window.removeEventListener('pointermove',dragMoveHandler);if(dragUpHandler)window.removeEventListener('pointerup',dragUpHandler);window.removeEventListener('pointercancel',dragUpHandler);if(dragged){if(placeholder?.parentNode)placeholder.parentNode.insertBefore(dragged,placeholder);dragged.style.position='';dragged.style.width='';dragged.style.left='';dragged.style.top='';dragged.style.zIndex='';dragged.style.pointerEvents='';dragged.classList.remove('dashboard-widget-dragging');}if(placeholder?.parentNode)placeholder.parentNode.removeChild(placeholder);dragged=null;placeholder=null;dragPointer=null;dragMoveHandler=null;dragUpHandler=null;}
     function boot(){addButton();applyLayout();installDirectDrag();}
     document.addEventListener('DOMContentLoaded',boot,{once:true});window.addEventListener('load',boot,{once:true});document.addEventListener('planner-data-changed',applyLayout);document.addEventListener('dashboard-widget-added',()=>{applyLayout();installDirectDrag();});
 })();
