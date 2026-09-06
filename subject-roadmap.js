@@ -9,9 +9,8 @@
         if(!d)return null;
         if(!d.settings)d.settings={};
         if(!Array.isArray(d.settings.subjects))d.settings.subjects=[];
-        d.settings.subjects.forEach(s=>{
-            if(s&&!Array.isArray(s.roadmap))s.roadmap=[];
-        });
+        if(!Array.isArray(d.tasks))d.tasks=[];
+        d.settings.subjects.forEach(s=>{if(s&&!Array.isArray(s.roadmap))s.roadmap=[];});
         return d;
     }
     function save(){
@@ -63,6 +62,33 @@
             const l=u?.lessons?.find(x=>String(x.id)===String(lessonId));
             if(!l)return;
             l.completed=!l.completed; save();
+        },
+        startLesson(subject,unitId,lessonId){
+            const d=ensure(); if(!d)return null;
+            const s=d.settings.subjects.find(x=>String(x?.name).toLowerCase()===String(subject).toLowerCase());
+            const u=s?.roadmap?.find(x=>String(x.id)===String(unitId));
+            const l=u?.lessons?.find(x=>String(x.id)===String(lessonId));
+            if(!s||!u||!l)return null;
+            const existing=d.tasks.find(t=>String(t?.roadmapLessonId)===String(lessonId)&&!t.completed);
+            if(existing)return existing;
+            const task={
+                id:Date.now()+Math.random(),
+                name:l.name,
+                subject:s.name,
+                type:'Task',
+                priority:'Normal',
+                dueDate:null,
+                tags:['#School'],
+                completed:false,
+                createdAt:new Date().toISOString(),
+                roadmapUnitId:u.id,
+                roadmapLessonId:l.id,
+                roadmapUnit:u.name,
+                roadmapLesson:l.name
+            };
+            d.tasks.push(task);
+            save();
+            return task;
         }
     };
 
@@ -86,7 +112,16 @@
             const lessons=u.lessons||[]; const done=lessons.filter(l=>l.completed).length;
             box.innerHTML=`<div class="roadmap-unit-head"><div><span class="roadmap-unit-number">Unit ${i+1}</span><h3>${esc(u.name||'Untitled unit')}</h3><small>${done}/${lessons.length} lessons complete</small></div><button class="small-button roadmap-delete" type="button">Delete</button></div><div class="roadmap-lessons"></div><div class="roadmap-add-lesson"><input type="text" placeholder="Add lesson..."><button class="small-button" type="button">Add</button></div>`;
             const list=box.querySelector('.roadmap-lessons');
-            lessons.forEach(l=>{const row=document.createElement('label');row.className='roadmap-lesson';row.innerHTML=`<input type="checkbox" ${l.completed?'checked':''}><span>${esc(l.name)}</span>`;row.querySelector('input').onchange=()=>window.SubjectRoadmap.toggleLesson(s.name,u.id,l.id);list.appendChild(row);});
+            lessons.forEach(l=>{
+                const row=document.createElement('div'); row.className='roadmap-lesson';
+                row.innerHTML=`<label><input type="checkbox" ${l.completed?'checked':''}><span>${esc(l.name)}</span></label><button class="small-button roadmap-study" type="button">Study</button>`;
+                row.querySelector('input').onchange=()=>window.SubjectRoadmap.toggleLesson(s.name,u.id,l.id);
+                row.querySelector('.roadmap-study').onclick=()=>{
+                    const task=window.SubjectRoadmap.startLesson(s.name,u.id,l.id);
+                    if(task&&typeof openEditTaskModal==='function')openEditTaskModal(task.id);
+                };
+                list.appendChild(row);
+            });
             box.querySelector('.roadmap-delete').onclick=()=>{if(confirm(`Delete ${u.name||'this unit'}?`)){window.SubjectRoadmap.removeUnit(s.name,u.id);renderDetail(s.name);}};
             const inp=box.querySelector('input[type="text"]'); box.querySelector('.roadmap-add-lesson button').onclick=()=>{if(inp.value.trim()){window.SubjectRoadmap.addLesson(s.name,u.id,inp.value);renderDetail(s.name);}};
             units.appendChild(box);
