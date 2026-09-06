@@ -41,6 +41,29 @@
     function hideOtherPages(){
         ['dashboardPage','calendarPage','tasksPage','subjectsPage','assignmentsPage','testsExamsPage','gradesPage','settingsPage'].forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('page-hidden');el.style.setProperty('display','none','important');}});
     }
+    function renderRoadmap(page,s){
+        const units=page.querySelector('#subjectDetailUnits');if(!units)return;
+        const roadmap=Array.isArray(s.roadmap)?s.roadmap:[];units.innerHTML='';
+        if(!roadmap.length){units.innerHTML='<div class="subject-detail-empty">No units yet. Use Manage to build this subject’s roadmap.</div>';return;}
+        roadmap.forEach((u,i)=>{
+            const lessons=Array.isArray(u.lessons)?u.lessons:[],done=lessons.filter(l=>l.completed).length,percent=lessons.length?Math.round(done/lessons.length*100):0;
+            const box=document.createElement('div');box.className='subject-detail-roadmap-unit';
+            box.innerHTML=`<div class="subject-roadmap-unit-top"><div class="subject-roadmap-unit-title"><span>Unit ${i+1}</span><strong></strong></div><small></small></div><div class="subject-roadmap-progress"><div></div></div><div class="subject-roadmap-lessons"></div>`;
+            box.querySelector('.subject-roadmap-unit-title strong').textContent=u.name||'Untitled unit';box.querySelector('.subject-roadmap-unit-top small').textContent=lessons.length?`${done}/${lessons.length} complete`:'No lessons yet';box.querySelector('.subject-roadmap-progress div').style.width=percent+'%';
+            const lessonBox=box.querySelector('.subject-roadmap-lessons');
+            if(!lessons.length)lessonBox.innerHTML='<span class="subject-roadmap-no-lessons">No lessons in this unit yet.</span>';
+            lessons.forEach(l=>{
+                const row=document.createElement('div');row.className='subject-roadmap-lesson'+(l.completed?' completed':'');
+                row.innerHTML='<label><input type="checkbox"><span></span></label><button type="button" class="small-button subject-roadmap-study">Study</button>';
+                row.querySelector('input').checked=!!l.completed;row.querySelector('span').textContent=l.name||'Untitled lesson';
+                row.querySelector('input').onchange=()=>{if(window.SubjectRoadmap?.toggleLesson)window.SubjectRoadmap.toggleLesson(s.name,u.id,l.id);};
+                row.querySelector('input').addEventListener('change',()=>row.classList.toggle('completed',row.querySelector('input').checked));
+                row.querySelector('.subject-roadmap-study').onclick=()=>{const task=window.SubjectRoadmap?.startLesson?.(s.name,u.id,l.id);if(task&&typeof openEditTaskModal==='function')openEditTaskModal(task.id);};
+                lessonBox.appendChild(row);
+            });
+            units.appendChild(box);
+        });
+    }
     function list(container,items,empty){container.innerHTML='';if(!items.length){container.innerHTML=`<div class="subject-detail-empty">${empty}</div>`;return;}items.forEach(t=>{const row=document.createElement('div');row.className='subject-detail-task';row.innerHTML=`<div class="subject-detail-task-type">${esc(t.type||'Task')}</div><div class="subject-detail-task-main"><strong>${esc(t.name||'Untitled task')}</strong><small>${esc(formatDue(t.dueDate))}${t.priority&&t.priority!=='Normal'?' · '+esc(t.priority):''}</small></div>`;row.onclick=()=>{if(typeof openEditTaskModal==='function')openEditTaskModal(t.id);};container.appendChild(row);});}
     function render(name){
         const s=subjectByName(name);if(!s)return;
@@ -48,9 +71,7 @@
         page.dataset.subject=s.name;page.classList.remove('page-hidden');page.style.setProperty('display','block','important');
         if(typeof setActiveNav==='function')setActiveNav('subjects');history.replaceState(null,'','#subjects');
         page.querySelector('#subjectDetailIcon').textContent=s.emoji||'📚';page.querySelector('#subjectDetailName').textContent=s.name;page.querySelector('#subjectDetailMeta').textContent=`${s.studyMode||'Study'} · ${s.active===false?'Inactive':'Active'}`;
-        const roadmap=Array.isArray(s.roadmap)?s.roadmap:[];const units=page.querySelector('#subjectDetailUnits');units.innerHTML='';
-        if(!roadmap.length)units.innerHTML='<div class="subject-detail-empty">No units yet. Use Manage to build this subject’s roadmap.</div>';
-        roadmap.forEach((u,i)=>{const lessons=Array.isArray(u.lessons)?u.lessons:[];const done=lessons.filter(l=>l.completed).length;const box=document.createElement('div');box.className='subject-detail-unit';box.innerHTML=`<div><span>Unit ${i+1}</span><strong>${esc(u.name||'Untitled unit')}</strong></div><small>${done}/${lessons.length} lessons</small>`;units.appendChild(box);});
+        renderRoadmap(page,s);
         const st=tasks().filter(t=>String(t.subject||'').toLowerCase()===String(s.name).toLowerCase());const active=st.filter(t=>!t.completed);const upcoming=active.filter(t=>t.dueDate).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,6);const completed=st.filter(t=>t.completed).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0,6);
         list(page.querySelector('#subjectDetailUpcoming'),upcoming,'Nothing due yet 🎉');list(page.querySelector('#subjectDetailActive'),active.filter(t=>!upcoming.includes(t)).slice(0,8),'No other active work.');list(page.querySelector('#subjectDetailCompleted'),completed,'Nothing completed yet.');
         renderGrades(page,s);
