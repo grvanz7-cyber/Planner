@@ -64,7 +64,11 @@ function restoreSubjectFromHash(){
 }
 
 function showPage(page,updateHistory=true){
-  // Do not let startup rendering overwrite a saved subject-detail URL.
+  // A subject-detail hash is the source of truth while the app is restoring.
+  if(getSubjectHash()!=null && window.__plannerRestoringSubject){
+    restoreSubjectFromHash();
+    return;
+  }
   if(!updateHistory&&getSubjectHash()!=null){
     restoreSubjectFromHash();
     return;
@@ -125,5 +129,19 @@ function loadSavedPage(){
   setCurrentDate();
 }
 
-window.addEventListener('hashchange',loadSavedPage);
+// DOMContentLoaded can run before another script's startup code. The load
+// event runs after all page scripts have initialized, so restore the saved
+// subject one final time there as well. This prevents refresh from being
+// overwritten by a later startup showPage('subjects') call.
 document.addEventListener('DOMContentLoaded',loadSavedPage);
+window.addEventListener('load',()=>{
+  if(getSubjectHash()!=null){
+    window.__plannerRestoringSubject=true;
+    restoreSubjectFromHash();
+    setTimeout(()=>{
+      restoreSubjectFromHash();
+      window.__plannerRestoringSubject=false;
+    },0);
+  }
+});
+window.addEventListener('hashchange',loadSavedPage);
