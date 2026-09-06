@@ -19,4 +19,24 @@ body{font-family:"Trebuchet MS","Segoe UI",Arial,sans-serif;background:#f6f1e8;c
 .checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:20px}.checkbox-row input{width:17px;height:17px;accent-color:#687b5e}.checkbox-row label{font-size:14px}.colour-row{display:flex;align-items:center;gap:12px}.colour-row input[type=color]{width:48px;height:38px;padding:2px;border:1px solid #ded5c6;border-radius:8px;background:#fffefa;cursor:pointer}.colour-row span{font-size:13px;color:#969082}
 .subject-roadmap-detail{width:min(680px,calc(100% - 32px));max-height:min(82vh,760px);overflow:auto}.subject-roadmap-detail .modal-header{align-items:flex-start}.subject-roadmap-detail .modal-header p{margin-top:4px;color:#969082;font-size:12px}.roadmap-unit{background:#fffaf3;border:1px solid #eee7dc;border-radius:13px;padding:16px;margin-bottom:13px}.roadmap-unit:last-child{margin-bottom:0}.roadmap-unit-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.roadmap-unit-number{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#a09584;margin-bottom:4px}.roadmap-unit h3{font-family:Georgia,serif;font-size:17px;color:#55584d;margin:0}.roadmap-unit-head small{display:block;margin-top:4px;font-size:11px;color:#9a9488}.roadmap-lessons{margin-top:13px;border-top:1px solid #eee7dc}.roadmap-lesson{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid #eee7dc}.roadmap-lesson:last-child{border-bottom:0}.roadmap-lesson label{display:flex;align-items:center;gap:9px;min-width:0;flex:1;cursor:pointer}.roadmap-lesson label input{width:17px;height:17px;flex-shrink:0;accent-color:#687b5e}.roadmap-lesson label span{font-size:13px;color:#55574e;overflow:hidden;text-overflow:ellipsis}.roadmap-lesson label input:checked+span{text-decoration:line-through;color:#a39c90}.roadmap-add-lesson{display:flex;gap:8px;margin-top:12px}.roadmap-add-lesson input,.roadmap-unit-add-form input{flex:1;min-width:0;border:1px solid #ded5c6;border-radius:10px;padding:10px 12px;font-size:14px;background:#fffefa;color:#505148;outline:none}.roadmap-add-lesson input::placeholder,.roadmap-unit-add-form input::placeholder{color:#aaa395}.roadmap-add-lesson input:focus,.roadmap-unit-add-form input:focus{border-color:#8b9a80;box-shadow:0 0 0 3px rgba(139,154,128,.12)}.roadmap-study{white-space:nowrap}.roadmap-delete{color:#9b5e5e}.roadmap-unit-add-form{display:flex;gap:8px;margin:0 0 16px;padding:13px;background:#f7f3eb;border:1px solid #eee7dc;border-radius:12px}.roadmap-unit-add-form input{padding:9px 11px}.roadmap-unit-add-form button{white-space:nowrap}.roadmap-empty{padding:28px 10px;text-align:center;color:#a29b8e;font-size:13px}
 @media(max-width:800px){.sidebar{width:190px}.main{padding:28px 24px}.dashboard-grid{grid-template-columns:1fr}.dashboard-stats-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.app{flex-direction:column}.sidebar{width:100%;border-right:none;border-bottom:1px solid #e6dccb;padding:18px}.main{padding:22px 18px}.form-row{grid-template-columns:1fr;gap:0}.dashboard-stats-grid{grid-template-columns:repeat(2,1fr)}.subject-roadmap-detail{padding:20px}.roadmap-add-lesson{flex-wrap:wrap}.roadmap-add-lesson input{flex-basis:100%}.roadmap-unit-add-form{flex-wrap:wrap}.roadmap-unit-add-form input{flex-basis:100%}}
+@media(max-width:600px){
+  body{padding-bottom:78px;overflow-x:hidden}
+  .app{display:block;min-height:100vh}
+  .sidebar{position:fixed;left:0;right:0;bottom:0;z-index:900;width:100%;height:70px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:rgba(255,250,241,.97);border:none;border-top:1px solid #e6dccb;box-shadow:0 -5px 20px rgba(91,76,52,.10);display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  .sidebar::-webkit-scrollbar{display:none}
+  .logo,.nav-title{display:none}
+  .nav-section{display:flex;align-items:stretch;gap:4px;margin:0;flex:0 0 auto}
+  .nav-item{width:auto;min-width:76px;height:56px;margin:0;padding:7px 8px;border-radius:11px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;white-space:nowrap;transform:none!important}
+  .nav-item:hover{transform:none}
+  .main{width:100%;max-width:none;padding:22px 16px 28px}
+  .header{margin-bottom:22px}.header h1{font-size:28px}.header p{font-size:13px}
+  .quick-add{margin-bottom:22px}.quick-add input{min-width:0;padding:12px}.quick-add button{padding:0 17px}
+  .dashboard-grid{grid-template-columns:1fr;gap:16px}.card{padding:18px;border-radius:15px}
+  .dashboard-stats-grid{grid-template-columns:repeat(2,1fr);gap:9px}.dashboard-stat{padding:12px 8px}.dashboard-stat strong{font-size:21px}
+  .settings-heading{align-items:flex-start}.settings-heading .save-button{white-space:nowrap}
+  .form-row{grid-template-columns:1fr;gap:0}
+  .modal{width:min(520px,calc(100% - 24px));max-height:calc(100vh - 24px);overflow-y:auto;padding:21px}
+  .subject-roadmap-detail{padding:20px}
+  .roadmap-add-lesson{flex-wrap:wrap}.roadmap-add-lesson input{flex-basis:100%}
+  .roadmap-unit-add-form{flex-wrap:wrap}.roadmap-unit-add-form input{flex-basis:100%}
+}
