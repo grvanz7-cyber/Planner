@@ -41,13 +41,13 @@
         style.textContent=`
         #dashboardPage .dashboard-grid .today-tasks,
         #dashboardPage .dashboard-grid .upcoming-tasks{min-width:0}
-        .dashboard-task-list{display:grid;gap:7px}
-        .dashboard-task-row{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-width:0;padding:10px 11px;border:1px solid var(--border-color,#e6e1da);border-radius:11px;background:var(--card-bg,#fff);box-sizing:border-box;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+        .dashboard-task-list{display:grid;gap:8px;min-width:0}
+        .dashboard-task-row{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-width:0;padding:10px 11px;border:1px solid var(--border-color,#e6e1da);border-radius:11px;background:var(--card-background,#fff);box-sizing:border-box;transition:background .15s ease,border-color .15s ease,transform .15s ease}
         .dashboard-task-row:hover{background:var(--hover-bg,#f4f1ed);transform:translateY(-1px)}
         .dashboard-task-row.overdue{border-left:3px solid #c96d6d;padding-left:9px}
         .dashboard-task-row.today{border-left:3px solid var(--planner-accent,#687b5e);padding-left:9px}
-        .dashboard-task-check{width:28px;height:28px;border:1px solid var(--border-color,#ded5c6);border-radius:8px;background:var(--card-background,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font:inherit;color:var(--muted-text,#777);font-size:15px}
-        .dashboard-task-check:hover{background:var(--hover-bg,#f4f1ed);border-color:var(--planner-accent,#687b5e)}
+        .dashboard-task-check{width:28px;height:28px;border:1px solid var(--border-color,#ded5c6);border-radius:8px;background:var(--card-background,#fff);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font:inherit;color:var(--muted-text,#777);font-size:15px;transition:all .15s ease}
+        .dashboard-task-check:hover{background:var(--hover-bg,#f4f1ed);border-color:var(--planner-accent,#687b5e);color:var(--planner-accent,#687b5e)}
         .dashboard-task-icon{width:28px;height:28px;border-radius:8px;background:var(--task-soft,rgba(104,123,94,.10));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
         .dashboard-task-main{display:grid;gap:3px;min-width:0;text-align:left}
         .dashboard-task-name{font-size:13px;font-weight:600;color:var(--text-color,#505148);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -58,12 +58,19 @@
         .dashboard-task-priority{font-size:10px;padding:4px 7px;border-radius:7px;background:#f0eadf;color:#82796b;white-space:nowrap}
         .dashboard-task-priority.high{background:#f7e7e2;color:#a05c4d}.dashboard-task-priority.low{opacity:.72}
         .dashboard-widget-count{font-size:11px;font-weight:600;color:var(--muted-text,#969082);margin-left:auto}
-        .dashboard-task-empty{padding:22px 8px;text-align:center;color:var(--muted-text,#a29b8e);font-size:13px}
-        .dashboard-upcoming-day{display:grid;gap:6px}.dashboard-upcoming-day+.dashboard-upcoming-day{margin-top:12px}
+        .dashboard-task-empty{padding:24px 8px;text-align:center;color:var(--muted-text,#a29b8e);font-size:13px}
+        .dashboard-upcoming-day{display:grid;gap:7px;min-width:0}.dashboard-upcoming-day+.dashboard-upcoming-day{margin-top:14px}
         .dashboard-upcoming-day-label{display:flex;align-items:center;justify-content:space-between;padding:0 3px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-text,#9a9488)}
-        .dashboard-upcoming-day-label strong{font-size:11px;letter-spacing:0;text-transform:none;color:var(--text-color,#68685f)}
-        .dashboard-widget-small .dashboard-task-list{gap:5px}.dashboard-widget-small .dashboard-task-row{grid-template-columns:26px minmax(0,1fr);padding:7px 8px}.dashboard-widget-small .dashboard-task-side{display:none}.dashboard-widget-small .dashboard-task-icon{width:24px;height:24px;font-size:14px}.dashboard-widget-small .dashboard-task-name{font-size:12px}.dashboard-widget-small .dashboard-task-meta{font-size:9px}.dashboard-widget-small .dashboard-task-row:nth-child(n+3){display:none}
-        .dashboard-widget-medium-vertical .dashboard-task-list,.dashboard-widget-large .dashboard-task-list{gap:8px}
+        .dashboard-upcoming-day-label strong{font-size:10px;letter-spacing:0;text-transform:none;color:var(--muted-text,#969082);font-weight:600;background:var(--hover-bg,#f4f1ed);padding:3px 6px;border-radius:999px}
+        .dashboard-widget-medium .today-tasks .dashboard-task-row,
+        .dashboard-widget-medium .upcoming-tasks .dashboard-task-row{padding-top:9px;padding-bottom:9px}
+        .dashboard-widget-medium-vertical .today-tasks .dashboard-task-row,
+        .dashboard-widget-medium-vertical .upcoming-tasks .dashboard-task-row,
+        .dashboard-widget-large .today-tasks .dashboard-task-row,
+        .dashboard-widget-large .upcoming-tasks .dashboard-task-row{padding-top:11px;padding-bottom:11px}
+        .dashboard-widget-medium-vertical .today-tasks .dashboard-task-list,
+        .dashboard-widget-large .today-tasks .dashboard-task-list{gap:9px}
+        .dashboard-widget-small .dashboard-task-list{gap:5px}.dashboard-widget-small .dashboard-task-row{grid-template-columns:26px minmax(0,1fr);padding:7px 8px;gap:7px}.dashboard-widget-small .dashboard-task-side{display:none}.dashboard-widget-small .dashboard-task-icon,.dashboard-widget-small .dashboard-task-check{width:24px;height:24px}.dashboard-widget-small .dashboard-task-icon{font-size:14px}.dashboard-widget-small .dashboard-task-check{font-size:13px}.dashboard-widget-small .dashboard-task-name{font-size:12px}.dashboard-widget-small .dashboard-task-meta{font-size:9px}.dashboard-widget-small .dashboard-task-row:nth-child(n+3){display:none}.dashboard-widget-small .dashboard-upcoming-day+.dashboard-upcoming-day{margin-top:7px}.dashboard-widget-small .dashboard-upcoming-day-label{font-size:8px}.dashboard-widget-small .dashboard-upcoming-day-label strong{font-size:8px;padding:2px 5px}
         @media(max-width:700px){.dashboard-task-row{grid-template-columns:30px minmax(0,1fr) auto}.dashboard-task-priority{display:none}.dashboard-upcoming-day+.dashboard-upcoming-day{margin-top:10px}}
         `;
         document.head.appendChild(style);
@@ -108,7 +115,12 @@
         });
         container.innerHTML='';
         const card=container.closest('.card'),heading=card?.querySelector('h2');
-        if(heading&&!heading.querySelector('.dashboard-widget-count')){const count=document.createElement('span');count.className='dashboard-widget-count';heading.style.display='flex';heading.style.alignItems='center';count.textContent=list.length?list.length+' active':'';heading.appendChild(count);}
+        if(heading){
+            heading.style.display='flex';heading.style.alignItems='center';
+            let count=heading.querySelector('.dashboard-widget-count');
+            if(!count){count=document.createElement('span');count.className='dashboard-widget-count';heading.appendChild(count);}
+            count.textContent=list.length?list.length+' active':'';
+        }
         if(!list.length){container.innerHTML='<div class="dashboard-task-empty">Nothing here yet!</div>';return;}
         const wrap=document.createElement('div');wrap.className='dashboard-task-list';list.forEach(t=>wrap.appendChild(taskRow(t,subjects,true)));container.appendChild(wrap);
     }
@@ -124,12 +136,8 @@
     }
 
     function installFactories(){
-        window.createTaskElement=function(task){
-            const subjects=data().subjects;return taskRow(task,subjects,true);
-        };
-        window.createUpcomingElement=function(task){
-            const subjects=data().subjects;return taskRow(task,subjects,false);
-        };
+        window.createTaskElement=function(task){return taskRow(task,data().subjects,true);};
+        window.createUpcomingElement=function(task){return taskRow(task,data().subjects,false);};
     }
 
     function render(){ensureStyles();installFactories();renderToday();renderUpcoming();}
