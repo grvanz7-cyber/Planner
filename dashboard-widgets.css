@@ -29,8 +29,94 @@
     display: none !important;
 }
 
+/* Dashboard widget sizing */
+.dashboard-widget-size-normal { grid-column: span 1; min-height: 180px; }
+.dashboard-widget-size-wide { grid-column: 1 / -1; min-height: 180px; }
+.dashboard-widget-size-tall { grid-column: span 1; min-height: 380px; }
+.dashboard-widget-size-large { grid-column: 1 / -1; min-height: 380px; }
+
+.dashboard-widget-drag-handle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted-text, #777);
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: -3px;
+    cursor: grab;
+    opacity: .45;
+    z-index: 5;
+    touch-action: none;
+}
+
+.dashboard-widget-drag-handle:hover {
+    opacity: .9;
+    background: var(--hover-bg, #f4f1ed);
+}
+
+.dashboard-widget-drag-handle:active {
+    cursor: grabbing;
+}
+
+.dashboard-widget-dragging {
+    opacity: .55;
+    transform: scale(.99);
+}
+
+.dashboard-widget-resize-handle {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    width: 18px;
+    height: 18px;
+    cursor: nwse-resize;
+    opacity: .35;
+    z-index: 5;
+    touch-action: none;
+}
+
+.dashboard-widget-resize-handle::before,
+.dashboard-widget-resize-handle::after {
+    content: '';
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+}
+
+.dashboard-widget-resize-handle::before {
+    width: 11px;
+    height: 11px;
+}
+
+.dashboard-widget-resize-handle::after {
+    width: 6px;
+    height: 6px;
+}
+
+.dashboard-widget-resize-handle:hover,
+.dashboard-widget-resizing .dashboard-widget-resize-handle {
+    opacity: .85;
+}
+
+.dashboard-widget-resizing {
+    user-select: none;
+    transition: none !important;
+}
+
+/* The resize/drag controls should not change normal widget interaction. */
+#dashboardPage .card {
+    position: relative;
+}
+
 .dashboard-widget-modal {
-    max-width: 520px;
+    max-width: 620px;
 }
 
 .widget-modal-help {
@@ -83,6 +169,25 @@
     opacity: .45;
 }
 
+.widget-size-select {
+    min-width: 92px;
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: 8px;
+    padding: 6px 8px;
+    background: var(--card-background, #fff);
+    color: inherit;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+@media (max-width: 700px) {
+    .dashboard-widget-size-normal,
+    .dashboard-widget-size-tall {
+        grid-column: 1 / -1;
+    }
+}
+
 @media (max-width: 640px) {
     #dashboardPage > .header {
         align-items: flex-start;
@@ -91,5 +196,13 @@
 
     .dashboard-customize-button {
         align-self: stretch;
+    }
+
+    .dashboard-widget-option {
+        flex-wrap: wrap;
+    }
+
+    .widget-size-select {
+        margin-left: 37px;
     }
 }
