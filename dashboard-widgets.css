@@ -38,23 +38,30 @@
 .dashboard-widget-resizing{user-select:none!important;transition:none!important}
 .dashboard-widget-resizing .dashboard-widget-resize-handle{opacity:1}
 
-/* iPhone-style variants: each size changes the information density. */
-.dashboard-widget-small{grid-column:span 1;min-height:120px;overflow:hidden}
-.dashboard-widget-medium{grid-column:span 1;min-height:190px}
-.dashboard-widget-large{grid-column:1/-1;min-height:310px}
+/* Invisible 2-column dashboard grid: 1, 2-horizontal, 2-vertical, or 4 blocks. */
+.dashboard-widget-small{grid-column:span 1;min-height:160px;overflow:hidden}
+.dashboard-widget-medium{grid-column:span 2;min-height:190px}
+.dashboard-widget-medium-vertical{grid-column:span 1;grid-row:span 2;min-height:350px}
+.dashboard-widget-large{grid-column:span 2;grid-row:span 2;min-height:350px}
+
+/* Information density follows the widget's occupied space. */
 .dashboard-widget-small .today-tasks-list,.dashboard-widget-small .upcoming-tasks-list{max-height:62px;overflow:hidden}
 .dashboard-widget-medium .today-tasks-list,.dashboard-widget-medium .upcoming-tasks-list{max-height:190px;overflow:auto}
+.dashboard-widget-medium-vertical .today-tasks-list,.dashboard-widget-medium-vertical .upcoming-tasks-list{max-height:320px;overflow:auto}
 .dashboard-widget-large .today-tasks-list,.dashboard-widget-large .upcoming-tasks-list{max-height:390px;overflow:auto}
 .dashboard-widget-small .dashboard-subject-list{grid-template-columns:1fr}
 .dashboard-widget-small .dashboard-subject-row:nth-child(n+3),.dashboard-widget-small .dashboard-subject-deadlines,.dashboard-widget-small .dashboard-widget-heading p{display:none}
 .dashboard-widget-medium .dashboard-subject-row:nth-child(n+5){display:none}
+.dashboard-widget-medium-vertical .dashboard-subject-row:nth-child(n+7){display:none}
 .dashboard-widget-large .dashboard-subject-row:nth-child(n+9){display:none}
 .dashboard-widget-small .study-load-subject:nth-child(n+3),.dashboard-widget-small .study-load-details{display:none}
 .dashboard-widget-medium .study-load-subject:nth-child(n+6){display:none}
+.dashboard-widget-medium-vertical .study-load-subject:nth-child(n+8){display:none}
 .dashboard-widget-small .dashboard-school-section:nth-of-type(n+2),.dashboard-widget-small .dashboard-school-list>*:nth-child(n+2){display:none}
 .dashboard-widget-medium .dashboard-school-list>*:nth-child(n+5){display:none}
+.dashboard-widget-medium-vertical .dashboard-school-list>*:nth-child(n+7){display:none}
 .dashboard-widget-small .dashboard-stats-breakdown{display:none}
-.dashboard-widget-medium .dashboard-stats-breakdown,.dashboard-widget-large .dashboard-stats-breakdown{display:block}
+.dashboard-widget-medium .dashboard-stats-breakdown,.dashboard-widget-medium-vertical .dashboard-stats-breakdown,.dashboard-widget-large .dashboard-stats-breakdown{display:block}
 
 /* Legacy size classes retained so older saved layouts do not break. */
 .dashboard-widget-size-normal{grid-column:span 1;min-height:180px}
@@ -67,8 +74,8 @@
 .dashboard-add-widget-wrap{flex:1}
 .dashboard-widget-action{width:100%}
 .dashboard-move-toggle{width:100%;justify-content:center}
-.dashboard-widget-small,.dashboard-widget-medium,.dashboard-widget-large{grid-column:1/-1;min-height:0}
+.dashboard-widget-small,.dashboard-widget-medium,.dashboard-widget-medium-vertical,.dashboard-widget-large{grid-column:1/-1;grid-row:auto;min-height:0}
 .dashboard-add-widget-popover{left:0;right:auto;width:100%;box-sizing:border-box}
 .dashboard-widget-delete{top:5px!important;right:5px!important}
 }
-@media(max-width:640px){.dashboard-widget-medium .dashboard-subject-list,.dashboard-widget-large .dashboard-subject-list{grid-template-columns:1fr}}
+@media(max-width:640px){.dashboard-widget-medium .dashboard-subject-list,.dashboard-widget-medium-vertical .dashboard-subject-list,.dashboard-widget-large .dashboard-subject-list{grid-template-columns:1fr}}
