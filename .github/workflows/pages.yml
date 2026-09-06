@@ -35,6 +35,9 @@ jobs:
           cp .mobile-source/app-*.js ./mobile/
           rm -rf .mobile-source
 
+      - name: Stamp deployed version
+        run: echo "${{ github.sha }}" > .pages-deploy-version
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
