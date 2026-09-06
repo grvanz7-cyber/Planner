@@ -95,8 +95,11 @@
         input.value='';openQuickReview(parse(text));
     }
 
-    // Public function used directly by the dashboard button.
     window.quickAdd=handleQuickAdd;
+
+    // The original dashboard button calls addTask(). Override that public
+    // entry point too, so Quick Add cannot fall back to the old task modal.
+    window.addTask=handleQuickAdd;
 
     function install(){
         const input=document.querySelector('.quick-add input');
