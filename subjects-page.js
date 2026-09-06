@@ -18,17 +18,47 @@ function renderSubjectsPage() {
         const lessonCount = subject.roadmap.reduce((n,u)=>n+(Array.isArray(u.lessons)?u.lessons.length:0),0);
         const completedLessons = subject.roadmap.reduce((n,u)=>n+(Array.isArray(u.lessons)?u.lessons.filter(l=>l.completed).length:0),0);
         const card = document.createElement('section');
-        card.className='subject-card'; card.style.setProperty('--subject-color',subject.colour||'#687b5e');
+        card.className='subject-card';
+        card.style.setProperty('--subject-color',subject.colour||'#687b5e');
         card.innerHTML='<div class="subject-card-top"><div class="subject-icon"></div><div class="subject-card-actions"><button class="small-button subject-open-button" type="button">Open</button><button class="small-button roadmap-button" type="button">Roadmap</button><button class="small-button edit-subject-button" type="button">Edit</button></div></div><h2></h2><div class="subject-count"></div><div class="subject-roadmap-summary"></div><div class="subject-upcoming"></div>';
         card.querySelector('.subject-icon').textContent=subject.emoji||'📚';
         card.querySelector('h2').textContent=subject.name||'Untitled subject';
         card.querySelector('.subject-count').textContent=`${activeTasks.length} active task${activeTasks.length===1?'':'s'} · ${subjectTasks.filter(t=>t.completed).length} completed`;
         card.querySelector('.subject-roadmap-summary').textContent=subject.roadmap.length?`${subject.roadmap.length} unit${subject.roadmap.length===1?'':'s'} · ${completedLessons}/${lessonCount} lessons complete`:'No roadmap yet';
         const box=card.querySelector('.subject-upcoming');
-        if(upcoming.length){box.innerHTML='<h3>Coming up</h3>';upcoming.forEach(task=>{const row=document.createElement('div');row.className='subject-task';row.innerHTML='<span></span><div><strong></strong><small></small></div>';row.querySelector('strong').textContent=task.name||'Untitled task';row.querySelector('small').textContent=task.dueDate;row.querySelector('span').textContent=task.type||'Task';row.onclick=()=>{if(typeof openEditTaskModal==='function')openEditTaskModal(task.id)};box.appendChild(row);});}else box.innerHTML='<p class="subject-none">Nothing coming up 🎉</p>';
-        card.querySelector('.subject-open-button').onclick=()=>{if(typeof openSubjectPage==='function')openSubjectPage(subject.name);};
-        card.querySelector('.roadmap-button').onclick=()=>{if(typeof openSubjectRoadmap==='function')openSubjectRoadmap(subject.name);};
-        card.querySelector('.edit-subject-button').onclick=()=>{if(typeof editSubject==='function')editSubject(realIndex);};
+        if(upcoming.length){
+            box.innerHTML='<h3>Coming up</h3>';
+            upcoming.forEach(task=>{
+                const row=document.createElement('div');
+                row.className='subject-task';
+                row.innerHTML='<span></span><div><strong></strong><small></small></div>';
+                row.querySelector('strong').textContent=task.name||'Untitled task';
+                row.querySelector('small').textContent=task.dueDate;
+                row.querySelector('span').textContent=task.type||'Task';
+                row.onclick=()=>{if(typeof openEditTaskModal==='function')openEditTaskModal(task.id)};
+                box.appendChild(row);
+            });
+        } else box.innerHTML='<p class="subject-none">Nothing coming up 🎉</p>';
+
+        // The subject itself is clickable and opens its detail page.
+        card.style.cursor='pointer';
+        card.onclick=(event)=>{
+            if(event.target.closest('button') || event.target.closest('.subject-task')) return;
+            if(typeof openSubjectPage==='function') openSubjectPage(subject.name);
+        };
+
+        card.querySelector('.subject-open-button').onclick=(event)=>{
+            event.stopPropagation();
+            if(typeof openSubjectPage==='function')openSubjectPage(subject.name);
+        };
+        card.querySelector('.roadmap-button').onclick=(event)=>{
+            event.stopPropagation();
+            if(typeof openSubjectRoadmap==='function')openSubjectRoadmap(subject.name);
+        };
+        card.querySelector('.edit-subject-button').onclick=(event)=>{
+            event.stopPropagation();
+            if(typeof editSubject==='function')editSubject(realIndex);
+        };
         grid.appendChild(card);
     });
 }
