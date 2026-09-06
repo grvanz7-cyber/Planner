@@ -51,8 +51,10 @@ function showPage(page,updateHistory=true){
     grades:document.querySelector('#gradesPage'),
     settings:document.querySelector('#settingsPage')
   };
-  Object.values(pages).forEach(el=>{if(el)el.classList.add('page-hidden');});
-  if(pages[page])pages[page].classList.remove('page-hidden');
+  const detail=document.querySelector('#subjectDetailPage');
+  Object.values(pages).forEach(el=>{if(el){el.classList.add('page-hidden');el.style.setProperty('display','none','important');}});
+  if(detail){detail.classList.add('page-hidden');detail.style.setProperty('display','none','important');}
+  if(pages[page]){pages[page].classList.remove('page-hidden');pages[page].style.removeProperty('display');}
   setActiveNav(page);
   try{
     if(page==='settings'){
@@ -87,8 +89,17 @@ function setCurrentDate(){
 }
 
 function loadSavedPage(){
-  const hash=window.location.hash.replace('#','').toLowerCase();
-  showPage(VALID_PAGES.includes(hash)?hash:'dashboard',false);
+  const rawHash=window.location.hash.replace(/^#/,'');
+  const lower=rawHash.toLowerCase();
+  if(lower.startsWith('subject/')){
+    const subjectName=decodeURIComponent(rawHash.slice(8));
+    if(subjectName&&typeof window.openSubjectPage==='function'){
+      window.openSubjectPage(subjectName,false);
+      setCurrentDate();
+      return;
+    }
+  }
+  showPage(VALID_PAGES.includes(lower)?lower:'dashboard',false);
   setCurrentDate();
 }
 
