@@ -9,7 +9,8 @@
     const DEFAULTS = [
         { id: 'today', label: 'Today', visible: true },
         { id: 'upcoming', label: 'Upcoming', visible: true },
-        { id: 'stats', label: 'Overview', visible: true }
+        { id: 'stats', label: 'Overview', visible: true },
+        { id: 'school', label: 'School Overview', visible: true }
     ];
 
     function getConfig(){
@@ -39,7 +40,8 @@
         return {
             today: dashboard.querySelector('.today-tasks')?.closest('.card'),
             upcoming: dashboard.querySelector('.upcoming-tasks')?.closest('.card'),
-            stats: dashboard.querySelector('#dashboardStatsCard')
+            stats: dashboard.querySelector('#dashboardStatsCard'),
+            school: dashboard.querySelector('#dashboardSchoolWidget')
         };
     }
 
@@ -176,8 +178,8 @@
     document.addEventListener('DOMContentLoaded', boot, {once:true});
     window.addEventListener('load', boot, {once:true});
 
-    // The statistics widget is created after some dashboard renders, so make
-    // sure the saved layout is reapplied after those renders.
+    // The statistics and school widgets are created after some dashboard
+    // renders, so make sure the saved layout is reapplied after interactions.
     document.addEventListener('click', () => setTimeout(applyLayout, 0));
     document.addEventListener('change', () => setTimeout(applyLayout, 0));
 })();
