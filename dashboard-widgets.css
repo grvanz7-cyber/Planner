@@ -28,22 +28,19 @@
 .dashboard-widget-resize-handle:not([hidden]){display:block!important}.dashboard-widget-resize-handle[hidden]{display:none!important}
 .dashboard-widget-resize-handle::before,.dashboard-widget-resize-handle::after{content:'';position:absolute;right:5px;bottom:5px;border-right:2px solid currentColor;border-bottom:2px solid currentColor}.dashboard-widget-resize-handle::before{width:11px;height:11px}.dashboard-widget-resize-handle::after{width:6px;height:6px}.dashboard-widget-resize-handle:hover{opacity:1}.dashboard-widget-resizing{user-select:none!important;transition:none!important}.dashboard-widget-resizing .dashboard-widget-resize-handle{opacity:1}
 
-/*
-   Widget sizing
-   ----------------
-   Widgets use width + minimum height rather than a fixed-height grid slot.
-   This prevents longer widget content from being clipped while still giving
-   the resize control predictable four layouts:
-     small          = 1 column x compact
-     medium         = 2 columns x normal
-     medium vertical= 1 column x tall
-     large          = 2 columns x tall
+/* ========================================
+   DASHBOARD GRID
+   ========================================
+   The grid deliberately uses auto-sized rows. Dense packing lets a small
+   widget fill an available half-width space instead of leaving a large hole
+   beside a full-width widget.
 */
 #dashboardPage .dashboard-grid{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
     grid-auto-rows:auto;
-    align-items:stretch;
+    grid-auto-flow:row dense;
+    align-items:start;
     gap:20px;
 }
 #dashboardPage .dashboard-grid>.card{
@@ -52,7 +49,7 @@
     width:auto;
     height:auto!important;
     min-height:0;
-    align-self:stretch;
+    align-self:start;
     overflow:visible;
 }
 #dashboardPage .dashboard-grid>.card.dashboard-widget-small{
@@ -130,14 +127,14 @@
 #dashboardPage .dashboard-grid>.dashboard-widget-medium .dashboard-subject-row:nth-child(n+5){display:none}
 #dashboardPage .dashboard-grid>.dashboard-widget-medium .dashboard-subject-deadlines{display:none}
 #dashboardPage .dashboard-grid>.dashboard-widget-medium .study-load-subject:nth-child(n+6){display:none}
-#dashboardPage .dashboard-grid>.dashboard-widget-medium .dashboard-school-list>*:nth-child(n+5){display:none}
+#dashboardPage .dashboard-grid>.dashboard-widget-medium .school-widget-list>*:nth-child(n+5){display:none}
 #dashboardPage .dashboard-grid>.dashboard-widget-medium .today-tasks-list,#dashboardPage .dashboard-grid>.dashboard-widget-medium .upcoming-tasks-list{max-height:135px;overflow:auto}
 
 /* Tall medium presentation. */
 #dashboardPage .dashboard-grid>.dashboard-widget-medium-vertical .dashboard-widget-heading{margin-bottom:12px!important}
 #dashboardPage .dashboard-grid>.dashboard-widget-medium-vertical .dashboard-subject-row:nth-child(n+7){display:none}
 #dashboardPage .dashboard-grid>.dashboard-widget-medium-vertical .study-load-subject:nth-child(n+8){display:none}
-#dashboardPage .dashboard-grid>.dashboard-widget-medium-vertical .dashboard-school-list>*:nth-child(n+7){display:none}
+#dashboardPage .dashboard-grid>.dashboard-widget-medium-vertical .school-widget-list>*:nth-child(n+7){display:none}
 #dashboardPage .dashboard-grid>.dashboard-widget-medium-vertical .today-tasks-list,#dashboardPage .dashboard-grid>.dashboard-widget-medium-vertical .upcoming-tasks-list{max-height:270px;overflow:auto}
 
 /* Large presentation. */
@@ -153,7 +150,7 @@
     .dashboard-add-widget-wrap{flex:1}
     .dashboard-widget-action{width:100%}
     .dashboard-move-toggle{width:100%;justify-content:center}
-    #dashboardPage .dashboard-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:16px}
+    #dashboardPage .dashboard-grid{grid-template-columns:1fr;grid-auto-rows:auto;grid-auto-flow:row;gap:16px}
     #dashboardPage .dashboard-grid>.card.dashboard-widget-small,
     #dashboardPage .dashboard-grid>.card.dashboard-widget-medium,
     #dashboardPage .dashboard-grid>.card.dashboard-widget-medium-vertical,
