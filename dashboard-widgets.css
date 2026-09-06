@@ -31,16 +31,15 @@
 /* ========================================
    DASHBOARD GRID
    ========================================
-   The grid deliberately uses auto-sized rows. Dense packing lets a small
-   widget fill an available half-width space instead of leaving a large hole
-   beside a full-width widget.
+   Widgets use width + minimum height rather than a fixed-height grid slot.
+   This preserves the original four resize layouts while preventing longer
+   widget content from being clipped.
 */
 #dashboardPage .dashboard-grid{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
     grid-auto-rows:auto;
-    grid-auto-flow:row dense;
-    align-items:start;
+    align-items:stretch;
     gap:20px;
 }
 #dashboardPage .dashboard-grid>.card{
@@ -49,7 +48,7 @@
     width:auto;
     height:auto!important;
     min-height:0;
-    align-self:start;
+    align-self:stretch;
     overflow:visible;
 }
 #dashboardPage .dashboard-grid>.card.dashboard-widget-small{
@@ -150,7 +149,7 @@
     .dashboard-add-widget-wrap{flex:1}
     .dashboard-widget-action{width:100%}
     .dashboard-move-toggle{width:100%;justify-content:center}
-    #dashboardPage .dashboard-grid{grid-template-columns:1fr;grid-auto-rows:auto;grid-auto-flow:row;gap:16px}
+    #dashboardPage .dashboard-grid{grid-template-columns:1fr;grid-auto-rows:auto;gap:16px}
     #dashboardPage .dashboard-grid>.card.dashboard-widget-small,
     #dashboardPage .dashboard-grid>.card.dashboard-widget-medium,
     #dashboardPage .dashboard-grid>.card.dashboard-widget-medium-vertical,
