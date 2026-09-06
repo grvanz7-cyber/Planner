@@ -1,0 +1,95 @@
+/* ========================================
+   DASHBOARD WIDGET SYSTEM
+   ======================================== */
+
+#dashboardPage > .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.dashboard-customize-button {
+    border: 1px solid var(--border-color, #d1d5db);
+    background: var(--card-background, #fff);
+    color: var(--text-color, #374151);
+    border-radius: 10px;
+    padding: 9px 13px;
+    font: inherit;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.dashboard-customize-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,.08);
+}
+
+.dashboard-widget-hidden {
+    display: none !important;
+}
+
+.dashboard-widget-modal {
+    max-width: 520px;
+}
+
+.widget-modal-help {
+    margin: -4px 0 16px;
+    opacity: .72;
+    line-height: 1.45;
+}
+
+.dashboard-widget-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dashboard-widget-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 13px;
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: 10px;
+    background: var(--card-background, #fff);
+    cursor: grab;
+    user-select: none;
+}
+
+.dashboard-widget-option:active {
+    cursor: grabbing;
+}
+
+.dashboard-widget-option.dragging {
+    opacity: .5;
+}
+
+.dashboard-widget-option label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.dashboard-widget-option input {
+    width: 17px;
+    height: 17px;
+}
+
+.widget-drag-handle {
+    font-size: 1.15rem;
+    opacity: .45;
+}
+
+@media (max-width: 640px) {
+    #dashboardPage > .header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-customize-button {
+        align-self: stretch;
+    }
+}
