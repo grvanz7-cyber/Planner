@@ -33,15 +33,19 @@
         page=document.createElement('div');page.id='subjectDetailPage';page.className='page-hidden';
         page.innerHTML=`<header class="header subject-detail-header"><button class="subject-back-button" id="subjectDetailBack">← Subjects</button><div class="subject-detail-title"><div class="subject-detail-icon" id="subjectDetailIcon"></div><div><h1 id="subjectDetailName"></h1><p id="subjectDetailMeta"></p></div></div><button class="save-button" id="subjectDetailEdit">Edit Subject</button></header><div class="subject-detail-grid"><section class="card subject-detail-roadmap"><div class="subject-section-heading"><div><h2>Roadmap</h2><p>Units and lessons for this subject.</p></div><button class="small-button" id="subjectDetailRoadmap">Manage</button></div><div id="subjectDetailUnits"></div></section><section class="card subject-detail-grades"><div class="subject-section-heading"><div><h2>Grades</h2><p>Your current performance in this subject.</p></div></div><div id="subjectDetailGrades"></div></section><section class="card"><div class="subject-section-heading"><div><h2>Upcoming</h2><p>What is coming up next.</p></div></div><div id="subjectDetailUpcoming"></div></section><section class="card"><div class="subject-section-heading"><div><h2>Active Work</h2><p>Everything currently in progress.</p></div></div><div id="subjectDetailActive"></div></section><section class="card"><div class="subject-section-heading"><div><h2>Completed</h2><p>Recently finished work.</p></div></div><div id="subjectDetailCompleted"></div></section></div>`;
         const main=document.querySelector('main.main')||document.querySelector('.main');main.appendChild(page);
-        page.querySelector('#subjectDetailBack').onclick=()=>{page.classList.add('page-hidden');const sp=document.getElementById('subjectsPage');if(sp)sp.classList.remove('page-hidden');};
+        page.querySelector('#subjectDetailBack').onclick=()=>{page.classList.add('page-hidden');const sp=document.getElementById('subjectsPage');if(sp)sp.classList.remove('page-hidden');if(typeof setActiveNav==='function')setActiveNav('subjects');history.replaceState(null,'','#subjects');};
         page.querySelector('#subjectDetailRoadmap').onclick=()=>{const s=page.dataset.subject;if(typeof openSubjectRoadmap==='function')openSubjectRoadmap(s);};
         page.querySelector('#subjectDetailEdit').onclick=()=>{const s=subjectByName(page.dataset.subject);if(!s)return;const i=subjects().indexOf(s);if(typeof editSubject==='function')editSubject(i);};
         return page;
     }
+    function hideOtherPages(){
+        ['dashboardPage','calendarPage','tasksPage','subjectsPage','assignmentsPage','testsExamsPage','gradesPage','settingsPage'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('page-hidden');});
+    }
     function list(container,items,empty){container.innerHTML='';if(!items.length){container.innerHTML=`<div class="subject-detail-empty">${empty}</div>`;return;}items.forEach(t=>{const row=document.createElement('div');row.className='subject-detail-task';row.innerHTML=`<div class="subject-detail-task-type">${esc(t.type||'Task')}</div><div class="subject-detail-task-main"><strong>${esc(t.name||'Untitled task')}</strong><small>${esc(formatDue(t.dueDate))}${t.priority&&t.priority!=='Normal'?' · '+esc(t.priority):''}</small></div>`;row.onclick=()=>{if(typeof openEditTaskModal==='function')openEditTaskModal(t.id);};container.appendChild(row);});}
     function render(name){
         const s=subjectByName(name);if(!s)return;
-        const page=ensurePage();page.dataset.subject=s.name;page.classList.remove('page-hidden');
+        const page=ensurePage();hideOtherPages();page.dataset.subject=s.name;page.classList.remove('page-hidden');
+        if(typeof setActiveNav==='function')setActiveNav('subjects');history.replaceState(null,'',`#subjects`);
         const sp=document.getElementById('subjectsPage');if(sp)sp.classList.add('page-hidden');
         page.querySelector('#subjectDetailIcon').textContent=s.emoji||'📚';page.querySelector('#subjectDetailName').textContent=s.name;page.querySelector('#subjectDetailMeta').textContent=`${s.studyMode||'Study'} · ${s.active===false?'Inactive':'Active'}`;
         const roadmap=Array.isArray(s.roadmap)?s.roadmap:[];const units=page.querySelector('#subjectDetailUnits');units.innerHTML='';
