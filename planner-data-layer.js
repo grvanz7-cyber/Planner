@@ -1,25 +1,29 @@
 // ========================================
 // PLANNER DATA LAYER
 // ========================================
-// One shared interface for planner data. The current storage backend is
-// localStorage, but pages/widgets should use PlannerDB instead of inventing
-// their own data sources. This makes the storage backend replaceable later.
+// Shared interface over the planner's EXISTING global plannerData object.
 (function installPlannerDataLayer(){
     const STORAGE_KEY='plannerData';
     const CHANGE_EVENT='planner-data-changed';
 
+    function getData(){
+        try{
+            if(typeof plannerData!=='undefined' && plannerData && typeof plannerData==='object') return plannerData;
+        }catch(e){}
+        return null;
+    }
+
     function ensureSchema(){
-        if(typeof window.plannerData!=='object' || !window.plannerData || Array.isArray(window.plannerData)){
-            window.plannerData={};
-        }
-        if(!window.plannerData.settings || typeof window.plannerData.settings!=='object' || Array.isArray(window.plannerData.settings))window.plannerData.settings={};
-        if(!Array.isArray(window.plannerData.settings.subjects))window.plannerData.settings.subjects=[];
-        if(!Array.isArray(window.plannerData.settings.types))window.plannerData.settings.types=[];
-        if(!Array.isArray(window.plannerData.tasks))window.plannerData.tasks=[];
-        if(!Array.isArray(window.plannerData.grades))window.plannerData.grades=[];
-        if(!Array.isArray(window.plannerData.gradeAssessments))window.plannerData.gradeAssessments=[];
-        if(!window.plannerData.gradeSettings || typeof window.plannerData.gradeSettings!=='object' || Array.isArray(window.plannerData.gradeSettings))window.plannerData.gradeSettings={};
-        return window.plannerData;
+        const data=getData();
+        if(!data) return null;
+        if(!data.settings || typeof data.settings!=='object' || Array.isArray(data.settings)) data.settings={};
+        if(!Array.isArray(data.settings.subjects)) data.settings.subjects=[];
+        if(!Array.isArray(data.settings.types)) data.settings.types=[];
+        if(!Array.isArray(data.tasks)) data.tasks=[];
+        if(!Array.isArray(data.grades)) data.grades=[];
+        if(!Array.isArray(data.gradeAssessments)) data.gradeAssessments=[];
+        if(!data.gradeSettings || typeof data.gradeSettings!=='object' || Array.isArray(data.gradeSettings)) data.gradeSettings={};
+        return data;
     }
 
     function emit(reason){
@@ -28,25 +32,23 @@
     }
 
     function save(reason){
-        ensureSchema();
-        if(typeof window.savePlannerData==='function'){
-            const original=window.savePlannerData.__original;
-            if(typeof original==='function')original.call(window);
-            else window.savePlannerData();
-        }else{
-            localStorage.setItem(STORAGE_KEY,JSON.stringify(window.plannerData));
-            localStorage.setItem('plannerTasks',JSON.stringify(window.plannerData.tasks));
+        const data=ensureSchema();
+        if(!data)return;
+        if(typeof window.savePlannerData==='function') window.savePlannerData();
+        else{
+            localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+            localStorage.setItem('plannerTasks',JSON.stringify(data.tasks));
         }
         emit(reason||'save');
     }
 
     const PlannerDB={
-        version:1,
+        version:2,
         events:{changed:CHANGE_EVENT},
         getData(){return ensureSchema();},
-        getTasks(){return ensureSchema().tasks;},
+        getTasks(){return ensureSchema()?.tasks||[];},
         getSubjects(options={}){
-            const subjects=ensureSchema().settings.subjects;
+            const subjects=ensureSchema()?.settings?.subjects||[];
             return options.activeOnly?subjects.filter(s=>s&&s.active!==false):subjects;
         },
         getTask(id){return this.getTasks().find(t=>String(t?.id)===String(id))||null;},
@@ -60,18 +62,15 @@
         },
         getAssignments(){return this.getTasks().filter(t=>String(t?.type||'').toLowerCase()==='assignment');},
         getAssessments(){return this.getTasks().filter(t=>['quiz','test','exam'].includes(String(t?.type||'').toLowerCase()));},
-        getGrades(){return ensureSchema().grades;},
-        getGradeAssessments(){return ensureSchema().gradeAssessments;},
-        getGradeSettings(){return ensureSchema().gradeSettings;},
+        getGrades(){return ensureSchema()?.grades||[];},
+        getGradeAssessments(){return ensureSchema()?.gradeAssessments||[];},
+        getGradeSettings(){return ensureSchema()?.gradeSettings||{};},
         save,
         notify(reason){emit(reason||'changed');}
     };
 
-    ensureSchema();
     window.PlannerDB=PlannerDB;
 
-    // Existing pages still call savePlannerData() directly. Wrap it once so
-    // those existing mutations also notify the shared data layer.
     if(typeof window.savePlannerData==='function'&&!window.savePlannerData.__plannerDataLayerWrapped){
         const originalSave=window.savePlannerData;
         const wrappedSave=function(){
@@ -85,12 +84,7 @@
     }
 
     window.addEventListener('storage',event=>{
-        if(event.key!==STORAGE_KEY)return;
-        try{
-            const parsed=event.newValue?JSON.parse(event.newValue):null;
-            if(parsed&&typeof parsed==='object')window.plannerData=parsed;
-            ensureSchema();
-            emit('storage');
-        }catch(e){}
+        if(event.key!==STORAGE_KEY && event.key!=='plannerTasks')return;
+        emit('storage');
     });
 })();
