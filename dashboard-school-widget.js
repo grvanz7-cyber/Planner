@@ -3,6 +3,7 @@
 // ========================================
 (function installDashboardSchoolWidget(){
   const WIDGET_ID='dashboardSchoolWidget';
+  const STYLE_ID='dashboardSchoolWidgetStyles';
   function getData(){
     const store=window.PlannerDB;
     if(store)return {assignments:store.getAssignments(),assessments:store.getAssessments()};
@@ -20,6 +21,10 @@
     const d=new Date(String(value).slice(0,10)+'T00:00:00');
     return Number.isNaN(d.getTime())?'No date':d.toLocaleDateString(undefined,{month:'short',day:'numeric'});
   }
+  function ensureStyles(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');style.id=STYLE_ID;style.textContent=`.dashboard-school-widget{grid-column:1 / -1}.dashboard-school-widget .dashboard-widget-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.dashboard-school-widget .dashboard-widget-heading h2{margin:0 0 4px}.dashboard-school-widget .dashboard-widget-heading p{margin:0;color:var(--muted-text,#777);font-size:13px}.dashboard-school-widget .dashboard-widget-link{border:0;background:none;color:var(--planner-accent,#304b8a);font:inherit;font-weight:600;cursor:pointer;padding:4px 0}.school-widget-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.school-widget-stats div{padding:12px;border-radius:12px;background:var(--planner-accent-soft,rgba(48,75,138,.08));display:grid;gap:2px}.school-widget-stats strong{font-size:21px}.school-widget-stats span{font-size:12px;color:var(--muted-text,#777)}.school-widget-list{display:grid;gap:7px}.school-widget-item{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:10px 12px;border:1px solid var(--border-color,#e6e1da);border-radius:11px;background:var(--card-bg,#fff);font:inherit;color:inherit;text-align:left;cursor:pointer}.school-widget-item:hover{background:var(--hover-bg,#f4f1ed)}.school-widget-item.overdue{border-left:3px solid #dc2626}.school-widget-item-main{display:grid;gap:2px;min-width:0}.school-widget-item-main strong,.school-widget-item-main small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.school-widget-item-main small{font-size:12px;color:var(--muted-text,#777)}.school-widget-item-date{font-size:12px;color:var(--muted-text,#777);white-space:nowrap}.school-widget-item.overdue .school-widget-item-date{color:#dc2626;font-weight:600}.school-widget-empty{margin:8px 0;color:var(--muted-text,#777);text-align:center}@media(max-width:700px){.dashboard-school-widget{grid-column:auto}.school-widget-stats{grid-template-columns:1fr 1fr}.school-widget-stats div:last-child{grid-column:1 / -1}}`;document.head.appendChild(style);
+  }
   function ensureWidget(){
     const grid=document.querySelector('#dashboardPage .dashboard-grid');if(!grid||document.getElementById(WIDGET_ID))return;
     const card=document.createElement('section');card.className='card dashboard-school-widget';card.id=WIDGET_ID;card.dataset.dashboardWidget='school';
@@ -29,7 +34,7 @@
     document.dispatchEvent(new Event('dashboard-widget-added'));
   }
   function render(){
-    ensureWidget();const widget=document.getElementById(WIDGET_ID);if(!widget)return;
+    ensureStyles();ensureWidget();const widget=document.getElementById(WIDGET_ID);if(!widget)return;
     const {assignments,assessments}=getData();const school=[...assignments,...assessments].filter(t=>state(t)!=='completed');
     const overdue=school.filter(t=>state(t)==='overdue');const upcoming=school.filter(t=>state(t)==='upcoming').sort((a,b)=>String(a.dueDate||'9999-12-31').localeCompare(String(b.dueDate||'9999-12-31')));
     const list=[...overdue.sort((a,b)=>String(a.dueDate||'').localeCompare(String(b.dueDate||''))),...upcoming].slice(0,5);
