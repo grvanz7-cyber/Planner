@@ -11,6 +11,7 @@
         const card=document.createElement('section');card.className='card dashboard-subject-widget';card.id=WIDGET_ID;
         card.innerHTML='<div class="dashboard-widget-heading"><div><h2>Subject Snapshot</h2><p>What is coming up in each subject</p></div><button type="button" class="dashboard-widget-link">Subjects</button></div><div class="dashboard-subject-list"></div>';
         card.querySelector('.dashboard-widget-link').onclick=()=>{if(typeof showPage==='function')showPage('subjects');};grid.appendChild(card);
+        document.dispatchEvent(new Event('dashboard-widget-added'));
     }
     function render(){
         ensure();const list=document.querySelector('#'+WIDGET_ID+' .dashboard-subject-list');if(!list)return;const{subjects,tasks}=data();const active=subjects.filter(s=>s&&s.active!==false);list.innerHTML='';
