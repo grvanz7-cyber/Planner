@@ -23,7 +23,6 @@
 .dashboard-widget-dragging{opacity:.48;transform:scale(.995);cursor:grabbing!important;box-shadow:0 14px 32px rgba(0,0,0,.16)!important}
 .dashboard-widget-placeholder{border:2px dashed var(--planner-accent,#304b8a);border-radius:13px;background:var(--hover-bg,#f4f1ed);opacity:.55;box-sizing:border-box;pointer-events:none}
 
-/* Every widget owns its controls. They sit inside the widget, not the page. */
 .dashboard-widget-delete{position:absolute!important;top:8px!important;right:8px!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;margin:0!important;border:0!important;border-radius:50%!important;background:var(--card-background,#fff)!important;color:var(--muted-text,#777)!important;font-family:inherit!important;font-size:21px!important;line-height:28px!important;padding:0!important;align-items:center!important;justify-content:center!important;cursor:pointer!important;z-index:50!important;box-shadow:0 2px 8px rgba(0,0,0,.14)!important;pointer-events:auto!important}
 .dashboard-widget-delete:not([hidden]){display:flex!important}
 .dashboard-widget-delete:hover{background:#fef2f2!important;color:#b91c1c!important}
@@ -38,17 +37,19 @@
 .dashboard-widget-resizing{user-select:none!important;transition:none!important}
 .dashboard-widget-resizing .dashboard-widget-resize-handle{opacity:1}
 
-/* Invisible 2-column dashboard grid: 1, 2-horizontal, 2-vertical, or 4 blocks. */
-.dashboard-widget-small{grid-column:span 1;min-height:160px;overflow:hidden}
-.dashboard-widget-medium{grid-column:span 2;min-height:190px}
-.dashboard-widget-medium-vertical{grid-column:span 1;grid-row:span 2;min-height:350px}
-.dashboard-widget-large{grid-column:span 2;grid-row:span 2;min-height:350px}
+/* The dashboard uses equal invisible slots. A slot is the height of one small widget. */
+#dashboardPage .dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:160px;align-items:stretch}
+#dashboardPage .dashboard-grid>.card{box-sizing:border-box;min-width:0}
+.dashboard-widget-small{grid-column:span 1;grid-row:span 1;min-height:160px;height:160px;overflow:hidden}
+.dashboard-widget-medium{grid-column:span 2;grid-row:span 1;min-height:160px;height:160px;overflow:hidden}
+.dashboard-widget-medium-vertical{grid-column:span 1;grid-row:span 2;min-height:320px;height:320px;overflow:hidden}
+.dashboard-widget-large{grid-column:span 2;grid-row:span 2;min-height:320px;height:320px;overflow:hidden}
 
-/* Information density follows the widget's occupied space. */
+/* Information density follows the occupied slot area. */
 .dashboard-widget-small .today-tasks-list,.dashboard-widget-small .upcoming-tasks-list{max-height:62px;overflow:hidden}
-.dashboard-widget-medium .today-tasks-list,.dashboard-widget-medium .upcoming-tasks-list{max-height:190px;overflow:auto}
-.dashboard-widget-medium-vertical .today-tasks-list,.dashboard-widget-medium-vertical .upcoming-tasks-list{max-height:320px;overflow:auto}
-.dashboard-widget-large .today-tasks-list,.dashboard-widget-large .upcoming-tasks-list{max-height:390px;overflow:auto}
+.dashboard-widget-medium .today-tasks-list,.dashboard-widget-medium .upcoming-tasks-list{max-height:130px;overflow:auto}
+.dashboard-widget-medium-vertical .today-tasks-list,.dashboard-widget-medium-vertical .upcoming-tasks-list{max-height:290px;overflow:auto}
+.dashboard-widget-large .today-tasks-list,.dashboard-widget-large .upcoming-tasks-list{max-height:290px;overflow:auto}
 .dashboard-widget-small .dashboard-subject-list{grid-template-columns:1fr}
 .dashboard-widget-small .dashboard-subject-row:nth-child(n+3),.dashboard-widget-small .dashboard-subject-deadlines,.dashboard-widget-small .dashboard-widget-heading p{display:none}
 .dashboard-widget-medium .dashboard-subject-row:nth-child(n+5){display:none}
@@ -64,17 +65,18 @@
 .dashboard-widget-medium .dashboard-stats-breakdown,.dashboard-widget-medium-vertical .dashboard-stats-breakdown,.dashboard-widget-large .dashboard-stats-breakdown{display:block}
 
 /* Legacy size classes retained so older saved layouts do not break. */
-.dashboard-widget-size-normal{grid-column:span 1;min-height:180px}
-.dashboard-widget-size-wide{grid-column:1/-1;min-height:180px}
-.dashboard-widget-size-tall{grid-column:span 1;min-height:380px}
-.dashboard-widget-size-large{grid-column:1/-1;min-height:380px}
+.dashboard-widget-size-normal{grid-column:span 1;min-height:160px;height:160px}
+.dashboard-widget-size-wide{grid-column:span 2;min-height:160px;height:160px}
+.dashboard-widget-size-tall{grid-column:span 1;grid-row:span 2;min-height:320px;height:320px}
+.dashboard-widget-size-large{grid-column:span 2;grid-row:span 2;min-height:320px;height:320px}
 
 @media(max-width:700px){
 .dashboard-widget-controls{width:100%;flex-wrap:wrap}
 .dashboard-add-widget-wrap{flex:1}
 .dashboard-widget-action{width:100%}
 .dashboard-move-toggle{width:100%;justify-content:center}
-.dashboard-widget-small,.dashboard-widget-medium,.dashboard-widget-medium-vertical,.dashboard-widget-large{grid-column:1/-1;grid-row:auto;min-height:0}
+#dashboardPage .dashboard-grid{grid-template-columns:1fr;grid-auto-rows:auto}
+.dashboard-widget-small,.dashboard-widget-medium,.dashboard-widget-medium-vertical,.dashboard-widget-large{grid-column:1;grid-row:auto;min-height:0;height:auto}
 .dashboard-add-widget-popover{left:0;right:auto;width:100%;box-sizing:border-box}
 .dashboard-widget-delete{top:5px!important;right:5px!important}
 }
