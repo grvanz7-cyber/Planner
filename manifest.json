@@ -2,9 +2,18 @@
   "name": "Planner",
   "short_name": "Planner",
   "start_url": "./#dashboard",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#f6f1e8",
   "theme_color": "#687b5e",
   "description": "A personal planner for tasks, schoolwork, grades, and study.",
-  "icons": []
+  "icons": [
+    {
+      "src": "./icons/planner-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
