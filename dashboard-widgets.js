@@ -10,7 +10,8 @@
         { id: 'today', label: 'Today', visible: true },
         { id: 'upcoming', label: 'Upcoming', visible: true },
         { id: 'stats', label: 'Overview', visible: true },
-        { id: 'school', label: 'School Overview', visible: true }
+        { id: 'school', label: 'School Overview', visible: true },
+        { id: 'subjects', label: 'Subject Snapshot', visible: true }
     ];
 
     function getConfig(){
@@ -41,7 +42,8 @@
             today: dashboard.querySelector('.today-tasks')?.closest('.card'),
             upcoming: dashboard.querySelector('.upcoming-tasks')?.closest('.card'),
             stats: dashboard.querySelector('#dashboardStatsCard'),
-            school: dashboard.querySelector('#dashboardSchoolWidget')
+            school: dashboard.querySelector('#dashboardSchoolWidget'),
+            subjects: dashboard.querySelector('#dashboardSubjectSnapshotWidget')
         };
     }
 
@@ -178,8 +180,8 @@
     document.addEventListener('DOMContentLoaded', boot, {once:true});
     window.addEventListener('load', boot, {once:true});
 
-    // The statistics and school widgets are created after some dashboard
-    // renders, so make sure the saved layout is reapplied after interactions.
+    // Widgets are created after some dashboard renders, so reapply the saved
+    // layout after user interactions without using a constant polling loop.
     document.addEventListener('click', () => setTimeout(applyLayout, 0));
     document.addEventListener('change', () => setTimeout(applyLayout, 0));
 })();
