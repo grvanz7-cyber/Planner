@@ -2,6 +2,15 @@
 // PWA
 // ========================================
 
+// Load desktop feature augmentations without changing the existing index
+// script order.
+(function(){
+  const script=document.createElement('script');
+  script.src='./grade-entry-actions.js?v=20260906';
+  script.defer=true;
+  document.head.appendChild(script);
+})();
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
