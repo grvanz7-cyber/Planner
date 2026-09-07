@@ -5,7 +5,11 @@
 // Load desktop feature augmentations without changing the existing index
 // script order.
 (function(){
-  const scripts=['./grade-entry-actions.js?v=20260906','./grade-what-if.js?v=20260907'];
+  const style=document.createElement('link');
+  style.rel='stylesheet';
+  style.href='./study-page.css?v=20260907';
+  document.head.appendChild(style);
+  const scripts=['./grade-entry-actions.js?v=20260906','./grade-what-if.js?v=20260907','./study-page.js?v=20260907'];
   scripts.forEach(src=>{const script=document.createElement('script');script.src=src;script.defer=true;document.head.appendChild(script);});
 })();
 
