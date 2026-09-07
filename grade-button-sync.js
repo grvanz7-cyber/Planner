@@ -26,10 +26,31 @@
       button.textContent=hasGrade(task)?'Edit Grade':'Record Grade';
     });
   }
+  function wrapRender(name){
+    const original=window[name];
+    if(typeof original!=='function'||original.__gradeButtonWrapped)return;
+    const wrapped=function(){
+      const result=original.apply(this,arguments);
+      sync();
+      return result;
+    };
+    wrapped.__gradeButtonWrapped=true;
+    wrapped.__original=original;
+    window[name]=wrapped;
+  }
   window.gradeExistsForTask=hasGrade;
   window.syncGradeButtons=sync;
+  wrapRender('renderAssignments');
+  wrapRender('renderAssessments');
   document.addEventListener('planner-data-changed',sync);
   document.addEventListener('DOMContentLoaded',sync);
   window.addEventListener('load',sync);
-  setInterval(sync,300);
+  const observer=new MutationObserver(()=>sync());
+  function observe(){
+    ['assignmentsList','assessmentsList'].forEach(id=>{const node=document.getElementById(id);if(node&&!node.__gradeButtonObserver){observer.observe(node,{childList:true,subtree:true});node.__gradeButtonObserver=true;}});
+    sync();
+  }
+  document.addEventListener('DOMContentLoaded',observe);
+  window.addEventListener('load',observe);
+  setInterval(()=>{wrapRender('renderAssignments');wrapRender('renderAssessments');observe();},500);
 })();
