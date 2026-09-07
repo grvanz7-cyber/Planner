@@ -34,10 +34,13 @@ function setActiveNav(page){document.querySelectorAll('.nav-item').forEach(item=
 function getSubjectHash(){const raw=window.location.hash.replace(/^#/,'');return raw.toLowerCase().startsWith('subject/')?raw.slice(8):null;}
 function restoreSubjectFromHash(){const encoded=getSubjectHash();if(encoded==null)return false;let subjectName='';try{subjectName=decodeURIComponent(encoded);}catch(e){return false;}if(!subjectName)return false;if(typeof window.openSubjectPage==='function'){window.openSubjectPage(subjectName,false);setCurrentDate();return true;}setTimeout(()=>{if(getSubjectHash()===encoded&&typeof window.openSubjectPage==='function'){window.openSubjectPage(subjectName,false);setCurrentDate();}},100);return true;}
 
-// Study owns its own page markup. Do not create a duplicate/older Study page here.
-// study-page.js creates the page after its script loads and navigation simply discovers it.
 function ensureStudyPage(){
-  if(typeof window.ensureStudyStudyPage==='function')window.ensureStudyStudyPage();
+  if(document.getElementById('studyPage'))return;
+  const main=document.querySelector('.main');if(!main)return;
+  const p=document.createElement('div');p.id='studyPage';p.className='page-hidden';
+  p.innerHTML='<header class="header study-page-header"><div><h1>Study</h1><p>Plan how you study, not just what you study.</p></div><button class="save-button" id="studyAddButton">+ New Study Set</button></header><div class="study-summary"><div class="study-stat"><strong id="studySetCount">0</strong><span>Study sets</span></div><div class="study-stat"><strong id="studyCardCount">0</strong><span>Items to study</span></div><div class="study-stat"><strong id="studyDueCount">0</strong><span>Due for review</span></div></div><section class="card study-library-card"><div class="study-library-header"><div><h2>Your Study Library</h2><p>Flashcards, notes, questions, and other study material.</p></div><select id="studySubjectFilter"><option value="">All subjects</option></select></div><div id="studySets" class="study-sets"></div></section>';
+  main.appendChild(p);
+  if(typeof window.openStudySetModal==='function')p.querySelector('#studyAddButton').onclick=window.openStudySetModal;
 }
 
 function ensureStudyNav(){
