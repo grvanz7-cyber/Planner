@@ -2,12 +2,12 @@
 // PWA
 // ========================================
 (function(){
-  ['study-page.css','study-plans.css','study-sessions.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260908'+i;document.head.appendChild(style);});
+  ['study-page.css','study-plans.css','study-sessions.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260909'+i;document.head.appendChild(style);});
 
   const scripts=[
     './grade-entry-actions.js?v=20260906',
     './grade-what-if.js?v=20260907',
-    './study-page.js?v=20260908',
+    './study-page.js?v=20260909',
     './study-import.js?v=20260907',
     './study-plans.js?v=20260907',
     './study-sessions.js?v=20260907'
@@ -28,7 +28,7 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./service-worker.js');
+      const registration = await navigator.serviceWorker.register('./service-worker.js?v=20260909');
       registration.addEventListener('updatefound', () => {
         const worker = registration.installing;
         if (!worker) return;
