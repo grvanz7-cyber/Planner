@@ -2,14 +2,15 @@
 // PWA
 // ========================================
 (function(){
-  ['study-page.css','study-plans.css','study-sessions.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260922'+i;document.head.appendChild(style);});
+  const VERSION='20260923';
+  ['study-page.css','study-plans.css','study-sessions.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v='+VERSION+i;document.head.appendChild(style);});
   const scripts=[
     './grade-entry-actions.js?v=20260906',
     './grade-what-if.js?v=20260907',
-    './study-page.js?v=20260922',
+    './study-page.js?v='+VERSION,
     './study-plans.js?v=20260912',
     './study-sessions.js?v=20260912',
-    './study-set-button-fix.js?v=20260922'
+    './study-set-button-fix.js?v='+VERSION
   ];
   scripts.forEach(src=>{
     const script=document.createElement('script');script.src=src;
@@ -17,4 +18,4 @@
     script.onerror=()=>console.warn('Planner script failed to load:',src);document.head.appendChild(script);
   });
 })();
-if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./service-worker.js?v=20260922');registration.addEventListener('updatefound',()=>{const worker=registration.installing;if(!worker)return;worker.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)console.info('A new Planner version is ready. Reload to update.');});});}catch(error){console.warn('Planner service worker registration failed:',error);}});}
+if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./service-worker.js?v=20260923');registration.update();registration.addEventListener('updatefound',()=>{const worker=registration.installing;if(!worker)return;worker.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)console.info('A new Planner version is ready. Reload to update.');});});}catch(error){console.warn('Planner service worker registration failed:',error);}});}
