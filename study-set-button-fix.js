@@ -31,22 +31,21 @@
   };
   const persist=()=>{
     const d=getData();
-    window.plannerData=d;
     try{
+      // Keep the top-level Planner variable and window reference pointing
+      // at the exact object we just changed.
+      plannerData=d;
+      window.plannerData=d;
+    }catch(e){window.plannerData=d;}
+    try{
+      localStorage.setItem(DATA_KEY,JSON.stringify(d));
+      if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
+      // Also run the Planner's normal save hook when available.
       if(typeof savePlannerData==='function')savePlannerData();
-      else if(window.PlannerDB&&typeof window.PlannerDB.save==='function')window.PlannerDB.save('study-set-create');
-      else{
-        localStorage.setItem(DATA_KEY,JSON.stringify(d));
-        if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
-      }
       return true;
     }catch(e){
       console.error('Study Set save failed:',e);
-      try{
-        localStorage.setItem(DATA_KEY,JSON.stringify(d));
-        if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
-        return true;
-      }catch(e2){return false;}
+      return false;
     }
   };
   const save=()=>{
@@ -55,11 +54,15 @@
     if(!subject)return alert('Please choose a subject.');
     const unit=getUnit(subject,unitId),topic=(unit?.lessons||[]).find(l=>String(l?.id)===String(topicId)),now=new Date().toISOString();
     d.studySets=Array.isArray(d.studySets)?d.studySets:[];
-    d.studySets.push({id:`S-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,subject,type:document.getElementById('studyFixType')?.value||'flashcards',unit:unit?.name||'',unitId:unit?.id||'',roadmapUnitId:unit?.id||'',topic:topic?.name||'',topicId:topic?.id||'',roadmapLessonId:topic?.id||'',description:document.getElementById('studyFixDescription')?.value.trim()||'',items:[],createdAt:now,updatedAt:now});
+    const set={id:`S-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,subject,type:document.getElementById('studyFixType')?.value||'flashcards',unit:unit?.name||'',unitId:unit?.id||'',roadmapUnitId:unit?.id||'',topic:topic?.name||'',topicId:topic?.id||'',roadmapLessonId:topic?.id||'',description:document.getElementById('studyFixDescription')?.value.trim()||'',items:[],createdAt:now,updatedAt:now};
+    d.studySets.push(set);
     if(!persist())return alert('The study set could not be saved. Please try again.');
     close();
     window.dispatchEvent(new Event('planner-data-changed'));
     if(typeof window.renderStudy==='function')window.renderStudy();
+    // Ensure the visible Study Library immediately reflects the exact object
+    // that was saved, even if another Study listener has just rendered.
+    requestAnimationFrame(()=>{if(typeof window.renderStudy==='function')window.renderStudy();});
   };
   const open=()=>{
     close();
