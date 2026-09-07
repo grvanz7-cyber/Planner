@@ -1,6 +1,5 @@
 // ========================================
 // GRADE INTERACTIONS
-// Safe delegated interactions for grades and assignments.
 // ========================================
 (function(){
   function el(id){return document.getElementById(id);}
@@ -42,8 +41,9 @@
     const close=()=>w.remove();el('gradeEditClose').onclick=close;el('gradeEditCancel').onclick=close;w.onclick=e=>{if(e.target===w)close();};
     el('gradeEditSave').onclick=()=>{
       const name=el('gradeEditName').value.trim(),wr=el('gradeEditWeight').value.trim();if(!name)return alert('Please enter a grade name.');const weight=wr===''?null:Number(wr);if(weight!==null&&(!Number.isFinite(weight)||weight<0||weight>100))return alert('Weight must be between 0 and 100.');
-      const updated=cats.map((c,i)=>{const input=el('gradeEditMark'+i);const parsed=parseMark(input.value,input.dataset.kind);if(!parsed)throw new Error(c.category);return{category:c.category,...parsed};});
-      try{g.name=name;g.subject=el('gradeEditSubject').value.trim();g.type=el('gradeEditType').value.trim()||'Other';g.weight=weight;g.portion=el('gradeEditPortion').value;g.notes=el('gradeEditNotes').value.trim();g.categories=updated;g.updatedAt=new Date().toISOString();}catch(e){return alert(`Please enter a valid mark for ${e.message}.`);}
+      let updated;
+      try{updated=cats.map((c,i)=>{const input=el('gradeEditMark'+i);const parsed=parseMark(input.value,input.dataset.kind);if(!parsed)throw new Error(c.category);return{category:c.category,...parsed};});}catch(e){return alert(`Please enter a valid mark for ${e.message}.`);}
+      g.name=name;g.subject=el('gradeEditSubject').value.trim();g.type=el('gradeEditType').value.trim()||'Other';g.weight=weight;g.portion=el('gradeEditPortion').value;g.notes=el('gradeEditNotes').value.trim();g.categories=updated;g.updatedAt=new Date().toISOString();
       if(typeof savePlannerData==='function')savePlannerData();close();if(typeof renderGrades==='function')renderGrades();if(typeof renderAssignments==='function')renderAssignments();document.dispatchEvent(new Event('planner-data-changed'));
     };
   }
@@ -55,20 +55,21 @@
     const subject=el('subjectDetailPage')?.dataset.subject||'';const name=row.querySelector('strong')?.textContent.trim()||'';
     return grades().find(g=>String(g.subject||'').toLowerCase()===subject.toLowerCase()&&String(g.name||'').trim()===name)||null;
   }
-  function syncAssignmentButtons(){
-    document.querySelectorAll('#assignmentsList .assignment-row').forEach(row=>{const id=row.dataset.taskId,button=row.querySelector('.record-grade-button');if(!id||!button)return;const g=grades().find(x=>x.taskId!=null&&String(x.taskId)===String(id));button.textContent=g?'Edit Grade':'Record Grade';button.classList.toggle('has-grade',!!g);});
-  }
-  function handleClick(e){
+  function handleGradeClick(e){
     const subject=e.target.closest('.grade-subject-title');if(subject){const section=subject.closest('.grade-subject');const name=section?.querySelector('h2')?.textContent.trim();if(name&&typeof openSubjectPage==='function')openSubjectPage(name);return;}
     const row=e.target.closest('.grade-entry');if(row){const g=gradeForRow(row);if(g)openGradeDetails(g);return;}
-    const srow=e.target.closest('#subjectDetailGrades .subject-grade-row');if(srow){const g=gradeForSubjectRow(srow);if(g)openGradeDetails(g);return;}
-    const button=e.target.closest('#assignmentsList .record-grade-button');if(button){e.stopPropagation();const row=button.closest('.assignment-row');const id=row?.dataset.taskId;const g=grades().find(x=>x.taskId!=null&&String(x.taskId)===String(id));if(g){openGradeEditor(g);}else if(typeof openGradeModal==='function'){openGradeModal();const sel=el('gradeTask');if(sel){sel.value=String(id);sel.dispatchEvent(new Event('change'));}}}
+  }
+  function handleSubjectGradeClick(e){
+    const row=e.target.closest('.subject-grade-row');if(!row)return;const g=gradeForSubjectRow(row);if(g)openGradeDetails(g);
+  }
+  function install(){
+    const gp=el('gradesPage');if(gp&&!gp.dataset.gradeInteractions){gp.addEventListener('click',handleGradeClick);gp.dataset.gradeInteractions='1';}
+    const sp=el('subjectDetailPage');if(sp&&!sp.dataset.gradeInteractions){sp.addEventListener('click',handleSubjectGradeClick);sp.dataset.gradeInteractions='1';}
   }
   function init(){
-    document.addEventListener('click',handleClick,true);syncAssignmentButtons();
-    document.addEventListener('planner-data-changed',syncAssignmentButtons);
-    if(typeof window.savePlannerData==='function'&&!window.__gradeSaveHooked){const original=window.savePlannerData;window.savePlannerData=function(){const r=original.apply(this,arguments);setTimeout(syncAssignmentButtons,0);return r;};window.__gradeSaveHooked=true;}
-    const style=document.createElement('style');style.textContent='.clickable-grade-subject,.clickable-grade-entry{cursor:pointer}.clickable-grade-subject:hover,.clickable-grade-entry:hover{background:var(--hover-bg,#f7f4ef)}.grade-detail-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}.grade-detail-summary>div,.grade-detail-mark{border:1px solid var(--border-color,#e6e1da);border-radius:12px;padding:12px}.grade-detail-summary small,.grade-detail-summary strong{display:block}.grade-detail-marks{display:grid;gap:8px}.grade-detail-mark{display:grid;grid-template-columns:1fr auto auto;gap:10px}.grade-detail-link{border:0;background:none;text-decoration:underline;cursor:pointer;font:inherit}.grade-detail-actions{justify-content:flex-end}@media(max-width:700px){.grade-detail-summary{grid-template-columns:1fr}}';document.head.appendChild(style);
+    install();
+    document.addEventListener('planner-data-changed',install);
+    const style=document.createElement('style');style.textContent='.clickable-grade-subject,.clickable-grade-entry{cursor:pointer}.grade-detail-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}.grade-detail-summary>div,.grade-detail-mark{border:1px solid var(--border-color,#e6e1da);border-radius:12px;padding:12px}.grade-detail-summary small,.grade-detail-summary strong{display:block}.grade-detail-marks{display:grid;gap:8px}.grade-detail-mark{display:grid;grid-template-columns:1fr auto auto;gap:10px}.grade-detail-link{border:0;background:none;text-decoration:underline;cursor:pointer;font:inherit}.grade-detail-actions{justify-content:flex-end}@media(max-width:700px){.grade-detail-summary{grid-template-columns:1fr}}';document.head.appendChild(style);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
