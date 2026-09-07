@@ -34,8 +34,6 @@
   const persist=()=>{
     const d=getData();
     try{window.plannerData=d;}catch(e){}
-    // The Study page reads the same object, so persist it first and only then
-    // call the normal Planner saver. Never replace the object during saving.
     localStorage.setItem(DATA_KEY,JSON.stringify(d));
     if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
     try{
@@ -43,17 +41,29 @@
     }catch(e){
       console.warn('Planner save hook failed; Study Set was already stored.',e);
     }
-    // Verify that the set is actually present in storage before continuing.
     try{
       const stored=JSON.parse(localStorage.getItem(DATA_KEY)||'{}');
       if(!Array.isArray(stored.studySets)||!stored.studySets.length)return false;
     }catch(e){return false;}
     return true;
   };
-  const refreshStudy=()=>{
+  const forceLibraryCard=(set)=>{
+    const container=document.getElementById('studySets');
+    if(!container||container.querySelector(`[data-study-fix-open="${esc(set.id)}"]`))return;
+    const typeLabel=set.type==='notes'?'Study notes':set.type==='questions'?'Question bank':'Flashcards';
+    const icon=set.type==='notes'?'📝':set.type==='questions'?'❓':'🗂️';
+    const article=document.createElement('article');
+    article.className='study-set-card';
+    article.innerHTML=`<div class="study-set-icon">${icon}</div><div class="study-set-main"><div class="study-set-top"><div><h3>${esc(set.name)}</h3><div class="study-set-meta">${esc(set.subject||'No subject')} · ${typeLabel}</div></div></div>${set.description?`<p>${esc(set.description)}</p>`:''}${set.unit?`<span class="study-set-unit">${esc(set.unit)}</span>`:''}<div class="study-set-footer"><span>0 items</span><div><button class="small-button" type="button" data-study-fix-open="${esc(set.id)}">Open</button></div></div></div>`;
+    article.querySelector('[data-study-fix-open]').onclick=()=>window.openStudySet?.(set.id);
+    container.prepend(article);
+  };
+  const refreshStudy=(set)=>{
     try{if(typeof window.renderStudy==='function')window.renderStudy();}catch(e){console.error('Study Library refresh failed:',e);}
+    forceLibraryCard(set);
     requestAnimationFrame(()=>{
       try{if(typeof window.renderStudy==='function')window.renderStudy();}catch(e){console.error('Study Library refresh failed:',e);}
+      forceLibraryCard(set);
     });
   };
   const save=()=>{
@@ -67,9 +77,9 @@
     try{window.plannerData=d;}catch(e){}
     if(!persist())return alert('The study set could not be saved. Please try again.');
     close();
-    refreshStudy();
+    refreshStudy(set);
     window.dispatchEvent(new CustomEvent('planner-data-changed',{detail:{reason:'study-set-create',setId:set.id}}));
-    refreshStudy();
+    refreshStudy(set);
   };
   const open=()=>{
     close();
