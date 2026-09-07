@@ -1,0 +1,11 @@
+// ========================================
+// THEME SYSTEM
+// ========================================
+(function(){
+ const d=()=>window.plannerData||(typeof plannerData!=='undefined'?plannerData:{});
+ const themes={Cozy:{accent:'#687b5e',bg:'#f5f1e8'},Nature:{accent:'#4f7658',bg:'#eef4ec'},Night:{accent:'#8da6c8',bg:'#20252b'},Study:{accent:'#786b59',bg:'#f3efe7'},Minimal:{accent:'#555',bg:'#f7f7f7'},Cafe:{accent:'#9a6b4f',bg:'#f6eee7'}};
+ function apply(){const name=d().profile?.theme||d().settings?.theme||'Cozy',t=themes[name]||themes.Cozy;document.documentElement.dataset.theme=name.toLowerCase();document.documentElement.style.setProperty('--planner-accent',t.accent);document.documentElement.style.setProperty('--planner-bg',t.bg);}
+ function open(){let m=document.getElementById('themePickerModal');if(!m){m=document.createElement('div');m.className='modal-overlay';m.id='themePickerModal';document.body.appendChild(m);}m.innerHTML='<div class="modal"><div class="modal-header"><h2>Planner theme</h2><button class="close-button" id="thClose">×</button></div><div class="theme-choice-grid">'+Object.keys(themes).map(k=>`<button class="theme-choice" data-theme="${k}"><strong>${k}</strong><small>Customize your planner atmosphere</small></button>`).join('')+'</div></div>';m.classList.add('open');m.querySelectorAll('.theme-choice').forEach(b=>b.onclick=()=>{d().profile=d().profile||{};d().profile.theme=b.dataset.theme;if(typeof savePlannerData==='function')savePlannerData();apply();m.classList.remove('open');});m.querySelector('#thClose').onclick=()=>m.classList.remove('open');m.onclick=e=>{if(e.target===m)m.classList.remove('open');};}
+ function init(){d().profile=d().profile||{displayName:'',avatar:'🌿',theme:'Cozy'};apply();const p=document.getElementById('profilePage');if(p&&!p.querySelector('.theme-system-button')){const b=document.createElement('button');b.className='secondary-button theme-system-button';b.textContent='🎨 Change theme';b.onclick=open;p.querySelector('.roadmap-actions')?.appendChild(b);}}
+ window.PlannerThemes={apply,open,themes};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();document.addEventListener('planner-data-changed',apply);
+})();
