@@ -2,7 +2,7 @@
 // PWA
 // ========================================
 (function(){
-  ['study-page.css','study-plans.css','study-sessions.css','study-quizzes.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260913'+i;document.head.appendChild(style);});
+  ['study-page.css','study-plans.css','study-sessions.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260912'+i;document.head.appendChild(style);});
 
   const scripts=[
     './grade-entry-actions.js?v=20260906',
@@ -10,8 +10,7 @@
     './study-page.js?v=20260912',
     './study-plans.js?v=20260912',
     './study-sessions.js?v=20260912',
-    './study-set-button-fix.js?v=20260912',
-    './study-quizzes.js?v=20260913'
+    './study-set-button-fix.js?v=20260912'
   ];
 
   scripts.forEach(src=>{
@@ -21,7 +20,6 @@
       if(src.includes('study-page.js') && typeof window.renderStudy==='function')window.renderStudy();
       if(src.includes('study-plans.js') && typeof window.renderStudyPlans==='function')window.renderStudyPlans();
       if(src.includes('study-sessions.js') && typeof window.renderStudySessions==='function')window.renderStudySessions();
-      if(src.includes('study-quizzes.js') && typeof window.renderStudyQuizzes==='function')window.renderStudyQuizzes();
     };
     script.onerror=()=>console.warn('Planner script failed to load:',src);
     document.head.appendChild(script);
@@ -30,7 +28,7 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./service-worker.js?v=20260913');
+      const registration = await navigator.serviceWorker.register('./service-worker.js?v=20260912');
       registration.addEventListener('updatefound', () => {
         const worker = registration.installing;
         if (!worker) return;
@@ -40,4 +38,4 @@ if ('serviceWorker' in navigator) {
       });
     } catch (error) { console.warn('Planner service worker registration failed:', error); }
   });
-})();
+}
