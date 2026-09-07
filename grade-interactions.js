@@ -28,11 +28,24 @@
     modal.querySelector('.save-button').onclick=()=>{close();openGradeEditModal(g);};
   }
 
+  function parseEditedMark(value){
+    const raw=String(value||'').trim();
+    if(!raw)return null;
+    const levelPercent={'1-':40,'1':45,'1+':50,'2-':55,'2':60,'2+':65,'3-':70,'3':75,'3+':80,'4-':85,'4':90,'4+':95,'4++':100};
+    if(levelPercent[raw]!=null)return{display:raw,percent:levelPercent[raw],kind:'level'};
+    const m=raw.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+    if(!m)return null;
+    const earned=Number(m[1]),possible=Number(m[2]);
+    if(possible<=0||earned<0)return null;
+    return{display:`${earned}/${possible}`,percent:Math.max(0,Math.min(100,earned/possible*100)),kind:'points',earned,possible};
+  }
+
   function openGradeEditModal(g){
     let modal=document.querySelector('#gradeEditModal');
     if(!modal){modal=document.createElement('div');modal.id='gradeEditModal';modal.className='modal-overlay';document.body.appendChild(modal);}
-    const cats=['Knowledge','Communication','Thinking','Application'];
-    modal.innerHTML=`<div class="modal wide-modal"><div class="modal-header"><h2>Edit Grade</h2><button class="close-button" type="button">×</button></div><div class="form-group"><label>Name</label><input id="editGradeName"></div><div class="form-row"><div class="form-group"><label>Subject</label><select id="editGradeSubject"></select></div><div class="form-group"><label>Type</label><select id="editGradeType"><option>Assignment</option><option>Quiz</option><option>Test</option><option>Lab</option><option>Exam</option><option>Other</option></select></div></div><div class="form-row"><div class="form-group"><label>Portion</label><select id="editGradePortion"><option value="coursework">Coursework — 70%</option><option value="culminating">Culminating — 30%</option></select></div><div class="form-group"><label>Weight</label><input id="editGradeWeight" type="number" min="0" max="100" step="0.1"></div></div><div class="form-group"><label>Notes</label><input id="editGradeNotes"></div><div class="grade-edit-categories">${cats.map(c=>`<div class="form-row"><label>${c}</label><input data-edit-category="${c}" placeholder="17/20 or 3+"></div>`).join('')}</div><div class="modal-actions"><button class="cancel-button" type="button">Cancel</button><button class="save-button" type="button">Save Changes</button></div></div>`;
+    const categoryNames=(g.categories||[]).map(x=>x.category||'Overall');
+    const cats=categoryNames.length?categoryNames:['Overall'];
+    modal.innerHTML=`<div class="modal wide-modal"><div class="modal-header"><h2>Edit Grade</h2><button class="close-button" type="button">×</button></div><div class="form-group"><label>Name</label><input id="editGradeName"></div><div class="form-row"><div class="form-group"><label>Subject</label><select id="editGradeSubject"></select></div><div class="form-group"><label>Type</label><select id="editGradeType"><option>Assignment</option><option>Quiz</option><option>Test</option><option>Lab</option><option>Exam</option><option>Other</option></select></div></div><div class="form-row"><div class="form-group"><label>Portion</label><select id="editGradePortion"><option value="coursework">Coursework — 70%</option><option value="culminating">Culminating — 30%</option></select></div><div class="form-group"><label>Weight</label><input id="editGradeWeight" type="number" min="0" max="100" step="0.1"></div></div><div class="form-group"><label>Notes</label><input id="editGradeNotes"></div><div class="grade-edit-categories"><div class="category-grade-heading"><strong>Achievement categories</strong><span>Previous marks are loaded below.</span></div>${cats.map(c=>{const mark=(g.categories||[]).find(x=>x.category===c);return `<div class="form-row grade-edit-category-row"><label>${c}</label><input data-edit-category="${c}" value="${mark?.display||''}" placeholder="17/20 or 3+"></div>`;}).join('')}</div><div class="modal-actions"><button class="cancel-button" type="button">Cancel</button><button class="save-button" type="button">Save Changes</button></div></div>`;
     modal.querySelector('#editGradeName').value=g.name||'';
     const subjectSelect=modal.querySelector('#editGradeSubject');
     (data().settings?.subjects||[]).filter(s=>s&&s.active!==false).forEach(s=>{const o=document.createElement('option');o.value=s.name;o.textContent=`${s.emoji||'📚'} ${s.name}`;subjectSelect.appendChild(o);});
@@ -41,17 +54,25 @@
     modal.querySelector('#editGradePortion').value=g.portion||'coursework';
     modal.querySelector('#editGradeWeight').value=g.weight??'';
     modal.querySelector('#editGradeNotes').value=g.notes||'';
-    cats.forEach(c=>{const mark=(g.categories||[]).find(x=>x.category===c);modal.querySelector(`[data-edit-category="${c}"]`).value=mark?.display||'';});
     const close=()=>modal.classList.remove('open');
     modal.querySelector('.close-button').onclick=close;
     modal.querySelector('.cancel-button').onclick=close;
     modal.querySelector('.save-button').onclick=()=>{
+      const editedCategories=[];
+      for(const c of cats){
+        const input=modal.querySelector(`[data-edit-category="${CSS.escape(c)}"]`);
+        const parsed=parseEditedMark(input?.value);
+        if(!parsed){alert(`Enter a valid ${c} mark, such as 17/20 or 3+.`);return;}
+        editedCategories.push({category:c,...parsed});
+      }
       g.name=modal.querySelector('#editGradeName').value.trim();
+      if(!g.name){alert('Please enter a grade name.');return;}
       g.subject=subjectSelect.value;
       g.type=modal.querySelector('#editGradeType').value;
       g.portion=modal.querySelector('#editGradePortion').value;
       g.weight=modal.querySelector('#editGradeWeight').value===''?null:Number(modal.querySelector('#editGradeWeight').value);
       g.notes=modal.querySelector('#editGradeNotes').value.trim();
+      g.categories=editedCategories;
       savePlannerData();
       close();
       if(typeof renderGrades==='function')renderGrades();
