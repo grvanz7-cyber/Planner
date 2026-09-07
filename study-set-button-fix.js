@@ -1,7 +1,9 @@
 (()=>{
   const DATA_KEY='plannerData';
   const getData=()=>{
-    if(typeof plannerData!=='undefined'&&plannerData&&typeof plannerData==='object')return plannerData;
+    try{
+      if(typeof plannerData!=='undefined'&&plannerData&&typeof plannerData==='object')return plannerData;
+    }catch(e){}
     if(window.plannerData&&typeof window.plannerData==='object')return window.plannerData;
     try{return JSON.parse(localStorage.getItem(DATA_KEY)||'null')||{};}catch(e){return {};}
   };
@@ -31,38 +33,43 @@
   };
   const persist=()=>{
     const d=getData();
+    try{window.plannerData=d;}catch(e){}
+    // The Study page reads the same object, so persist it first and only then
+    // call the normal Planner saver. Never replace the object during saving.
+    localStorage.setItem(DATA_KEY,JSON.stringify(d));
+    if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
     try{
-      // Keep the top-level Planner variable and window reference pointing
-      // at the exact object we just changed.
-      plannerData=d;
-      window.plannerData=d;
-    }catch(e){window.plannerData=d;}
-    try{
-      localStorage.setItem(DATA_KEY,JSON.stringify(d));
-      if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
-      // Also run the Planner's normal save hook when available.
-      if(typeof savePlannerData==='function')savePlannerData();
-      return true;
+      if(typeof window.savePlannerData==='function')window.savePlannerData();
     }catch(e){
-      console.error('Study Set save failed:',e);
-      return false;
+      console.warn('Planner save hook failed; Study Set was already stored.',e);
     }
+    // Verify that the set is actually present in storage before continuing.
+    try{
+      const stored=JSON.parse(localStorage.getItem(DATA_KEY)||'{}');
+      if(!Array.isArray(stored.studySets)||!stored.studySets.length)return false;
+    }catch(e){return false;}
+    return true;
+  };
+  const refreshStudy=()=>{
+    try{if(typeof window.renderStudy==='function')window.renderStudy();}catch(e){console.error('Study Library refresh failed:',e);}
+    requestAnimationFrame(()=>{
+      try{if(typeof window.renderStudy==='function')window.renderStudy();}catch(e){console.error('Study Library refresh failed:',e);}
+    });
   };
   const save=()=>{
     const d=getData(),name=document.getElementById('studyFixName')?.value.trim(),subject=document.getElementById('studyFixSubject')?.value||'',unitId=document.getElementById('studyFixUnit')?.value||'',topicId=document.getElementById('studyFixTopic')?.value||'';
     if(!name)return alert('Please enter a study set name.');
     if(!subject)return alert('Please choose a subject.');
+    if(!Array.isArray(d.studySets))d.studySets=[];
     const unit=getUnit(subject,unitId),topic=(unit?.lessons||[]).find(l=>String(l?.id)===String(topicId)),now=new Date().toISOString();
-    d.studySets=Array.isArray(d.studySets)?d.studySets:[];
     const set={id:`S-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,subject,type:document.getElementById('studyFixType')?.value||'flashcards',unit:unit?.name||'',unitId:unit?.id||'',roadmapUnitId:unit?.id||'',topic:topic?.name||'',topicId:topic?.id||'',roadmapLessonId:topic?.id||'',description:document.getElementById('studyFixDescription')?.value.trim()||'',items:[],createdAt:now,updatedAt:now};
     d.studySets.push(set);
+    try{window.plannerData=d;}catch(e){}
     if(!persist())return alert('The study set could not be saved. Please try again.');
     close();
-    window.dispatchEvent(new Event('planner-data-changed'));
-    if(typeof window.renderStudy==='function')window.renderStudy();
-    // Ensure the visible Study Library immediately reflects the exact object
-    // that was saved, even if another Study listener has just rendered.
-    requestAnimationFrame(()=>{if(typeof window.renderStudy==='function')window.renderStudy();});
+    refreshStudy();
+    window.dispatchEvent(new CustomEvent('planner-data-changed',{detail:{reason:'study-set-create',setId:set.id}}));
+    refreshStudy();
   };
   const open=()=>{
     close();
