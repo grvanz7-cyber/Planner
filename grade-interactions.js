@@ -18,7 +18,7 @@
     if(document.querySelector('#gradeEntryInteractionStyles'))return;
     const style=document.createElement('style');
     style.id='gradeEntryInteractionStyles';
-    style.textContent='.grade-entry{cursor:pointer;transition:background .15s ease;padding-left:8px;padding-right:8px;border-radius:10px}.grade-entry:hover{background:var(--surface-secondary,#f7f5f1)}.grade-entry:focus-visible{outline:2px solid var(--accent-color,#687b5e);outline-offset:2px}.grade-entry::after{content:"View / edit";align-self:center;font-size:12px;color:var(--muted-text,#777);opacity:0;transition:opacity .15s ease}.grade-entry:hover::after,.grade-entry:focus-visible::after{opacity:1}';
+    style.textContent='.grade-entry{cursor:pointer;transition:background .15s ease;padding-left:8px;padding-right:8px;border-radius:10px}.grade-entry:hover{background:var(--surface-secondary,#f7f5f1)}.grade-entry:focus-visible{outline:2px solid var(--accent-color,#687b5e);outline-offset:2px}.grade-entry::after{content:"View / edit";align-self:center;font-size:12px;color:var(--muted-text,#777);opacity:0;transition:opacity .15s ease}.grade-entry:hover::after,.grade-entry:focus-visible::after{opacity:1}.delete-grade-button{border:1px solid rgba(170,70,70,.25);background:transparent;color:#a44;padding:10px 14px;border-radius:10px;cursor:pointer}.delete-grade-button:hover{background:rgba(170,70,70,.08)}';
     document.head.appendChild(style);
   }
 
@@ -27,13 +27,23 @@
     let modal=document.querySelector('#gradeDetailsModal');
     if(!modal){modal=document.createElement('div');modal.id='gradeDetailsModal';modal.className='modal-overlay';document.body.appendChild(modal);}
     const marks=(g.categories||[]).map(x=>`<div class="grade-detail-mark"><strong>${x.category||'Overall'}</strong><span>${x.display||((x.percent??'')+'%')}</span></div>`).join('');
-    modal.innerHTML=`<div class="modal wide-modal"><div class="modal-header"><div><h2>${g.name||'Grade'}</h2><p>${g.subject||''} • ${g.type||'Assessment'}</p></div><button class="close-button" type="button">×</button></div><div class="grade-detail-summary"><strong>${(g.categories||[]).length?((g.categories||[]).reduce((a,x)=>a+Number(x.percent||0),0)/(g.categories||[]).length).toFixed(1)+'%':'—'}</strong><span>${g.portion==='culminating'?'Culminating — 30%':'Coursework — 70%'}</span></div><div class="grade-detail-marks">${marks||'<p>No marks recorded.</p>'}</div><div class="grade-detail-meta"><span>Weight: ${g.weight==null||g.weight===''?'Not set':g.weight+'%'}</span><span>Recorded: ${g.createdAt?new Date(g.createdAt).toLocaleDateString():''}</span></div><div class="modal-actions"><button class="cancel-button" type="button">Close</button><button class="save-button" type="button">Edit Grade</button></div></div>`;
+    modal.innerHTML=`<div class="modal wide-modal"><div class="modal-header"><div><h2>${g.name||'Grade'}</h2><p>${g.subject||''} • ${g.type||'Assessment'}</p></div><button class="close-button" type="button">×</button></div><div class="grade-detail-summary"><strong>${(g.categories||[]).length?((g.categories||[]).reduce((a,x)=>a+Number(x.percent||0),0)/(g.categories||[]).length).toFixed(1)+'%':'—'}</strong><span>${g.portion==='culminating'?'Culminating — 30%':'Coursework — 70%'}</span></div><div class="grade-detail-marks">${marks||'<p>No marks recorded.</p>'}</div><div class="grade-detail-meta"><span>Weight: ${g.weight==null||g.weight===''?'Not set':g.weight+'%'}</span><span>Recorded: ${g.createdAt?new Date(g.createdAt).toLocaleDateString():''}</span></div><div class="modal-actions"><button class="cancel-button" type="button">Close</button><button class="delete-grade-button" type="button">Delete Grade</button><button class="save-button" type="button">Edit Grade</button></div></div>`;
     modal.classList.add('open');
     const close=()=>modal.classList.remove('open');
     modal.querySelector('.close-button').onclick=close;
     modal.querySelector('.cancel-button').onclick=close;
     modal.onclick=e=>{if(e.target===modal)close();};
     modal.querySelector('.save-button').onclick=()=>{close();openGradeEditModal(g);};
+    modal.querySelector('.delete-grade-button').onclick=()=>{
+      if(!confirm(`Delete “${g.name||'this grade'}”? This cannot be undone.`))return;
+      const d=data();
+      if(!Array.isArray(d.gradeAssessments))return;
+      d.gradeAssessments=d.gradeAssessments.filter(x=>x!==g&&String(x.id)!==String(g.id));
+      savePlannerData();
+      close();
+      if(typeof renderGrades==='function')renderGrades();
+      syncGradeButtons();
+    };
   }
 
   function parseEditedMark(value){
