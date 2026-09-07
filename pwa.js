@@ -3,7 +3,7 @@
 // ========================================
 (function(){
   const VERSION='20260931';
-  ['study-page.css','study-plans.css','study-sessions.css','focus-expansion.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v='+VERSION+i;document.head.appendChild(style);});
+  ['study-page.css','study-plans.css','study-sessions.css','focus-expansion.css','gamification-expansion.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v='+VERSION+i;document.head.appendChild(style);});
 
   const scripts=[
     './grade-entry-actions.js?v=20260906',
@@ -11,7 +11,8 @@
     './study-page.js?v='+VERSION,
     './study-plans.js?v=20260912',
     './study-sessions.js?v=20260912',
-    './focus-expansion.js?v=20260907'
+    './focus-expansion.js?v=20260907',
+    './gamification-expansion.js?v=20260907'
   ];
 
   function loadNext(index){
@@ -24,6 +25,7 @@
       if(src.includes('study-plans.js')&&typeof window.renderStudyPlans==='function')window.renderStudyPlans();
       if(src.includes('study-sessions.js')&&typeof window.renderStudySessions==='function')window.renderStudySessions();
       if(src.includes('focus-expansion.js')&&typeof window.renderFocusExpansion==='function')window.renderFocusExpansion();
+      if(src.includes('gamification-expansion.js')&&typeof window.renderGamification==='function')window.renderGamification();
       loadNext(index+1);
     };
     script.onerror=()=>{console.warn('Planner script failed to load:',src);loadNext(index+1);};
