@@ -66,5 +66,5 @@
   }
   window.renderAssessments=renderAssessments;window.openAssessmentModal=openAssessmentModal;window.closeAssessmentModal=closeAssessmentModal;window.createAssessment=createAssessment;
   function install(){ensurePage();ensureModal();installNav();installStyles();if(window.location.hash.toLowerCase()==='#tests-exams'&&typeof showPage==='function')showPage('tests-exams',false);}
-  install();document.addEventListener('DOMContentLoaded',install);window.addEventListener('load',install);setInterval(install,500);
+  install();document.addEventListener('DOMContentLoaded',install);window.addEventListener('load',install);
 })();
