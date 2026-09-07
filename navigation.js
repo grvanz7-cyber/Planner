@@ -24,7 +24,7 @@
     }
     sessionStorage.removeItem('plannerRepairReload');
   }catch(error){
-    try{localStorage.removeItem('plannerData');sessionStorage.setItem('plannerRepairReload','1');location.reload();}catch(e){}
+    console.error('Planner storage repair failed:',error);
   }
 })();
 
@@ -35,12 +35,17 @@ function getSubjectHash(){const raw=window.location.hash.replace(/^#/,'');return
 function restoreSubjectFromHash(){const encoded=getSubjectHash();if(encoded==null)return false;let subjectName='';try{subjectName=decodeURIComponent(encoded);}catch(e){return false;}if(!subjectName)return false;if(typeof window.openSubjectPage==='function'){window.openSubjectPage(subjectName,false);setCurrentDate();return true;}setTimeout(()=>{if(getSubjectHash()===encoded&&typeof window.openSubjectPage==='function'){window.openSubjectPage(subjectName,false);setCurrentDate();}},100);return true;}
 
 function ensureStudyPage(){
-  if(document.getElementById('studyPage'))return;
+  if(document.getElementById('studyPage')){
+    const existingButton=document.getElementById('studyAddButton');
+    if(existingButton)existingButton.onclick=function(){if(typeof window.openStudySetModal==='function'){window.openStudySetModal();return false;}};
+    return;
+  }
   const main=document.querySelector('.main');if(!main)return;
   const p=document.createElement('div');p.id='studyPage';p.className='page-hidden';
-  p.innerHTML='<header class="header study-page-header"><div><h1>Study</h1><p>Plan how you study, not just what you study.</p></div><button class="save-button" id="studyAddButton">+ New Study Set</button></header><div class="study-summary"><div class="study-stat"><strong id="studySetCount">0</strong><span>Study sets</span></div><div class="study-stat"><strong id="studyCardCount">0</strong><span>Items to study</span></div><div class="study-stat"><strong id="studyDueCount">0</strong><span>Due for review</span></div></div><section class="card study-library-card"><div class="study-library-header"><div><h2>Your Study Library</h2><p>Flashcards, notes, questions, and other study material.</p></div><select id="studySubjectFilter"><option value="">All subjects</option></select></div><div id="studySets" class="study-sets"></div></section>';
+  p.innerHTML='<header class="header study-page-header"><div><h1>Study</h1><p>Plan how you study, not just what you study.</p></div><button type="button" class="save-button" id="studyAddButton">+ New Study Set</button></header><div class="study-summary"><div class="study-stat"><strong id="studySetCount">0</strong><span>Study sets</span></div><div class="study-stat"><strong id="studyCardCount">0</strong><span>Items to study</span></div><div class="study-stat"><strong id="studyDueCount">0</strong><span>Due for review</span></div></div><section class="card study-library-card"><div class="study-library-header"><div><h2>Your Study Library</h2><p>Flashcards, notes, questions, and other study material.</p></div><select id="studySubjectFilter"><option value="">All subjects</option></select></div><div id="studySets" class="study-sets"></div></section>';
   main.appendChild(p);
-  if(typeof window.openStudySetModal==='function')p.querySelector('#studyAddButton').onclick=window.openStudySetModal;
+  const button=p.querySelector('#studyAddButton');
+  if(button)button.onclick=function(){if(typeof window.openStudySetModal==='function'){window.openStudySetModal();return false;}};
 }
 
 function ensureStudyNav(){
