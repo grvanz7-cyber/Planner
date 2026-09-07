@@ -11,7 +11,7 @@
     './study-plans.js?v=20260912',
     './study-sessions.js?v=20260912',
     './study-set-button-fix.js?v=20260915',
-    './study-unit-linking.js?v=20260916'
+    './study-set-unit-link.js?v=20260916'
   ];
 
   scripts.forEach(src=>{
@@ -39,4 +39,4 @@ if ('serviceWorker' in navigator) {
       });
     } catch (error) { console.warn('Planner service worker registration failed:', error); }
   });
-}
+})();
