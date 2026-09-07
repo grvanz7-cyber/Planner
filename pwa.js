@@ -2,7 +2,7 @@
 // PWA
 // ========================================
 (function(){
-  const VERSION='20260926';
+  const VERSION='20260929';
   ['study-page.css','study-plans.css','study-sessions.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v='+VERSION+i;document.head.appendChild(style);});
 
   const scripts=[
@@ -33,8 +33,8 @@
 if('serviceWorker' in navigator){
   window.addEventListener('load',async()=>{
     try{
-      const registration=await navigator.serviceWorker.register('./service-worker.js?v=20260926');
-      registration.update();
+      const registration=await navigator.serviceWorker.register('./service-worker.js?v=20260929');
+      await registration.update();
       registration.addEventListener('updatefound',()=>{
         const worker=registration.installing;
         if(!worker)return;
