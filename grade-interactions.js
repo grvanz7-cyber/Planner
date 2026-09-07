@@ -14,6 +14,14 @@
     });
   }
 
+  function addGradeEntryStyles(){
+    if(document.querySelector('#gradeEntryInteractionStyles'))return;
+    const style=document.createElement('style');
+    style.id='gradeEntryInteractionStyles';
+    style.textContent='.grade-entry{cursor:pointer;transition:background .15s ease;padding-left:8px;padding-right:8px;border-radius:10px}.grade-entry:hover{background:var(--surface-secondary,#f7f5f1)}.grade-entry:focus-visible{outline:2px solid var(--accent-color,#687b5e);outline-offset:2px}.grade-entry::after{content:"View / edit";align-self:center;font-size:12px;color:var(--muted-text,#777);opacity:0;transition:opacity .15s ease}.grade-entry:hover::after,.grade-entry:focus-visible::after{opacity:1}';
+    document.head.appendChild(style);
+  }
+
   function showGradeDetails(g){
     if(!g)return;
     let modal=document.querySelector('#gradeDetailsModal');
@@ -120,4 +128,6 @@
       if(g)showGradeDetails(g);
     }
   });
+
+  addGradeEntryStyles();
 })();
