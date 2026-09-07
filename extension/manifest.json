@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Planner Companion",
+  "version": "0.1.0",
+  "description": "A small side-panel companion for the Planner.",
+  "permissions": ["storage", "sidePanel", "tabs"],
+  "action": {"default_title": "Planner Companion"},
+  "side_panel": {"default_path": "sidepanel.html"},
+  "background": {"service_worker": "background.js"}
+}
