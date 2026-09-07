@@ -1,4 +1,4 @@
-const CACHE_NAME = 'planner-v7';
+const CACHE_NAME = 'planner-v8';
 
 const APP_SHELL = [
   './',
@@ -21,36 +21,6 @@ const APP_SHELL = [
   './study-page.css',
   './study-plans.css',
   './study-sessions.css',
-  './script.js',
-  './planner-data-layer.js',
-  './subject-enhancements.js',
-  './navigation.js',
-  './task-type-enhancements.js',
-  './calendar.js',
-  './calendar-edit.js',
-  './task-subject-fix.js',
-  './dashboard-edit.js',
-  './tasks-page.js',
-  './subjects-page.js',
-  './subject-detail-page.js',
-  './subject-roadmap.js',
-  './assignments-page.js',
-  './recurring-tasks.js',
-  './delete-task.js',
-  './status-consistency.js',
-  './dashboard-priorities-stats.js',
-  './calendar-day-fix.js',
-  './tests-exams-page.js',
-  './grades-page.js',
-  './task-validation.js',
-  './settings-enhancements.js',
-  './dashboard-widgets.js',
-  './dashboard-school-widget.js',
-  './dashboard-study-load.js',
-  './dashboard-today-upcoming.js',
-  './quick-add.js',
-  './quick-add-fix.js',
-  './pwa.js',
   './icons/planner-icon.svg'
 ];
 
@@ -74,6 +44,18 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+  const isDynamicDocument = url.pathname.endsWith('/index.html') || url.pathname.endsWith('/');
+  const isDynamicScript = url.pathname.endsWith('.js');
+
+  if (isDynamicDocument || isDynamicScript) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
+    );
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)
