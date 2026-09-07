@@ -8,6 +8,7 @@
     './grade-entry-actions.js?v=20260906',
     './grade-what-if.js?v=20260907',
     './study-page.js?v=20260907',
+    './study-import.js?v=20260907',
     './study-plans.js?v=20260907',
     './study-sessions.js?v=20260907'
   ];
