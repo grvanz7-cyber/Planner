@@ -4,15 +4,8 @@
 (function(){
   function data(){return window.plannerData||{};}
   function grades(){return Array.isArray(data().gradeAssessments)?data().gradeAssessments:[];}
-  function gradeForTask(id){return grades().find(g=>String(g.taskId)===String(id))||null;}
-  function syncGradeButtons(){
-    document.querySelectorAll('#assignmentsList .record-grade-button,#assessmentsList .record-grade-button').forEach(button=>{
-      const row=button.closest('.assignment-row,.assessment-row');
-      const id=row?.dataset?.taskId||row?.getAttribute('data-task-id');
-      button.textContent=gradeForTask(id)?'Edit Grade':'Record Grade';
-    });
-  }
-  window.syncGradeButtons=syncGradeButtons;
+  function gradeForTask(id){return grades().find(g=>String(g.taskId||'')===String(id))||null;}
+
   function showGradeDetails(g){
     if(!g)return;
     let modal=document.querySelector('#gradeDetailsModal');
@@ -21,9 +14,12 @@
     modal.innerHTML=`<div class="modal wide-modal"><div class="modal-header"><div><h2>${g.name||'Grade'}</h2><p>${g.subject||''} • ${g.type||'Assessment'}</p></div><button class="close-button" type="button">×</button></div><div class="grade-detail-summary"><strong>${(g.categories||[]).length?((g.categories||[]).reduce((a,x)=>a+Number(x.percent||0),0)/(g.categories||[]).length).toFixed(1)+'%':'—'}</strong><span>${g.portion==='culminating'?'Culminating — 30%':'Coursework — 70%'}</span></div><div class="grade-detail-marks">${marks||'<p>No marks recorded.</p>'}</div><div class="grade-detail-meta"><span>Weight: ${g.weight==null||g.weight===''?'Not set':g.weight+'%'}</span><span>Recorded: ${g.createdAt?new Date(g.createdAt).toLocaleDateString():''}</span></div><div class="modal-actions"><button class="cancel-button" type="button">Close</button><button class="save-button" type="button">Edit Grade</button></div></div>`;
     modal.classList.add('open');
     const close=()=>modal.classList.remove('open');
-    modal.querySelector('.close-button').onclick=close;modal.querySelector('.cancel-button').onclick=close;modal.onclick=e=>{if(e.target===modal)close();};
+    modal.querySelector('.close-button').onclick=close;
+    modal.querySelector('.cancel-button').onclick=close;
+    modal.onclick=e=>{if(e.target===modal)close();};
     modal.querySelector('.save-button').onclick=()=>{close();openGradeEditModal(g);};
   }
+
   function openGradeEditModal(g){
     let modal=document.querySelector('#gradeEditModal');
     if(!modal){modal=document.createElement('div');modal.id='gradeEditModal';modal.className='modal-overlay';document.body.appendChild(modal);}
@@ -32,34 +28,65 @@
     modal.querySelector('#editGradeName').value=g.name||'';
     const subjectSelect=modal.querySelector('#editGradeSubject');
     (data().settings?.subjects||[]).filter(s=>s&&s.active!==false).forEach(s=>{const o=document.createElement('option');o.value=s.name;o.textContent=`${s.emoji||'📚'} ${s.name}`;subjectSelect.appendChild(o);});
-    subjectSelect.value=g.subject||'';modal.querySelector('#editGradeType').value=g.type||'Assignment';modal.querySelector('#editGradePortion').value=g.portion||'coursework';modal.querySelector('#editGradeWeight').value=g.weight??'';modal.querySelector('#editGradeNotes').value=g.notes||'';
+    subjectSelect.value=g.subject||'';
+    modal.querySelector('#editGradeType').value=g.type||'Assignment';
+    modal.querySelector('#editGradePortion').value=g.portion||'coursework';
+    modal.querySelector('#editGradeWeight').value=g.weight??'';
+    modal.querySelector('#editGradeNotes').value=g.notes||'';
     cats.forEach(c=>{const mark=(g.categories||[]).find(x=>x.category===c);modal.querySelector(`[data-edit-category="${c}"]`).value=mark?.display||'';});
-    modal.querySelector('.close-button').onclick=()=>modal.classList.remove('open');modal.querySelector('.cancel-button').onclick=()=>modal.classList.remove('open');
-    modal.querySelector('.save-button').onclick=()=>{g.name=modal.querySelector('#editGradeName').value.trim();g.subject=subjectSelect.value;g.type=modal.querySelector('#editGradeType').value;g.portion=modal.querySelector('#editGradePortion').value;g.weight=modal.querySelector('#editGradeWeight').value===''?null:Number(modal.querySelector('#editGradeWeight').value);g.notes=modal.querySelector('#editGradeNotes').value.trim();savePlannerData();modal.classList.remove('open');if(typeof renderGrades==='function')renderGrades();syncGradeButtons();};
+    const close=()=>modal.classList.remove('open');
+    modal.querySelector('.close-button').onclick=close;
+    modal.querySelector('.cancel-button').onclick=close;
+    modal.querySelector('.save-button').onclick=()=>{
+      g.name=modal.querySelector('#editGradeName').value.trim();
+      g.subject=subjectSelect.value;
+      g.type=modal.querySelector('#editGradeType').value;
+      g.portion=modal.querySelector('#editGradePortion').value;
+      g.weight=modal.querySelector('#editGradeWeight').value===''?null:Number(modal.querySelector('#editGradeWeight').value);
+      g.notes=modal.querySelector('#editGradeNotes').value.trim();
+      savePlannerData();
+      close();
+      if(typeof renderGrades==='function')renderGrades();
+      if(typeof window.syncGradeButtons==='function')window.syncGradeButtons();
+    };
     modal.classList.add('open');
   }
+
+  window.openGradeDetails=showGradeDetails;
+  window.openGradeEditModal=openGradeEditModal;
+
+  // Use one normal delegated click handler. No capture phase and no polling.
   document.addEventListener('click',function(e){
-    const assignmentButton=e.target.closest?.('#assignmentsList .record-grade-button');
-    const assessmentButton=e.target.closest?.('#assessmentsList .record-grade-button');
-    const schoolworkButton=assignmentButton||assessmentButton;
-    if(schoolworkButton){
-      e.preventDefault();e.stopImmediatePropagation();
-      const row=schoolworkButton.closest('.assignment-row,.assessment-row'),id=row?.dataset?.taskId,existing=gradeForTask(id);
-      if(existing){showGradeDetails(existing);}
-      else if(typeof window.openGradeModal==='function'){
-        window.openGradeModal();
-        const select=document.querySelector('#gradeTask');
-        if(select){select.value=String(id);select.dispatchEvent(new Event('change'));}
+    const target=e.target?.closest?.('.record-grade-button');
+    if(target && (target.closest('#assignmentsList')||target.closest('#assessmentsList'))){
+      const row=target.closest('.assignment-row,.assessment-row');
+      const id=row?.dataset?.taskId;
+      const existing=gradeForTask(id);
+      if(existing){
+        e.preventDefault();
+        e.stopPropagation();
+        showGradeDetails(existing);
       }
       return;
     }
-    const gradeRow=e.target.closest?.('#gradesPage .grade-entry');
-    if(gradeRow){e.preventDefault();const subject=gradeRow.closest('.grade-subject')?.querySelector('.grade-subject-title h2')?.textContent?.trim()||'';const name=gradeRow.querySelector('strong')?.textContent?.trim()||'';const g=grades().find(x=>x.subject===subject&&String(x.name||'').trim()===name);if(g)showGradeDetails(g);return;}
-    const subjectRow=e.target.closest?.('#subjectDetailGrades .subject-grade-row');
-    if(subjectRow){e.preventDefault();const subject=document.querySelector('#subjectDetailPage')?.dataset?.subject||'';const name=subjectRow.querySelector('strong')?.textContent?.trim()||'';const g=grades().find(x=>x.subject===subject&&String(x.name||'').trim()===name);if(g)showGradeDetails(g);return;}
-  },true);
-  document.addEventListener('planner-data-changed',syncGradeButtons);
-  document.addEventListener('DOMContentLoaded',syncGradeButtons);
-  window.addEventListener('load',syncGradeButtons);
-  setInterval(syncGradeButtons,500);
+
+    const gradeRow=e.target?.closest?.('#gradesPage .grade-entry');
+    if(gradeRow){
+      e.preventDefault();
+      const subject=gradeRow.closest('.grade-subject')?.querySelector('.grade-subject-title h2')?.textContent?.trim()||'';
+      const name=gradeRow.querySelector('strong')?.textContent?.trim()||'';
+      const g=grades().find(x=>x.subject===subject&&String(x.name||'').trim()===name);
+      if(g)showGradeDetails(g);
+      return;
+    }
+
+    const subjectRow=e.target?.closest?.('#subjectDetailGrades .subject-grade-row');
+    if(subjectRow){
+      e.preventDefault();
+      const subject=document.querySelector('#subjectDetailPage')?.dataset?.subject||'';
+      const name=subjectRow.querySelector('strong')?.textContent?.trim()||'';
+      const g=grades().find(x=>x.subject===subject&&String(x.name||'').trim()===name);
+      if(g)showGradeDetails(g);
+    }
+  });
 })();
