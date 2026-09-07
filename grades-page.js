@@ -13,6 +13,11 @@
     if(!plannerData.gradeSettings)plannerData.gradeSettings={};
     activeSubjects().forEach(s=>{if(!plannerData.gradeSettings[s.name])plannerData.gradeSettings[s.name]={knowledge:25,communication:25,thinking:25,application:25};});
   }
+  function courseSettings(subject){
+    const defaults={knowledge:25,communication:25,thinking:25,application:25};
+    const saved=plannerData.gradeSettings?.[subject];
+    return {...defaults,...(saved||{})};
+  }
   function schoolwork(){return (plannerData.tasks||[]).filter(t=>['assignment','quiz','test','exam','lab'].includes(String(t.type||'').toLowerCase())||((t.tags||[]).some(x=>String(x).toLowerCase()==='#school')));}
   function populateSubjects(id,all){const s=el(id);if(!s)return;const cur=s.value;s.innerHTML=all?'<option value="">All subjects</option>':'<option value="">Choose a subject</option>';activeSubjects().forEach(x=>{const o=document.createElement('option');o.value=x.name;o.textContent=`${x.emoji||'📚'} ${x.name}`;s.appendChild(o);});if([...s.options].some(o=>o.value===cur))s.value=cur;}
   function populateTaskLinks(){const s=el('gradeTask');if(!s)return;const cur=s.value;s.innerHTML='<option value="">New / not linked to schoolwork</option>';schoolwork().sort((a,b)=>String(b.dueDate||b.createdAt||'').localeCompare(String(a.dueDate||a.createdAt||''))).forEach(t=>{const o=document.createElement('option');o.value=String(t.id);o.textContent=`${t.subject||'No subject'} — ${t.name||'Untitled'} (${t.type||'Task'})`;o.dataset.name=t.name||'';o.dataset.subject=t.subject||'';o.dataset.type=t.type||'';o.dataset.weight=t.weight??'';o.dataset.notes=t.notes||'';s.appendChild(o);});if([...s.options].some(o=>o.value===cur))s.value=cur;}
