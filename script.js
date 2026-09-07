@@ -2,7 +2,7 @@
 // PLANNER DATA
 // ========================================
 
-let plannerData =
+var plannerData =
     JSON.parse(
         localStorage.getItem("plannerData")
     );
@@ -500,7 +500,6 @@ function populateTaskOptions() {
     subjectSelect.innerHTML =
         "";
 
-
     typeSelect.innerHTML =
         "";
 
@@ -936,7 +935,6 @@ function renderTasks() {
     todayContainer.innerHTML =
         "";
 
-
     upcomingContainer.innerHTML =
         "";
 
@@ -1042,969 +1040,133 @@ function renderTasks() {
 
 
 // ========================================
-// TASK ELEMENT
+// TASK ELEMENTS
 // ========================================
 
 function createTaskElement(task) {
 
-    const taskElement =
-        document.createElement(
-            "div"
-        );
+    const div =
+        document.createElement("div");
+
+    div.className = "task";
 
 
-    taskElement.className =
-        "task";
+    const checkbox =
+        document.createElement("input");
+
+    checkbox.type = "checkbox";
+
+    checkbox.checked =
+        task.completed;
+
+    checkbox.onchange = () =>
+        toggleTask(task.id);
 
 
-    const subjectText =
-        task.subject
-            ? `${task.subject} · ${task.type}`
-            : task.type;
+    const content =
+        document.createElement("div");
+
+    content.className =
+        "task-content";
 
 
-    let dateText =
-        "";
+    const name =
+        document.createElement("span");
+
+    name.textContent =
+        task.name;
 
 
-    if (
-        isOverdue(task)
-    ) {
+    const meta =
+        document.createElement("small");
 
-        dateText =
-            " · Overdue";
-
-    }
-    else if (
-        isToday(task)
-    ) {
-
-        dateText =
-            " · Today";
-
-    }
+    meta.textContent =
+        `${task.subject || ""}`;
 
 
-    taskElement.innerHTML = `
+    content.appendChild(
+        name
+    );
 
-        <input
-            type="checkbox"
-            onchange="toggleTask(${task.id})"
-        >
-
-        <div class="task-info">
-
-            <div class="task-name">
-                ${escapeHTML(
-                    task.name
-                )}
-            </div>
-
-            <div class="task-meta">
-                ${escapeHTML(
-                    subjectText +
-                    dateText
-                )}
-            </div>
-
-        </div>
-
-        <span class="priority">
-            ${escapeHTML(
-                task.priority
-            )}
-        </span>
-
-    `;
+    content.appendChild(
+        meta
+    );
 
 
-    return taskElement;
+    div.appendChild(
+        checkbox
+    );
+
+    div.appendChild(
+        content
+    );
+
+
+    return div;
 
 }
 
-
-
-// ========================================
-// UPCOMING ELEMENT
-// ========================================
 
 function createUpcomingElement(task) {
 
-    const taskElement =
-        document.createElement(
-            "div"
-        );
-
-
-    taskElement.className =
-        "task";
-
-
-    taskElement.innerHTML = `
-
-        <div class="task-info">
-
-            <div class="task-name">
-                ${escapeHTML(
-                    task.name
-                )}
-            </div>
-
-            <div class="task-meta">
-                Due ${escapeHTML(
-                    formatDate(
-                        task.dueDate
-                    )
-                )}
-            </div>
-
-        </div>
-
-        <span class="priority">
-            ${escapeHTML(
-                task.priority
-            )}
-        </span>
-
-    `;
-
-
-    return taskElement;
-
-}
-
-
-
-// ========================================
-// FORMAT DATE
-// ========================================
-
-function formatDate(dateString) {
-
-    if (!dateString) {
-
-        return "";
-
-    }
-
-
-    const date =
-        getDateOnly(
-            dateString
-        );
-
-
-    return date.toLocaleDateString(
-        undefined,
-        {
-            weekday:
-                "short",
-
-            month:
-                "short",
-
-            day:
-                "numeric"
-        }
-    );
-
-}
-
-
-
-// ========================================
-// SUBJECT SETTINGS
-// ========================================
-
-function renderSubjects() {
-
-    const container =
-        document.querySelector(
-            "#subjectsList"
-        );
-
-
-    if (!container) {
-
-        return;
-
-    }
-
-
-    container.innerHTML =
-        "";
-
-
-    plannerData
-        .settings
-        .subjects
-        .forEach(
-            (subject, index) => {
-
-                const row =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                row.className =
-                    "settings-row";
-
-
-                row.innerHTML = `
-
-                    <span
-                        class="settings-icon"
-                        style="color: ${subject.colour}"
-                    >
-                        ${escapeHTML(
-                            subject.emoji
-                        )}
-                    </span>
-
-                    <span class="settings-name">
-                        ${escapeHTML(
-                            subject.name
-                        )}
-                    </span>
-
-                    <span class="settings-status">
-                        ${
-                            subject.active
-                                ? "Active"
-                                : "Inactive"
-                        }
-                    </span>
-
-                    <button
-                        class="small-button"
-                        onclick="toggleSubject(${index})"
-                    >
-                        ${
-                            subject.active
-                                ? "Disable"
-                                : "Enable"
-                        }
-                    </button>
-
-                    <button
-                        class="small-button"
-                        onclick="editSubject(${index})"
-                    >
-                        Edit
-                    </button>
-
-                `;
-
-
-                container.appendChild(
-                    row
-                );
-
-            }
-        );
-
-}
-
-
-
-// ========================================
-// ICON PICKER
-// ========================================
-
-function renderIconPicker() {
-
-    const picker =
-        document.querySelector(
-            "#iconPicker"
-        );
-
-
-    if (!picker) {
-
-        return;
-
-    }
-
-
-    picker.innerHTML =
-        "";
-
-
-    iconOptions.forEach(
-        icon => {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button.className =
-                "icon-option";
-
-
-            if (
-                icon ===
-                selectedSubjectIcon
-            ) {
-
-                button.classList.add(
-                    "selected"
-                );
-
-            }
-
-
-            button.textContent =
-                icon;
-
-
-            button.onclick =
-                () => {
-
-                    selectedSubjectIcon =
-                        icon;
-
-
-                    renderIconPicker();
-
-                };
-
-
-            picker.appendChild(
-                button
-            );
-
-        }
-    );
-
-}
-
-
-
-// ========================================
-// OPEN ADD SUBJECT MODAL
-// ========================================
-
-function openSubjectModal() {
-
-    editingSubjectIndex =
-        null;
-
-
-    selectedSubjectIcon =
-        "📚";
-
-
-    document
-        .querySelector(
-            "#subjectModalTitle"
-        )
-        .textContent =
-            "Add Subject";
-
-
-    document
-        .querySelector(
-            "#subjectName"
-        )
-        .value =
-            "";
-
-
-    document
-        .querySelector(
-            "#subjectColour"
-        )
-        .value =
-            "#304b8a";
-
-
-    document
-        .querySelector(
-            "#subjectActive"
-        )
-        .checked =
-            true;
-
-
-    renderIconPicker();
-
-
-    document
-        .querySelector(
-            "#subjectModal"
-        )
-        .classList.add(
-            "open"
-        );
-
-
-    document
-        .querySelector(
-            "#subjectName"
-        )
-        .focus();
-
-}
-
-
-
-// ========================================
-// EDIT SUBJECT
-// ========================================
-
-function editSubject(index) {
-
-    const subject =
-        plannerData
-            .settings
-            .subjects[index];
-
-
-    if (!subject) {
-
-        return;
-
-    }
-
-
-    editingSubjectIndex =
-        index;
-
-
-    selectedSubjectIcon =
-        subject.emoji;
-
-
-    document
-        .querySelector(
-            "#subjectModalTitle"
-        )
-        .textContent =
-            "Edit Subject";
-
-
-    document
-        .querySelector(
-            "#subjectName"
-        )
-        .value =
-            subject.name;
-
-
-    document
-        .querySelector(
-            "#subjectColour"
-        )
-        .value =
-            subject.colour ||
-            "#304b8a";
-
-
-    document
-        .querySelector(
-            "#subjectActive"
-        )
-        .checked =
-            subject.active;
-
-
-    renderIconPicker();
-
-
-    document
-        .querySelector(
-            "#subjectModal"
-        )
-        .classList.add(
-            "open"
-        );
-
-}
-
-
-
-// ========================================
-// SAVE SUBJECT
-// ========================================
-
-function saveSubject() {
-
-    const name =
-        document
-            .querySelector(
-                "#subjectName"
-            )
-            .value
-            .trim();
-
-
-    if (!name) {
-
-        alert(
-            "Please enter a subject name."
-        );
-
-        return;
-
-    }
-
-
-    const colour =
-        document
-            .querySelector(
-                "#subjectColour"
-            )
-            .value;
-
-
-    const active =
-        document
-            .querySelector(
-                "#subjectActive"
-            )
-            .checked;
-
-
-    const subject = {
-
-        name:
-            name,
-
-        emoji:
-            selectedSubjectIcon,
-
-        colour:
-            colour,
-
-        active:
-            active
-
-    };
-
-
-    if (
-        editingSubjectIndex ===
-        null
-    ) {
-
-        plannerData
-            .settings
-            .subjects
-            .push(
-                subject
-            );
-
-    }
-    else {
-
-        plannerData
-            .settings
-            .subjects[
-                editingSubjectIndex
-            ] =
-                subject;
-
-    }
-
-
-    savePlannerData();
-
-    renderSubjects();
-
-    populateTaskOptions();
-
-    closeSubjectModal();
-
-}
-
-
-
-// ========================================
-// CLOSE SUBJECT MODAL
-// ========================================
-
-function closeSubjectModal() {
-
-    document
-        .querySelector(
-            "#subjectModal"
-        )
-        .classList.remove(
-            "open"
-        );
-
-
-    editingSubjectIndex =
-        null;
-
-}
-
-
-
-// ========================================
-// TOGGLE SUBJECT
-// ========================================
-
-function toggleSubject(index) {
-
-    const subject =
-        plannerData
-            .settings
-            .subjects[index];
-
-
-    if (!subject) {
-
-        return;
-
-    }
-
-
-    subject.active =
-        !subject.active;
-
-
-    savePlannerData();
-
-    renderSubjects();
-
-    populateTaskOptions();
-
-}
-
-
-
-// ========================================
-// TASK TYPES
-// ========================================
-
-function renderTaskTypes() {
-
-    const container =
-        document.querySelector(
-            "#typesList"
-        );
-
-
-    if (!container) {
-
-        return;
-
-    }
-
-
-    container.innerHTML =
-        "";
-
-
-    plannerData
-        .settings
-        .types
-        .forEach(
-            (type, index) => {
-
-                const row =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                row.className =
-                    "settings-row";
-
-
-                row.innerHTML = `
-
-                    <span class="settings-icon">
-                        ${escapeHTML(
-                            type.emoji
-                        )}
-                    </span>
-
-                    <span class="settings-name">
-                        ${escapeHTML(
-                            type.name
-                        )}
-                    </span>
-
-                    <button
-                        class="small-button danger-button"
-                        onclick="removeTaskType(${index})"
-                    >
-                        Remove
-                    </button>
-
-                `;
-
-
-                container.appendChild(
-                    row
-                );
-
-            }
-        );
-
-}
-
-
-
-// ========================================
-// ADD TASK TYPE
-// ========================================
-
-function addTaskType() {
-
-    const name =
-        prompt(
-            "What should the task type be called?"
-        );
-
-
-    if (!name) {
-
-        return;
-
-    }
-
-
-    const emoji =
-        prompt(
-            "Choose an emoji for this type:",
-            "✓"
-        );
-
-
-    plannerData
-        .settings
-        .types
-        .push({
-
-            name:
-                name.trim(),
-
-            emoji:
-                emoji ||
-                "✓"
-
-        });
-
-
-    savePlannerData();
-
-    renderTaskTypes();
-
-    populateTaskOptions();
-
-}
-
-
-
-// ========================================
-// REMOVE TASK TYPE
-// ========================================
-
-function removeTaskType(index) {
-
-    const type =
-        plannerData
-            .settings
-            .types[index];
-
-
-    if (!type) {
-
-        return;
-
-    }
-
-
-    const confirmed =
-        confirm(
-            `Remove "${type.name}"?`
-        );
-
-
-    if (!confirmed) {
-
-        return;
-
-    }
-
-
-    plannerData
-        .settings
-        .types
-        .splice(
-            index,
-            1
-        );
-
-
-    savePlannerData();
-
-    renderTaskTypes();
-
-    populateTaskOptions();
-
-}
-
-
-
-// ========================================
-// PAGE NAVIGATION
-// ========================================
-
-function showPage(page) {
-
-    const dashboard =
-        document.querySelector(
-            "#dashboardPage"
-        );
-
-
-    const settings =
-        document.querySelector(
-            "#settingsPage"
-        );
-
-
-    dashboard.classList.add(
-        "page-hidden"
-    );
-
-
-    settings.classList.add(
-        "page-hidden"
-    );
-
-
-    if (
-        page ===
-        "dashboard"
-    ) {
-
-        dashboard.classList.remove(
-            "page-hidden"
-        );
-
-    }
-
-
-    if (
-        page ===
-        "settings"
-    ) {
-
-        settings.classList.remove(
-            "page-hidden"
-        );
-
-
-        renderSubjects();
-
-        renderTaskTypes();
-
-    }
-
-}
-
-
-
-// ========================================
-// ESCAPE HTML
-// ========================================
-
-function escapeHTML(text) {
-
     const div =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
+
+    div.className = "task";
 
 
-    div.textContent =
-        text;
+    const content =
+        document.createElement("div");
+
+    content.className =
+        "task-content";
 
 
-    return div.innerHTML;
+    const name =
+        document.createElement("span");
+
+    name.textContent =
+        task.name;
+
+
+    const meta =
+        document.createElement("small");
+
+    meta.textContent =
+        `${task.subject || ""} · ${task.dueDate}`;
+
+
+    content.appendChild(
+        name
+    );
+
+    content.appendChild(
+        meta
+    );
+
+
+    div.appendChild(
+        content
+    );
+
+
+    return div;
 
 }
 
 
 
 // ========================================
-// START
+// STARTUP
 // ========================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function () {
 
         initializePlannerData();
 
-
-        const input =
-            document.querySelector(
-                ".quick-add input"
-            );
-
-
-        if (input) {
-
-            input.addEventListener(
-                "keydown",
-                event => {
-
-                    if (
-                        event.key ===
-                        "Enter"
-                    ) {
-
-                        addTask();
-
-                    }
-
-                }
-            );
-
-        }
-
-
         renderTasks();
-
-
-        const dateElement =
-            document.querySelector(
-                "#currentDate"
-            );
-
-
-        if (dateElement) {
-
-            dateElement.textContent =
-                new Date()
-                    .toLocaleDateString(
-                        undefined,
-                        {
-                            weekday:
-                                "long",
-
-                            month:
-                                "long",
-
-                            day:
-                                "numeric"
-                        }
-                    );
-
-        }
 
     }
 );
