@@ -2,14 +2,10 @@
 // PWA
 // ========================================
 (function(){
-  const style=document.createElement('link');
-  style.rel='stylesheet';
-  style.href='./study-page.css?v=20260907b';
-  document.head.appendChild(style);
-  const scripts=['./grade-entry-actions.js?v=20260906','./grade-what-if.js?v=20260907','./study-page.js?v=20260907','./study-system.js?v=20260907b'];
-  scripts.forEach(src=>{const script=document.createElement('script');script.src=src;document.body.appendChild(script);});
+  ['study-page.css','study-plans.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260907'+i;document.head.appendChild(style);});
+  const scripts=['./grade-entry-actions.js?v=20260906','./grade-what-if.js?v=20260907','./study-page.js?v=20260907','./study-plans.js?v=20260907'];
+  scripts.forEach(src=>{const script=document.createElement('script');script.src=src;script.defer=true;document.head.appendChild(script);});
 })();
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
@@ -21,8 +17,6 @@ if ('serviceWorker' in navigator) {
           if (worker.state === 'installed' && navigator.serviceWorker.controller) console.info('A new Planner version is ready. Reload to update.');
         });
       });
-    } catch (error) {
-      console.warn('Planner service worker registration failed:', error);
-    }
+    } catch (error) { console.warn('Planner service worker registration failed:', error); }
   });
 }
