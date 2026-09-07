@@ -2,7 +2,7 @@
 // PWA
 // ========================================
 (function(){
-  ['study-page.css','study-plans.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260907'+i;document.head.appendChild(style);});
+  ['study-page.css','study-plans.css','study-sessions.css'].forEach((name,i)=>{const style=document.createElement('link');style.rel='stylesheet';style.href='./'+name+'?v=20260907'+i;document.head.appendChild(style);});
 
   const scripts=[
     './grade-entry-actions.js?v=20260906',
