@@ -13,15 +13,16 @@
   const activeTasks=d=>arr(d,'tasks').filter(t=>t.status!=='Completed'&&!t.completed).concat(arr(d,'assignments').filter(t=>t.status!=='Completed'&&!t.completed));
 
   function initData(){
-    const d=read();
-    d.goals=arr(d,'goals'); d.habits=arr(d,'habits'); d.focusSessions=arr(d,'focusSessions');
-    d.pet=d.pet||{name:'Sprout',emoji:'🌱',happiness:70,xp:0,coins:0,level:1};
-    d.profile=d.profile||{displayName:'',avatar:'🌿',theme:'Cozy'};
-    d.friends=arr(d,'friends'); d.sharedProjects=arr(d,'sharedProjects');
-    d.integrations=d.integrations||{googleCalendar:false,edsby:false};
-    d.achievements=arr(d,'achievements'); d.dailyQuests=arr(d,'dailyQuests');
-    d.rewardLog=arr(d,'rewardLog'); d.smartPlans=arr(d,'smartPlans');
-    save(d); return d;
+    const d=read(); let changed=false;
+    const ensure=(k,v)=>{if(!d[k]){d[k]=v;changed=true;}};
+    ensure('goals',[]); ensure('habits',[]); ensure('focusSessions',[]);
+    ensure('pet',{name:'Sprout',emoji:'🌱',happiness:70,xp:0,coins:0,level:1});
+    ensure('profile',{displayName:'',avatar:'🌿',theme:'Cozy'});
+    ensure('friends',[]); ensure('sharedProjects',[]);
+    ensure('integrations',{googleCalendar:false,edsby:false});
+    ensure('achievements',[]); ensure('dailyQuests',[]); ensure('rewardLog',[]); ensure('smartPlans',[]);
+    if(changed) save(d); else window.plannerData=d;
+    return d;
   }
 
   function focusPage(){return document.getElementById('focusPage')||document.getElementById('focusSpacePage');}
