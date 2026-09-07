@@ -2,7 +2,7 @@
 // GRADE INTERACTIONS
 // ========================================
 (function(){
-  function data(){return window.plannerData||{};}
+  function data(){return (typeof plannerData!=='undefined'&&plannerData)||window.plannerData||{};}
   function grades(){return Array.isArray(data().gradeAssessments)?data().gradeAssessments:[];}
   function gradeForTask(id){return grades().find(g=>String(g.taskId||'')===String(id))||null;}
 
@@ -87,7 +87,6 @@
 
   document.addEventListener('planner-data-changed',syncGradeButtons);
 
-  // Use one normal delegated click handler. No capture phase and no polling.
   document.addEventListener('click',function(e){
     const target=e.target?.closest?.('.record-grade-button');
     if(target && (target.closest('#assignmentsList')||target.closest('#assessmentsList'))){
