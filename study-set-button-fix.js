@@ -1,57 +1,57 @@
 // ========================================
 // STUDY SET BUTTON FIX + PRACTICE QUIZZES
-// Keeps the Study Set modal independent from load-order issues.
-// Practice quizzes live here so PWA/index.html remain untouched.
+// Use the Study page's native study-set modal/save path.
+// Add roadmap-linked unit choices without creating a second modal.
 // ========================================
 (function(){
   function data(){return (typeof plannerData!=='undefined'&&plannerData)||window.plannerData||{};}
   function subjects(){return (data().settings?.subjects||[]).filter(s=>s&&s.active!==false);}
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  function openModal(){
-    let modal=document.getElementById('studySetModal');
-    if(!modal){
-      modal=document.createElement('div');
-      modal.className='modal-overlay';
-      modal.id='studySetModal';
-      modal.innerHTML='<div class="modal wide-modal"><div class="modal-header"><h2>New Study Set</h2><button type="button" class="close-button" id="studyFixClose">×</button></div><div class="form-group"><label for="studyFixName">Name</label><input id="studyFixName" placeholder="e.g. Kinematics — Unit 1"></div><div class="form-row"><div class="form-group"><label for="studyFixSubject">Subject</label><select id="studyFixSubject"></select></div><div class="form-group"><label for="studyFixType">Set type</label><select id="studyFixType"><option value="flashcards">🗂️ Flashcards</option><option value="notes">📝 Study notes</option><option value="questions">❓ Question bank</option></select></div></div><div class="form-group"><label for="studyFixUnit">Unit / topic <span class="field-hint">optional</span></label><input id="studyFixUnit" placeholder="e.g. Unit 1 · Kinematics"></div><div class="form-group"><label for="studyFixDescription">Description <span class="field-hint">optional</span></label><textarea id="studyFixDescription" rows="3" placeholder="What is this set for?"></textarea></div><div class="modal-actions"><button type="button" class="cancel-button" id="studyFixCancel">Cancel</button><button type="button" class="save-button" id="studyFixSave">Create Study Set</button></div></div>';
-      document.body.appendChild(modal);
-      document.getElementById('studyFixClose').onclick=closeModal;
-      document.getElementById('studyFixCancel').onclick=closeModal;
-      document.getElementById('studyFixSave').onclick=createSet;
-      modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
+  function roadmapFor(subject){
+    try{
+      if(window.SubjectRoadmap&&typeof window.SubjectRoadmap.get==='function')return window.SubjectRoadmap.get(subject)||[];
+    }catch(e){}
+    const subjectObj=subjects().find(s=>String(s.name)===String(subject));
+    return Array.isArray(subjectObj?.units)?subjectObj.units:[];
+  }
+  function enhanceUnitField(){
+    const modal=document.getElementById('studySetModal');
+    const subject=document.getElementById('studySetSubject');
+    const old=document.getElementById('studySetUnit');
+    if(!modal||!subject||!old)return;
+    if(old.tagName==='SELECT')return;
+    const select=document.createElement('select');
+    select.id='studySetUnit';
+    select.innerHTML='<option value="">No unit / topic</option>';
+    old.replaceWith(select);
+    const label=select.parentElement?.querySelector('label');
+    if(label)label.innerHTML='Unit / topic <span class="field-hint">optional</span>';
+    function populate(){
+      const current=select.value;
+      const units=roadmapFor(subject.value);
+      select.innerHTML='<option value="">No unit / topic</option>'+
+        units.map(u=>{const name=typeof u==='string'?u:(u?.name||'');return name?`<option value="${esc(name)}">${esc(name)}</option>`:'';}).join('');
+      if(current&&[...select.options].some(o=>o.value===current))select.value=current;
+      else if(current&&!units.length){
+        const custom=document.createElement('option');custom.value=current;custom.textContent=current;select.appendChild(custom);select.value=current;
+      }
     }
-    const subject=document.getElementById('studyFixSubject');
-    subject.innerHTML='<option value="">Choose a subject</option>'+subjects().map(s=>`<option value="${esc(s.name)}">${esc(s.emoji||'📚')} ${esc(s.name)}</option>`).join('');
-    document.getElementById('studyFixName').value='';
-    document.getElementById('studyFixSubject').value='';
-    document.getElementById('studyFixType').value='flashcards';
-    document.getElementById('studyFixUnit').value='';
-    document.getElementById('studyFixDescription').value='';
-    modal.classList.add('open');
-    document.getElementById('studyFixName').focus();
+    subject.addEventListener('change',populate);
+    populate();
   }
-  function closeModal(){document.getElementById('studySetModal')?.classList.remove('open');}
-  function createSet(){
-    const d=data();
-    if(!Array.isArray(d.studySets))d.studySets=[];
-    const name=document.getElementById('studyFixName').value.trim();
-    const subject=document.getElementById('studyFixSubject').value;
-    if(!name){alert('Please enter a study set name.');return;}
-    if(!subject){alert('Please choose a subject.');return;}
-    const now=new Date().toISOString();
-    d.studySets.push({id:`S-${Date.now()}`,name,subject,type:document.getElementById('studyFixType').value,unit:document.getElementById('studyFixUnit').value.trim(),description:document.getElementById('studyFixDescription').value.trim(),items:[],createdAt:now,updatedAt:now});
-    if(typeof savePlannerData==='function')savePlannerData();
-    closeModal();
-    if(typeof window.renderStudy==='function')window.renderStudy();
-    if(typeof window.renderStudySessions==='function')window.renderStudySessions();
+  function wire(){
+    const button=document.getElementById('studyAddButton');
+    if(button){
+      button.onclick=function(e){
+        if(e)e.preventDefault();
+        if(typeof window.openStudySetModal==='function')window.openStudySetModal();
+        setTimeout(enhanceUnitField,0);
+        return false;
+      };
+    }
+    enhanceUnitField();
+    ensureQuizSection();
   }
-
-  // ----------------------------------------
-  // Practice quizzes — isolated from page rendering
-  // ----------------------------------------
-  function quizSets(){return (data().studySets||[]).filter(s=>s&&s.type==='flashcards'&&Array.isArray(s.items)&&s.items.some(c=>c&&(c.front||c.question)&&(c.back||c.answer)));}
-  function quizCards(set){return (set.items||[]).filter(c=>c&&(c.front||c.question)&&(c.back||c.answer));}
-  function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
   function ensureQuizSection(){
     const page=document.getElementById('studyPage');
     if(!page||document.getElementById('studyQuizSection'))return;
@@ -64,6 +64,9 @@
     document.getElementById('studyQuizButton').onclick=openQuizBuilder;
     renderQuizMini();
   }
+  function quizSets(){return (data().studySets||[]).filter(s=>s&&s.type==='flashcards'&&Array.isArray(s.items)&&s.items.some(c=>c&&(c.front||c.question)&&(c.back||c.answer)));}
+  function quizCards(set){return (set.items||[]).filter(c=>c&&(c.front||c.question)&&(c.back||c.answer));}
+  function shuffle(a){return [...a].sort(()=>Math.random()-.5);}
   function renderQuizMini(){
     const box=document.getElementById('studyQuizMini');if(!box)return;
     const sets=quizSets();
@@ -143,14 +146,7 @@
     document.getElementById('quizModalBody').innerHTML='<div class="quiz-results"><div class="quiz-score"><strong>'+percent+'%</strong><span>'+quizSession.score+' / '+total+' correct</span></div><p>'+(percent>=80?'Great work.':'Use the missed questions as your next review target.')+'</p>'+(wrong.length?'<div class="quiz-review"><h3>Review missed questions</h3>'+wrong.map(w=>'<article><strong>'+esc(w.question)+'</strong><span>Your answer: '+esc(w.given||'No answer')+'</span><span>Correct answer: '+esc(w.answer)+'</span></article>').join('')+'</div>':'<div class="quiz-feedback correct"><strong>Perfect score!</strong><p>Nothing to review this time.</p></div>')+'</div><div class="modal-actions"><button type="button" class="cancel-button" id="quizDone">Done</button><button type="button" class="save-button" id="quizAgain">Retake quiz</button></div>';
     document.getElementById('quizDone').onclick=closeQuizModal;document.getElementById('quizAgain').onclick=openQuizBuilder;
   }
-
-  function wire(){
-    const old=document.getElementById('studyAddButton');
-    if(old){const button=old.cloneNode(true);old.replaceWith(button);button.addEventListener('click',openModal);window.openStudySetModal=openModal;}
-    ensureQuizSection();renderQuizMini();
-  }
   function init(){wire();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
   window.addEventListener('load',init);
-  window.addEventListener('planner-data-changed',init);
 })();
