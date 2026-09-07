@@ -90,9 +90,16 @@ function ensureStudyPage(){
 }
 
 function ensureStudyNav(){
-  const school=document.querySelector('.sidebar .nav-section:nth-of-type(2)');
+  const sections=document.querySelectorAll('.sidebar .nav-section');
+  const school=sections[1];
   if(!school)return;
-  if(document.querySelector('[data-page="study"]'))return;
+  const items=[...document.querySelectorAll('.sidebar .nav-item[data-page="study"]')];
+  if(items.length){
+    const keep=items[0];
+    school.appendChild(keep);
+    items.slice(1).forEach(item=>item.remove());
+    return;
+  }
   const a=document.createElement('a');
   a.href='#study';
   a.className='nav-item';
@@ -190,8 +197,6 @@ function loadSavedPage(){
   setTimeout(dedupeSidebarNav,0);
 }
 
-// Use one delegated click handler for the sidebar. This avoids navigation
-// depending on inline onclick handlers and keeps dynamically added nav items working.
 document.addEventListener('click',function(event){
   const item=event.target.closest?.('.sidebar .nav-item[data-page]');
   if(!item)return;
