@@ -1,6 +1,10 @@
 (()=>{
   const DATA_KEY='plannerData';
-  const getData=()=>window.plannerData||JSON.parse(localStorage.getItem(DATA_KEY)||'null')||{};
+  const getData=()=>{
+    if(typeof plannerData!=='undefined'&&plannerData&&typeof plannerData==='object')return plannerData;
+    if(window.plannerData&&typeof window.plannerData==='object')return window.plannerData;
+    try{return JSON.parse(localStorage.getItem(DATA_KEY)||'null')||{};}catch(e){return {};}
+  };
   const getSubjects=()=>getData()?.settings?.subjects||[];
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const getUnits=subjectName=>{
@@ -25,6 +29,26 @@
     unit.innerHTML='<option value="">No unit / topic</option>'+getUnits(subject.value).map(u=>`<option value="${esc(u.id)}">${esc(u.name||u.title||'Untitled unit')}</option>`).join('');
     populateTopics();
   };
+  const persist=()=>{
+    const d=getData();
+    window.plannerData=d;
+    try{
+      if(typeof savePlannerData==='function')savePlannerData();
+      else if(window.PlannerDB&&typeof window.PlannerDB.save==='function')window.PlannerDB.save('study-set-create');
+      else{
+        localStorage.setItem(DATA_KEY,JSON.stringify(d));
+        if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
+      }
+      return true;
+    }catch(e){
+      console.error('Study Set save failed:',e);
+      try{
+        localStorage.setItem(DATA_KEY,JSON.stringify(d));
+        if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
+        return true;
+      }catch(e2){return false;}
+    }
+  };
   const save=()=>{
     const d=getData(),name=document.getElementById('studyFixName')?.value.trim(),subject=document.getElementById('studyFixSubject')?.value||'',unitId=document.getElementById('studyFixUnit')?.value||'',topicId=document.getElementById('studyFixTopic')?.value||'';
     if(!name)return alert('Please enter a study set name.');
@@ -32,9 +56,7 @@
     const unit=getUnit(subject,unitId),topic=(unit?.lessons||[]).find(l=>String(l?.id)===String(topicId)),now=new Date().toISOString();
     d.studySets=Array.isArray(d.studySets)?d.studySets:[];
     d.studySets.push({id:`S-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,subject,type:document.getElementById('studyFixType')?.value||'flashcards',unit:unit?.name||'',unitId:unit?.id||'',roadmapUnitId:unit?.id||'',topic:topic?.name||'',topicId:topic?.id||'',roadmapLessonId:topic?.id||'',description:document.getElementById('studyFixDescription')?.value.trim()||'',items:[],createdAt:now,updatedAt:now});
-    window.plannerData=d;
-    localStorage.setItem(DATA_KEY,JSON.stringify(d));
-    if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
+    if(!persist())return alert('The study set could not be saved. Please try again.');
     close();
     window.dispatchEvent(new Event('planner-data-changed'));
     if(typeof window.renderStudy==='function')window.renderStudy();
