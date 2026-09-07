@@ -7,14 +7,14 @@
   function grades(){return Array.isArray(data().gradeAssessments)?data().gradeAssessments:[];}
   function hasGrade(task){
     if(!task)return false;
-    const id=String(task.id);
+    const id=String(task.id).trim();
     const name=String(task.name||'').trim().toLowerCase();
     const subject=String(task.subject||'').trim().toLowerCase();
     return grades().some(g=>{
       const linked=String(g.taskId ?? g.linkedTaskId ?? g.task ?? '').trim();
       if(linked && linked===id)return true;
-      return String(g.name||'').trim().toLowerCase()===name &&
-             String(g.subject||'').trim().toLowerCase()===subject;
+      return name && String(g.name||'').trim().toLowerCase()===name &&
+             subject && String(g.subject||'').trim().toLowerCase()===subject;
     });
   }
   function sync(){
@@ -26,6 +26,7 @@
       button.textContent=hasGrade(task)?'Edit Grade':'Record Grade';
     });
   }
+  window.gradeExistsForTask=hasGrade;
   window.syncGradeButtons=sync;
   document.addEventListener('planner-data-changed',sync);
   document.addEventListener('DOMContentLoaded',sync);
