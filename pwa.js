@@ -10,7 +10,7 @@
     './study-page.js?v=20260912',
     './study-plans.js?v=20260912',
     './study-sessions.js?v=20260912',
-    './study-set-button-fix.js?v=20260912'
+    './study-set-button-fix.js?v=20260916'
   ];
 
   scripts.forEach(src=>{
