@@ -32,6 +32,15 @@ function setActiveNav(page){
   document.querySelectorAll('.nav-item').forEach(item=>item.classList.toggle('active',item.dataset.page===page));
 }
 
+function dedupeSidebarNav(){
+  const seen=new Set();
+  document.querySelectorAll('.sidebar .nav-item[data-page]').forEach(item=>{
+    const page=item.dataset.page;
+    if(seen.has(page))item.remove();
+    else seen.add(page);
+  });
+}
+
 function getSubjectHash(){
   const raw=window.location.hash.replace(/^#/,'');
   return raw.toLowerCase().startsWith('subject/')?raw.slice(8):null;
@@ -95,6 +104,7 @@ function ensureStudyNav(){
 function showPage(page,updateHistory=true){
   ensureStudyPage();
   ensureStudyNav();
+  dedupeSidebarNav();
 
   if(getSubjectHash()!=null&&window.__plannerRestoringSubject){restoreSubjectFromHash();return;}
   if(!updateHistory&&getSubjectHash()!=null){restoreSubjectFromHash();return;}
@@ -177,6 +187,7 @@ function loadSavedPage(){
   const lower=rawHash.toLowerCase();
   showPage(VALID_PAGES.includes(lower)?lower:'dashboard',false);
   setCurrentDate();
+  setTimeout(dedupeSidebarNav,0);
 }
 
 // Use one delegated click handler for the sidebar. This avoids navigation
@@ -195,12 +206,14 @@ document.addEventListener('DOMContentLoaded',loadSavedPage);
 window.addEventListener('load',()=>{
   ensureStudyPage();
   ensureStudyNav();
+  dedupeSidebarNav();
   if(getSubjectHash()!=null){
     window.__plannerRestoringSubject=true;
     restoreSubjectFromHash();
     setTimeout(()=>{
       restoreSubjectFromHash();
       window.__plannerRestoringSubject=false;
+      dedupeSidebarNav();
     },0);
   }
 });
