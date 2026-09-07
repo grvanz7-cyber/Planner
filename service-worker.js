@@ -1,4 +1,4 @@
-const CACHE_NAME = 'planner-v2';
+const CACHE_NAME = 'planner-v3';
 
 const APP_SHELL = [
   './',
@@ -18,6 +18,9 @@ const APP_SHELL = [
   './dashboard-widgets.css',
   './dashboard-subjects-widget.css',
   './dashboard-study-load.css',
+  './study-page.css',
+  './study-plans.css',
+  './study-sessions.css',
   './script.js',
   './planner-data-layer.js',
   './subject-enhancements.js',
