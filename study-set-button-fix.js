@@ -26,6 +26,7 @@
     else if(!lessons.length)topic.innerHTML='<option value="">No topics in this unit</option>';
   };
   const persist=d=>{
+    window.plannerData=d;
     localStorage.setItem(DATA_KEY,JSON.stringify(d));
     if(d.tasks)localStorage.setItem('plannerTasks',JSON.stringify(d.tasks));
   };
@@ -37,8 +38,12 @@
     const now=new Date().toISOString();
     const set={id:`S-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name,subject,type:document.getElementById('studyFixType')?.value||'flashcards',unit:unitObj?.name||'',unitId:unitObj?.id||'',roadmapUnitId:unitObj?.id||'',topic:topicObj?.name||'',topicId:topicObj?.id||'',roadmapLessonId:topicObj?.id||'',description:document.getElementById('studyFixDescription')?.value.trim()||'',items:[],createdAt:now,updatedAt:now};
     d.studySets=Array.isArray(d.studySets)?d.studySets:[];d.studySets.push(set);
-    try{persist(d);if(typeof window.savePlannerData==='function')window.savePlannerData();}catch(e){console.error(e);alert('The study set could not be saved. Please try again.');return;}
-    closeModal();if(typeof window.renderStudy==='function')window.renderStudy();if(typeof window.renderStudySessions==='function')window.renderStudySessions();if(typeof window.renderStudyPlans==='function')window.renderStudyPlans();window.dispatchEvent(new Event('planner-data-changed'));
+    try{persist(d);}catch(e){console.error(e);alert('The study set could not be saved. Please try again.');return;}
+    closeModal();
+    if(typeof window.renderStudy==='function')window.renderStudy();
+    if(typeof window.renderStudySessions==='function')window.renderStudySessions();
+    if(typeof window.renderStudyPlans==='function')window.renderStudyPlans();
+    window.dispatchEvent(new Event('planner-data-changed'));
   };
   const openModal=()=>{
     closeModal();const modal=document.createElement('div');modal.id='studySetModal';modal.className='modal-overlay';
