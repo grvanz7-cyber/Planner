@@ -6,6 +6,14 @@
   function grades(){return Array.isArray(data().gradeAssessments)?data().gradeAssessments:[];}
   function gradeForTask(id){return grades().find(g=>String(g.taskId||'')===String(id))||null;}
 
+  function syncGradeButtons(){
+    document.querySelectorAll('.record-grade-button').forEach(button=>{
+      const row=button.closest('.assignment-row,.assessment-row');
+      const id=row?.dataset?.taskId;
+      if(id!=null)button.textContent=gradeForTask(id)?'Edit Grade':'Record Grade';
+    });
+  }
+
   function showGradeDetails(g){
     if(!g)return;
     let modal=document.querySelector('#gradeDetailsModal');
@@ -47,13 +55,16 @@
       savePlannerData();
       close();
       if(typeof renderGrades==='function')renderGrades();
-      if(typeof window.syncGradeButtons==='function')window.syncGradeButtons();
+      syncGradeButtons();
     };
     modal.classList.add('open');
   }
 
   window.openGradeDetails=showGradeDetails;
   window.openGradeEditModal=openGradeEditModal;
+  window.syncGradeButtons=syncGradeButtons;
+
+  document.addEventListener('planner-data-changed',syncGradeButtons);
 
   // Use one normal delegated click handler. No capture phase and no polling.
   document.addEventListener('click',function(e){
