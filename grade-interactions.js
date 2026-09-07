@@ -5,14 +5,14 @@
   function data(){return window.plannerData||{};}
   function grades(){return Array.isArray(data().gradeAssessments)?data().gradeAssessments:[];}
   function gradeForTask(id){return grades().find(g=>String(g.taskId)===String(id))||null;}
-  function syncAssignmentButtons(){
-    document.querySelectorAll('#assignmentsList .assignment-row').forEach(row=>{
-      const button=row.querySelector('.record-grade-button');
-      if(!button)return;
-      const id=row.dataset.taskId||row.getAttribute('data-task-id');
+  function syncGradeButtons(){
+    document.querySelectorAll('#assignmentsList .record-grade-button,#assessmentsList .record-grade-button').forEach(button=>{
+      const row=button.closest('.assignment-row,.assessment-row');
+      const id=row?.dataset?.taskId||row?.getAttribute('data-task-id');
       button.textContent=gradeForTask(id)?'Edit Grade':'Record Grade';
     });
   }
+  window.syncGradeButtons=syncGradeButtons;
   function showGradeDetails(g){
     if(!g)return;
     let modal=document.querySelector('#gradeDetailsModal');
@@ -35,14 +35,16 @@
     subjectSelect.value=g.subject||'';modal.querySelector('#editGradeType').value=g.type||'Assignment';modal.querySelector('#editGradePortion').value=g.portion||'coursework';modal.querySelector('#editGradeWeight').value=g.weight??'';modal.querySelector('#editGradeNotes').value=g.notes||'';
     cats.forEach(c=>{const mark=(g.categories||[]).find(x=>x.category===c);modal.querySelector(`[data-edit-category="${c}"]`).value=mark?.display||'';});
     modal.querySelector('.close-button').onclick=()=>modal.classList.remove('open');modal.querySelector('.cancel-button').onclick=()=>modal.classList.remove('open');
-    modal.querySelector('.save-button').onclick=()=>{g.name=modal.querySelector('#editGradeName').value.trim();g.subject=subjectSelect.value;g.type=modal.querySelector('#editGradeType').value;g.portion=modal.querySelector('#editGradePortion').value;g.weight=modal.querySelector('#editGradeWeight').value===''?null:Number(modal.querySelector('#editGradeWeight').value);g.notes=modal.querySelector('#editGradeNotes').value.trim();savePlannerData();modal.classList.remove('open');if(typeof renderGrades==='function')renderGrades();syncAssignmentButtons();};
+    modal.querySelector('.save-button').onclick=()=>{g.name=modal.querySelector('#editGradeName').value.trim();g.subject=subjectSelect.value;g.type=modal.querySelector('#editGradeType').value;g.portion=modal.querySelector('#editGradePortion').value;g.weight=modal.querySelector('#editGradeWeight').value===''?null:Number(modal.querySelector('#editGradeWeight').value);g.notes=modal.querySelector('#editGradeNotes').value.trim();savePlannerData();modal.classList.remove('open');if(typeof renderGrades==='function')renderGrades();syncGradeButtons();};
     modal.classList.add('open');
   }
   document.addEventListener('click',function(e){
     const assignmentButton=e.target.closest?.('#assignmentsList .record-grade-button');
-    if(assignmentButton){
+    const assessmentButton=e.target.closest?.('#assessmentsList .record-grade-button');
+    const schoolworkButton=assignmentButton||assessmentButton;
+    if(schoolworkButton){
       e.preventDefault();e.stopImmediatePropagation();
-      const row=assignmentButton.closest('.assignment-row'),id=row?.dataset?.taskId,existing=gradeForTask(id);
+      const row=schoolworkButton.closest('.assignment-row,.assessment-row'),id=row?.dataset?.taskId,existing=gradeForTask(id);
       if(existing){showGradeDetails(existing);}
       else if(typeof window.openGradeModal==='function'){
         window.openGradeModal();
@@ -56,6 +58,8 @@
     const subjectRow=e.target.closest?.('#subjectDetailGrades .subject-grade-row');
     if(subjectRow){e.preventDefault();const subject=document.querySelector('#subjectDetailPage')?.dataset?.subject||'';const name=subjectRow.querySelector('strong')?.textContent?.trim()||'';const g=grades().find(x=>x.subject===subject&&String(x.name||'').trim()===name);if(g)showGradeDetails(g);return;}
   },true);
-  document.addEventListener('planner-data-changed',syncAssignmentButtons);
-  document.addEventListener('DOMContentLoaded',syncAssignmentButtons);
+  document.addEventListener('planner-data-changed',syncGradeButtons);
+  document.addEventListener('DOMContentLoaded',syncGradeButtons);
+  window.addEventListener('load',syncGradeButtons);
+  setInterval(syncGradeButtons,500);
 })();
