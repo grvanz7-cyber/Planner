@@ -32,7 +32,7 @@
   }
 })();
 
-const VALID_PAGES=['dashboard','calendar','tasks','subjects','assignments','tests-exams','grades','settings'];
+const VALID_PAGES=['dashboard','calendar','tasks','subjects','assignments','tests-exams','grades','study','settings'];
 
 function setActiveNav(page){
   document.querySelectorAll('.nav-item').forEach(item=>item.classList.toggle('active',item.dataset.page===page));
@@ -64,15 +64,8 @@ function restoreSubjectFromHash(){
 }
 
 function showPage(page,updateHistory=true){
-  // A subject-detail hash is the source of truth while the app is restoring.
-  if(getSubjectHash()!=null && window.__plannerRestoringSubject){
-    restoreSubjectFromHash();
-    return;
-  }
-  if(!updateHistory&&getSubjectHash()!=null){
-    restoreSubjectFromHash();
-    return;
-  }
+  if(getSubjectHash()!=null && window.__plannerRestoringSubject){restoreSubjectFromHash();return;}
+  if(!updateHistory&&getSubjectHash()!=null){restoreSubjectFromHash();return;}
   if(!VALID_PAGES.includes(page))page='dashboard';
   const pages={
     dashboard:document.querySelector('#dashboardPage'),
@@ -82,6 +75,7 @@ function showPage(page,updateHistory=true){
     assignments:document.querySelector('#assignmentsPage'),
     'tests-exams':document.querySelector('#testsExamsPage'),
     grades:document.querySelector('#gradesPage'),
+    study:document.querySelector('#studyPage'),
     settings:document.querySelector('#settingsPage')
   };
   const detail=document.querySelector('#subjectDetailPage');
@@ -105,20 +99,18 @@ function showPage(page,updateHistory=true){
       if(typeof renderAssessments==='function')renderAssessments();
     }else if(page==='grades'){
       if(typeof renderGrades==='function')renderGrades();
+    }else if(page==='study'){
+      if(typeof renderStudy==='function')renderStudy();
     }else if(typeof renderTasks==='function'){
       renderTasks();
     }
-  }catch(error){
-    console.error('Planner page render error:',error);
-  }
+  }catch(error){console.error('Planner page render error:',error);}
   if(updateHistory)history.replaceState(null,'',`#${page}`);
 }
 
 function setCurrentDate(){
   const dateElement=document.querySelector('#currentDate');
-  if(dateElement&&dateElement.textContent==='Loading date...'){
-    dateElement.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  }
+  if(dateElement&&dateElement.textContent==='Loading date...')dateElement.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
 }
 
 function loadSavedPage(){
@@ -129,19 +121,12 @@ function loadSavedPage(){
   setCurrentDate();
 }
 
-// DOMContentLoaded can run before another script's startup code. The load
-// event runs after all page scripts have initialized, so restore the saved
-// subject one final time there as well. This prevents refresh from being
-// overwritten by a later startup showPage('subjects') call.
 document.addEventListener('DOMContentLoaded',loadSavedPage);
 window.addEventListener('load',()=>{
   if(getSubjectHash()!=null){
     window.__plannerRestoringSubject=true;
     restoreSubjectFromHash();
-    setTimeout(()=>{
-      restoreSubjectFromHash();
-      window.__plannerRestoringSubject=false;
-    },0);
+    setTimeout(()=>{restoreSubjectFromHash();window.__plannerRestoringSubject=false;},0);
   }
 });
 window.addEventListener('hashchange',loadSavedPage);
