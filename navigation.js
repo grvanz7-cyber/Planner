@@ -108,6 +108,15 @@ function ensureStudyNav(){
   school.appendChild(a);
 }
 
+function getPageElement(page){
+  const fixed={
+    dashboard:'#dashboardPage',calendar:'#calendarPage',tasks:'#tasksPage',subjects:'#subjectsPage',
+    assignments:'#assignmentsPage','tests-exams':'#testsExamsPage',grades:'#gradesPage',study:'#studyPage',settings:'#settingsPage'
+  };
+  if(fixed[page])return document.querySelector(fixed[page]);
+  return document.getElementById(page+'Page')||document.getElementById(page);
+}
+
 function showPage(page,updateHistory=true){
   ensureStudyPage();
   ensureStudyNav();
@@ -116,38 +125,21 @@ function showPage(page,updateHistory=true){
   if(getSubjectHash()!=null&&window.__plannerRestoringSubject){restoreSubjectFromHash();return;}
   if(!updateHistory&&getSubjectHash()!=null){restoreSubjectFromHash();return;}
 
-  if(!VALID_PAGES.includes(page))page='dashboard';
+  const target=getPageElement(page);
+  if(!target){page='dashboard';}
+  const finalTarget=getPageElement(page)||document.querySelector('#dashboardPage');
 
-  const pages={
-    dashboard:document.querySelector('#dashboardPage'),
-    calendar:document.querySelector('#calendarPage'),
-    tasks:document.querySelector('#tasksPage'),
-    subjects:document.querySelector('#subjectsPage'),
-    assignments:document.querySelector('#assignmentsPage'),
-    'tests-exams':document.querySelector('#testsExamsPage'),
-    grades:document.querySelector('#gradesPage'),
-    study:document.querySelector('#studyPage'),
-    settings:document.querySelector('#settingsPage')
-  };
-
-  const detail=document.querySelector('#subjectDetailPage');
-
-  Object.values(pages).forEach(el=>{
-    if(!el)return;
+  document.querySelectorAll('.main > div').forEach(el=>{
     el.classList.add('page-hidden');
     el.style.display='none';
   });
-  if(detail){
-    detail.classList.add('page-hidden');
-    detail.style.display='none';
-  }
+  const detail=document.querySelector('#subjectDetailPage');
+  if(detail&&detail!==finalTarget){detail.classList.add('page-hidden');detail.style.display='none';}
 
-  const target=pages[page];
-  if(target){
-    target.classList.remove('page-hidden');
-    target.style.display='';
+  if(finalTarget){
+    finalTarget.classList.remove('page-hidden');
+    finalTarget.style.display='';
   }
-
   setActiveNav(page);
 
   try{
@@ -169,14 +161,10 @@ function showPage(page,updateHistory=true){
     }else if(page==='study'){
       if(typeof renderStudy==='function')renderStudy();
       if(typeof renderStudyPlans==='function')renderStudyPlans();
-    }else if(typeof renderTasks==='function'){
-      renderTasks();
     }
-  }catch(error){
-    console.error('Planner page render error:',error);
-  }
+  }catch(error){console.error('Planner page render error:',error);}
 
-  if(updateHistory)history.replaceState(null,'',`#${page}`);
+  if(updateHistory)history.replaceState(null,'','#'+page);
 }
 
 function setCurrentDate(){
@@ -192,7 +180,7 @@ function loadSavedPage(){
   if(restoreSubjectFromHash())return;
   const rawHash=window.location.hash.replace(/^#/,'');
   const lower=rawHash.toLowerCase();
-  showPage(VALID_PAGES.includes(lower)?lower:'dashboard',false);
+  showPage(lower||'dashboard',false);
   setCurrentDate();
   setTimeout(dedupeSidebarNav,0);
 }
@@ -201,7 +189,7 @@ document.addEventListener('click',function(event){
   const item=event.target.closest?.('.sidebar .nav-item[data-page]');
   if(!item)return;
   const page=item.dataset.page;
-  if(!VALID_PAGES.includes(page))return;
+  if(!getPageElement(page))return;
   event.preventDefault();
   event.stopPropagation();
   showPage(page,true);
@@ -220,6 +208,9 @@ window.addEventListener('load',()=>{
       window.__plannerRestoringSubject=false;
       dedupeSidebarNav();
     },0);
+  }else{
+    const raw=window.location.hash.replace(/^#/,'').toLowerCase();
+    if(raw&&getPageElement(raw))showPage(raw,false);
   }
 });
 window.addEventListener('hashchange',loadSavedPage);
