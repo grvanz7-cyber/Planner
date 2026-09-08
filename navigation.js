@@ -108,6 +108,12 @@ function ensureStudyNav(){
   school.appendChild(a);
 }
 
+function ensureRoadmapPage(page){
+  if(page!=='study-map')return;
+  if(getPageElement(page))return;
+  if(typeof window.renderRoadmapCore==='function')window.renderRoadmapCore();
+}
+
 function getPageElement(page){
   const fixed={
     dashboard:'#dashboardPage',calendar:'#calendarPage',tasks:'#tasksPage',subjects:'#subjectsPage',
@@ -120,13 +126,14 @@ function getPageElement(page){
 function showPage(page,updateHistory=true){
   ensureStudyPage();
   ensureStudyNav();
+  ensureRoadmapPage(page);
   dedupeSidebarNav();
 
-  if(getSubjectHash()!=null&&window.__plannerRestoringSubject){restoreSubjectFromHash();return;}
+  if(getSubjectHash()!=null&&window.__plannerRestoringSubject){window.__plannerRestoringSubject=false;}
   if(!updateHistory&&getSubjectHash()!=null){restoreSubjectFromHash();return;}
 
   const target=getPageElement(page);
-  if(!target){page='dashboard';}
+  if(!target)page='dashboard';
   const finalTarget=getPageElement(page)||document.querySelector('#dashboardPage');
 
   document.querySelectorAll('.main > div').forEach(el=>{
@@ -161,6 +168,8 @@ function showPage(page,updateHistory=true){
     }else if(page==='study'){
       if(typeof renderStudy==='function')renderStudy();
       if(typeof renderStudyPlans==='function')renderStudyPlans();
+    }else if(page==='study-map'){
+      if(typeof window.renderStudyMap==='function')window.renderStudyMap();
     }
   }catch(error){console.error('Planner page render error:',error);}
 
@@ -177,10 +186,9 @@ function setCurrentDate(){
 function loadSavedPage(){
   ensureStudyPage();
   ensureStudyNav();
-  if(restoreSubjectFromHash())return;
   const rawHash=window.location.hash.replace(/^#/,'');
-  const lower=rawHash.toLowerCase();
-  showPage(lower||'dashboard',false);
+  if(rawHash.toLowerCase().startsWith('subject/')){restoreSubjectFromHash();return;}
+  showPage(rawHash.toLowerCase()||'dashboard',false);
   setCurrentDate();
   setTimeout(dedupeSidebarNav,0);
 }
@@ -189,7 +197,8 @@ document.addEventListener('click',function(event){
   const item=event.target.closest?.('.sidebar .nav-item[data-page]');
   if(!item)return;
   const page=item.dataset.page;
-  if(!getPageElement(page))return;
+  ensureRoadmapPage(page);
+  if(!getPageElement(page)&&page!=='study-map')return;
   event.preventDefault();
   event.stopPropagation();
   showPage(page,true);
@@ -199,18 +208,9 @@ document.addEventListener('DOMContentLoaded',loadSavedPage);
 window.addEventListener('load',()=>{
   ensureStudyPage();
   ensureStudyNav();
+  ensureRoadmapPage('study-map');
   dedupeSidebarNav();
-  if(getSubjectHash()!=null){
-    window.__plannerRestoringSubject=true;
-    restoreSubjectFromHash();
-    setTimeout(()=>{
-      restoreSubjectFromHash();
-      window.__plannerRestoringSubject=false;
-      dedupeSidebarNav();
-    },0);
-  }else{
-    const raw=window.location.hash.replace(/^#/,'').toLowerCase();
-    if(raw&&getPageElement(raw))showPage(raw,false);
-  }
+  const raw=window.location.hash.replace(/^#/,'').toLowerCase();
+  if(raw&&getPageElement(raw))showPage(raw,false);
 });
 window.addEventListener('hashchange',loadSavedPage);
