@@ -108,25 +108,49 @@ function ensureStudyNav(){
   school.appendChild(a);
 }
 
+function ensureStudyMapPage(){
+  const main=document.querySelector('.main');
+  if(!main)return;
+
+  let page=document.getElementById('study-mapPage');
+  if(!page){
+    page=document.createElement('div');
+    page.id='study-mapPage';
+    page.className='page-hidden';
+    page.innerHTML='<header class="header"><div><h1>Study Map</h1><p>See each subject as a learning path from units to lessons.</p></div></header><section class="card"><div id="studyMapContent" class="study-map-content"></div></section>';
+    main.appendChild(page);
+  }
+
+  const sections=document.querySelectorAll('.sidebar .nav-section');
+  const school=sections[1];
+  if(school&&!document.querySelector('.sidebar .nav-item[data-page="study-map"]')){
+    const a=document.createElement('a');
+    a.href='#study-map';
+    a.className='nav-item';
+    a.dataset.page='study-map';
+    a.textContent='🗺️ Study Map';
+    school.appendChild(a);
+  }
+}
+
 function ensureRoadmapPage(page){
   if(page!=='study-map')return;
-  if(getPageElement(page))return;
+  ensureStudyMapPage();
   if(typeof window.renderRoadmapCore==='function')window.renderRoadmapCore();
+  ensureStudyMapPage();
 }
 
 function getPageElement(page){
   const fixed={
     dashboard:'#dashboardPage',calendar:'#calendarPage',tasks:'#tasksPage',subjects:'#subjectsPage',
-    assignments:'#assignmentsPage','tests-exams':'#testsExamsPage',grades:'#gradesPage',study:'#studyPage',settings:'#settingsPage'
+    assignments:'#assignmentsPage','tests-exams':'#testsExamsPage',grades:'#gradesPage',study:'#studyPage','study-map':'#study-mapPage',settings:'#settingsPage'
   };
   if(fixed[page])return document.querySelector(fixed[page]);
   return document.getElementById(page+'Page')||document.getElementById(page);
 }
 
 function showStudyMap(){
-  // Study Map is a dynamically-created page, so handle it explicitly instead
-  // of allowing the generic navigation fallback to send it to Today.
-  ensureRoadmapPage('study-map');
+  ensureStudyMapPage();
   const target=document.getElementById('study-mapPage');
   if(!target){
     console.error('Study Map page could not be created.');
@@ -214,6 +238,7 @@ function setCurrentDate(){
 function loadSavedPage(){
   ensureStudyPage();
   ensureStudyNav();
+  ensureStudyMapPage();
   const rawHash=window.location.hash.replace(/^#/,'');
   if(rawHash.toLowerCase().startsWith('subject/')){restoreSubjectFromHash();return;}
   if(rawHash.toLowerCase()==='study-map'){
@@ -247,7 +272,7 @@ document.addEventListener('DOMContentLoaded',loadSavedPage);
 window.addEventListener('load',()=>{
   ensureStudyPage();
   ensureStudyNav();
-  ensureRoadmapPage('study-map');
+  ensureStudyMapPage();
   dedupeSidebarNav();
   const raw=window.location.hash.replace(/^#/,'').toLowerCase();
   if(raw==='study-map')showStudyMap();
