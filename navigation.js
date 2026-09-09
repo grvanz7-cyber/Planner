@@ -123,7 +123,37 @@ function getPageElement(page){
   return document.getElementById(page+'Page')||document.getElementById(page);
 }
 
+function showStudyMap(){
+  // Study Map is a dynamically-created page, so handle it explicitly instead
+  // of allowing the generic navigation fallback to send it to Today.
+  ensureRoadmapPage('study-map');
+  const target=document.getElementById('study-mapPage');
+  if(!target){
+    console.error('Study Map page could not be created.');
+    return false;
+  }
+
+  document.querySelectorAll('.main > div').forEach(el=>{
+    el.classList.add('page-hidden');
+    el.style.display='none';
+  });
+  const detail=document.querySelector('#subjectDetailPage');
+  if(detail&&detail!==target){detail.classList.add('page-hidden');detail.style.display='none';}
+
+  target.classList.remove('page-hidden');
+  target.style.display='';
+  setActiveNav('study-map');
+  if(typeof window.renderStudyMap==='function')window.renderStudyMap();
+  history.replaceState(null,'','#study-map');
+  return true;
+}
+
 function showPage(page,updateHistory=true){
+  if(page==='study-map'){
+    showStudyMap();
+    return;
+  }
+
   ensureStudyPage();
   ensureStudyNav();
   ensureRoadmapPage(page);
@@ -168,8 +198,6 @@ function showPage(page,updateHistory=true){
     }else if(page==='study'){
       if(typeof renderStudy==='function')renderStudy();
       if(typeof renderStudyPlans==='function')renderStudyPlans();
-    }else if(page==='study-map'){
-      if(typeof window.renderStudyMap==='function')window.renderStudyMap();
     }
   }catch(error){console.error('Planner page render error:',error);}
 
@@ -188,6 +216,11 @@ function loadSavedPage(){
   ensureStudyNav();
   const rawHash=window.location.hash.replace(/^#/,'');
   if(rawHash.toLowerCase().startsWith('subject/')){restoreSubjectFromHash();return;}
+  if(rawHash.toLowerCase()==='study-map'){
+    showStudyMap();
+    setCurrentDate();
+    return;
+  }
   showPage(rawHash.toLowerCase()||'dashboard',false);
   setCurrentDate();
   setTimeout(dedupeSidebarNav,0);
@@ -197,6 +230,12 @@ document.addEventListener('click',function(event){
   const item=event.target.closest?.('.sidebar .nav-item[data-page]');
   if(!item)return;
   const page=item.dataset.page;
+  if(page==='study-map'){
+    event.preventDefault();
+    event.stopPropagation();
+    showStudyMap();
+    return;
+  }
   ensureRoadmapPage(page);
   if(!getPageElement(page)&&page!=='study-map')return;
   event.preventDefault();
@@ -211,6 +250,7 @@ window.addEventListener('load',()=>{
   ensureRoadmapPage('study-map');
   dedupeSidebarNav();
   const raw=window.location.hash.replace(/^#/,'').toLowerCase();
-  if(raw&&getPageElement(raw))showPage(raw,false);
+  if(raw==='study-map')showStudyMap();
+  else if(raw&&getPageElement(raw))showPage(raw,false);
 });
 window.addEventListener('hashchange',loadSavedPage);
