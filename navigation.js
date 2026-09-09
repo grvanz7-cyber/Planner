@@ -109,35 +109,14 @@ function ensureStudyNav(){
 }
 
 function ensureStudyMapPage(){
-  const main=document.querySelector('.main');
-  if(!main)return;
-
-  let page=document.getElementById('study-mapPage');
-  if(!page){
-    page=document.createElement('div');
-    page.id='study-mapPage';
-    page.className='page-hidden';
-    page.innerHTML='<header class="header"><div><h1>Study Map</h1><p>See each subject as a learning path from units to lessons.</p></div></header><section class="card"><div id="studyMapContent" class="study-map-content"></div></section>';
-    main.appendChild(page);
-  }
-
-  const sections=document.querySelectorAll('.sidebar .nav-section');
-  const school=sections[1];
-  if(school&&!document.querySelector('.sidebar .nav-item[data-page="study-map"]')){
-    const a=document.createElement('a');
-    a.href='#study-map';
-    a.className='nav-item';
-    a.dataset.page='study-map';
-    a.textContent='🗺️ Study Map';
-    school.appendChild(a);
-  }
+  // Study Map is owned by roadmap-systems.js. Never create a second copy here.
+  return document.getElementById('study-mapPage');
 }
 
 function ensureRoadmapPage(page){
   if(page!=='study-map')return;
-  ensureStudyMapPage();
+  if(getPageElement(page))return;
   if(typeof window.renderRoadmapCore==='function')window.renderRoadmapCore();
-  ensureStudyMapPage();
 }
 
 function getPageElement(page){
@@ -150,7 +129,7 @@ function getPageElement(page){
 }
 
 function showStudyMap(){
-  ensureStudyMapPage();
+  ensureRoadmapPage('study-map');
   const target=document.getElementById('study-mapPage');
   if(!target){
     console.error('Study Map page could not be created.');
