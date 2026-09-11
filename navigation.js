@@ -26,7 +26,7 @@
   }catch(error){console.error('Planner storage repair failed:',error);}
 })();
 
-const VALID_PAGES=['dashboard','calendar','tasks','subjects','assignments','tests-exams','grades','study','settings'];
+const VALID_PAGES=['dashboard','calendar','tasks','subjects','assignments','tests-exams','grades','study','settings','focus','habits','goals','companion','profile','friends','integrations','smart','study-map'];
 
 function setActiveNav(page){
   document.querySelectorAll('.nav-item').forEach(item=>item.classList.toggle('active',item.dataset.page===page));
@@ -109,12 +109,12 @@ function ensureStudyNav(){
 }
 
 function ensureStudyMapPage(){
-  // Study Map is owned by roadmap-systems.js. Never create a second copy here.
   return document.getElementById('study-mapPage');
 }
 
 function ensureRoadmapPage(page){
-  if(page!=='study-map')return;
+  const roadmapPages=['focus','habits','goals','companion','profile','friends','integrations','smart','study-map'];
+  if(!roadmapPages.includes(page))return;
   if(getPageElement(page))return;
   if(typeof window.renderRoadmapCore==='function')window.renderRoadmapCore();
 }
@@ -131,130 +131,68 @@ function getPageElement(page){
 function showStudyMap(){
   ensureRoadmapPage('study-map');
   const target=document.getElementById('study-mapPage');
-  if(!target){
-    console.error('Study Map page could not be created.');
-    return false;
-  }
-
-  document.querySelectorAll('.main > div').forEach(el=>{
-    el.classList.add('page-hidden');
-    el.style.display='none';
-  });
+  if(!target){console.error('Study Map page could not be created.');return false;}
+  document.querySelectorAll('.main > div').forEach(el=>{el.classList.add('page-hidden');el.style.display='none';});
   const detail=document.querySelector('#subjectDetailPage');
   if(detail&&detail!==target){detail.classList.add('page-hidden');detail.style.display='none';}
-
-  target.classList.remove('page-hidden');
-  target.style.display='';
-  setActiveNav('study-map');
+  target.classList.remove('page-hidden');target.style.display='';setActiveNav('study-map');
   if(typeof window.renderStudyMap==='function')window.renderStudyMap();
-  history.replaceState(null,'','#study-map');
-  return true;
+  history.replaceState(null,'','#study-map');return true;
 }
 
 function showPage(page,updateHistory=true){
-  if(page==='study-map'){
-    showStudyMap();
-    return;
-  }
-
-  ensureStudyPage();
-  ensureStudyNav();
-  ensureRoadmapPage(page);
-  dedupeSidebarNav();
-
-  if(getSubjectHash()!=null&&window.__plannerRestoringSubject){window.__plannerRestoringSubject=false;}
+  if(page==='study-map'){showStudyMap();return;}
+  ensureStudyPage();ensureStudyNav();ensureRoadmapPage(page);dedupeSidebarNav();
+  if(getSubjectHash()!=null&&window.__plannerRestoringSubject)window.__plannerRestoringSubject=false;
   if(!updateHistory&&getSubjectHash()!=null){restoreSubjectFromHash();return;}
-
   const target=getPageElement(page);
   if(!target)page='dashboard';
   const finalTarget=getPageElement(page)||document.querySelector('#dashboardPage');
-
-  document.querySelectorAll('.main > div').forEach(el=>{
-    el.classList.add('page-hidden');
-    el.style.display='none';
-  });
+  document.querySelectorAll('.main > div').forEach(el=>{el.classList.add('page-hidden');el.style.display='none';});
   const detail=document.querySelector('#subjectDetailPage');
   if(detail&&detail!==finalTarget){detail.classList.add('page-hidden');detail.style.display='none';}
-
-  if(finalTarget){
-    finalTarget.classList.remove('page-hidden');
-    finalTarget.style.display='';
-  }
+  if(finalTarget){finalTarget.classList.remove('page-hidden');finalTarget.style.display='';}
   setActiveNav(page);
-
   try{
-    if(page==='settings'){
-      if(typeof renderSubjects==='function')renderSubjects();
-      if(typeof renderTaskTypes==='function')renderTaskTypes();
-    }else if(page==='calendar'){
-      if(typeof renderCalendar==='function')renderCalendar();
-    }else if(page==='tasks'){
-      if(typeof renderAllTasks==='function')renderAllTasks();
-    }else if(page==='subjects'){
-      if(typeof renderSubjectsPage==='function')renderSubjectsPage();
-    }else if(page==='assignments'){
-      if(typeof renderAssignments==='function')renderAssignments();
-    }else if(page==='tests-exams'){
-      if(typeof renderAssessments==='function')renderAssessments();
-    }else if(page==='grades'){
-      if(typeof renderGrades==='function')renderGrades();
-    }else if(page==='study'){
-      if(typeof renderStudy==='function')renderStudy();
-      if(typeof renderStudyPlans==='function')renderStudyPlans();
-    }
+    if(page==='settings'){if(typeof renderSubjects==='function')renderSubjects();if(typeof renderTaskTypes==='function')renderTaskTypes();}
+    else if(page==='calendar'){if(typeof renderCalendar==='function')renderCalendar();}
+    else if(page==='tasks'){if(typeof renderAllTasks==='function')renderAllTasks();}
+    else if(page==='subjects'){if(typeof renderSubjectsPage==='function')renderSubjectsPage();}
+    else if(page==='assignments'){if(typeof renderAssignments==='function')renderAssignments();}
+    else if(page==='tests-exams'){if(typeof renderAssessments==='function')renderAssessments();}
+    else if(page==='grades'){if(typeof renderGrades==='function')renderGrades();}
+    else if(page==='study'){if(typeof renderStudy==='function')renderStudy();if(typeof renderStudyPlans==='function')renderStudyPlans();}
   }catch(error){console.error('Planner page render error:',error);}
-
   if(updateHistory)history.replaceState(null,'','#'+page);
 }
 
 function setCurrentDate(){
   const dateElement=document.querySelector('#currentDate');
-  if(dateElement&&dateElement.textContent==='Loading date...'){
-    dateElement.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
-  }
+  if(dateElement&&dateElement.textContent==='Loading date...')dateElement.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
 }
 
 function loadSavedPage(){
-  ensureStudyPage();
-  ensureStudyNav();
-  ensureStudyMapPage();
+  ensureStudyPage();ensureStudyNav();ensureStudyMapPage();
   const rawHash=window.location.hash.replace(/^#/,'');
   if(rawHash.toLowerCase().startsWith('subject/')){restoreSubjectFromHash();return;}
-  if(rawHash.toLowerCase()==='study-map'){
-    showStudyMap();
-    setCurrentDate();
-    return;
-  }
-  showPage(rawHash.toLowerCase()||'dashboard',false);
-  setCurrentDate();
-  setTimeout(dedupeSidebarNav,0);
+  if(rawHash.toLowerCase()==='study-map'){showStudyMap();setCurrentDate();return;}
+  showPage(rawHash.toLowerCase()||'dashboard',false);setCurrentDate();setTimeout(dedupeSidebarNav,0);
 }
 
 document.addEventListener('click',function(event){
   const item=event.target.closest?.('.sidebar .nav-item[data-page]');
   if(!item)return;
   const page=item.dataset.page;
-  if(page==='study-map'){
-    event.preventDefault();
-    event.stopPropagation();
-    showStudyMap();
-    return;
-  }
+  if(page==='study-map'){event.preventDefault();event.stopPropagation();showStudyMap();return;}
   ensureRoadmapPage(page);
   if(!getPageElement(page)&&page!=='study-map')return;
-  event.preventDefault();
-  event.stopPropagation();
-  showPage(page,true);
+  event.preventDefault();event.stopPropagation();showPage(page,true);
 },true);
 
 document.addEventListener('DOMContentLoaded',loadSavedPage);
 window.addEventListener('load',()=>{
-  ensureStudyPage();
-  ensureStudyNav();
-  ensureStudyMapPage();
-  dedupeSidebarNav();
+  ensureStudyPage();ensureStudyNav();ensureStudyMapPage();dedupeSidebarNav();
   const raw=window.location.hash.replace(/^#/,'').toLowerCase();
-  if(raw==='study-map')showStudyMap();
-  else if(raw&&getPageElement(raw))showPage(raw,false);
+  if(raw==='study-map')showStudyMap();else if(raw&&getPageElement(raw))showPage(raw,false);
 });
 window.addEventListener('hashchange',loadSavedPage);
