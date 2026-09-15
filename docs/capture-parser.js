@@ -7,8 +7,6 @@
     mathematics: ["mathematics", "math", "maths", "mcr3u"]
   };
 
-  // Generic names are still meaningful, but read more naturally with the
-  // subject attached when they are the entire captured name.
   const genericNames = new Set([
     "test", "tests", "quiz", "quizzes", "exam", "exams", "assessment", "assessments",
     "essay", "essays", "lab", "labs", "assignment", "assignments", "worksheet", "worksheets",
@@ -16,15 +14,18 @@
   ]);
 
   function escapeRegExp(value) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
   function tokenRegex(token) {
     return new RegExp(`(^|\\s)${escapeRegExp(token)}(?=\\s|$)`, "i");
   }
 
-  function removeToken(text, token) {
-    return text.replace(tokenRegex(token), " ");
+  function localDateString(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   }
 
   function parse(text) {
@@ -32,14 +33,14 @@
     const subjects = window.PlannerData.getData().subjects || [];
     let subject = null;
 
-    // Prefer the actual subject names, then fall back to the common aliases.
     const actual = subjects
       .map(s => ({ subject: s, token: s.name }))
       .sort((a, b) => b.token.length - a.token.length);
+
     for (const item of actual) {
       if (tokenRegex(item.token).test(remaining)) {
         subject = item.subject;
-        remaining = removeToken(remaining, item.token);
+        remaining = remaining.replace(tokenRegex(item.token), " ");
         break;
       }
     }
@@ -51,7 +52,7 @@
       for (const item of aliasList) {
         if (tokenRegex(item.word).test(remaining)) {
           subject = subjects.find(s => s.name.toLowerCase() === item.name.toLowerCase()) || null;
-          if (subject) remaining = removeToken(remaining, item.word);
+          if (subject) remaining = remaining.replace(tokenRegex(item.word), " ");
           break;
         }
       }
@@ -66,10 +67,7 @@
     let dueDate = null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const weekdays = {
-      sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-      thursday: 4, friday: 5, saturday: 6
-    };
+    const weekdays = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
 
     remaining = remaining.replace(/\b(today|tomorrow)\b/i, word => {
       const date = new Date(today);
@@ -124,86 +122,84 @@
     let status = null;
     const statuses = ["in progress", "not started", "finished", "submitted", "graded"];
     for (const value of statuses) {
-      if (new RegExp(`\\b${escapeRegExp(value)}\\b`, "i").test(remaining)) {
+      const re = new RegExp(`\\b${escapeRegExp(value)}\\b`, "i");
+      if (re.test(remaining)) {
         status = value.replace(/^./, c => c.toUpperCase());
-        remaining = remaining.replace(new RegExp(`\\b${escapeRegExp(value)}\\b`, "i"), " ");
+        remaining = remaining.replace(re, " ");
         break;
       }
     }
 
     let name = remaining.replace(/\s+/g, " ").trim() || text.trim();
+    if (subject && genericNames.has(name.toLowerCase())) name = `${subject.name} ${name}`;
 
-    // If the whole meaningful name is generic, include the actual subject name.
-    // This gives "chem test" -> "Chemistry test" while keeping
-    // "chem momentum lab" -> "Momentum lab".
-    if (subject && genericNames.has(name.toLowerCase())) {
-      name = `${subject.name} ${name}`;
-    }
-
-    return {
-      name,
-      subjectId: subject ? subject.id : null,
-      unitNumber,
-      dueDate,
-      estimatedWorkload,
-      type,
-      priority,
-      status
-    };
+    return { name, subjectId: subject ? subject.id : null, unitNumber, dueDate, estimatedWorkload, type, priority, status };
   }
 
-  function localDateString(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+  function findUnit(subject, unitNumber) {
+    if (!subject || unitNumber == null) return null;
+    const units = (window.PlannerData.getData().units || []).filter(u => u.subjectId === subject.id);
+    return units.find(u => Number(u.number) === Number(unitNumber)) || null;
+  }
+
+  function createFromCapture(text) {
+    const parsed = parse(text);
+
+    if (!parsed.subjectId) {
+      // There is no safe subject to assign. Keep this as an actionable notification
+      // rather than opening a form and interrupting capture.
+      addCaptureNotification(`Could not identify a subject for “${text}”.`);
+      return null;
+    }
+
+    const subject = (window.PlannerData.getData().subjects || []).find(s => s.id === parsed.subjectId);
+    const unit = findUnit(subject, parsed.unitNumber);
+
+    const assignment = window.PlannerData.create("assignments", {
+      name: parsed.name,
+      subjectId: parsed.subjectId,
+      type: parsed.type,
+      unitId: unit ? unit.id : null,
+      dueDate: parsed.dueDate,
+      dueTime: null,
+      dueTimeMode: "No time specified",
+      priority: parsed.priority || "Normal",
+      estimatedWorkload: parsed.estimatedWorkload,
+      status: parsed.status || "Not started",
+      notes: "",
+      resources: [],
+      grade: null,
+      tasks: [],
+      studyPlanId: null
+    });
+
+    // Only genuinely unresolved information is surfaced. Missing optional fields
+    // such as workload or unit are not treated as errors.
+    if (parsed.unitNumber != null && !unit) {
+      addCaptureNotification(`${assignment.name} needs Unit ${parsed.unitNumber} to be checked.`);
+    }
+
+    window.dispatchEvent(new CustomEvent("planner:assignment-created", { detail: assignment }));
+    return assignment;
+  }
+
+  function addCaptureNotification(message) {
+    const data = window.PlannerData.getData();
+    if (!Array.isArray(data.notifications)) data.notifications = [];
+    data.notifications.push({
+      id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      type: "Confirmation",
+      message,
+      read: false,
+      resolved: false,
+      createdAt: new Date().toISOString()
+    });
+    window.PlannerData.save();
+    window.dispatchEvent(new CustomEvent("planner:notifications-changed"));
   }
 
   const original = window.PlannerAssignments && window.PlannerAssignments.showAddAssignment;
   if (!original) return;
 
-  window.PlannerAssignments.openSmartCapture = text => {
-    const parsed = parse(text);
-    original(parsed.name);
-
-    // The existing assignment modal remains responsible for creation and persistence.
-    // This layer only pre-fills fields after the modal has been rendered.
-    requestAnimationFrame(() => {
-      const modal = document.querySelector(".assignment-feature-modal-backdrop");
-      if (!modal) return;
-
-      const subject = modal.querySelector("#assignmentSubject");
-      const type = modal.querySelector("#assignmentType");
-      const unit = modal.querySelector("#assignmentUnit");
-      const due = modal.querySelector("#assignmentDue");
-      const workload = modal.querySelector("#assignmentWorkload");
-      const status = modal.querySelector("#assignmentStatus");
-      const priorityButtons = modal.querySelectorAll("#assignmentPriority [data-value]");
-
-      if (parsed.subjectId && subject) {
-        subject.value = parsed.subjectId;
-        subject.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-      if (parsed.type && type) type.value = parsed.type;
-      if (parsed.dueDate && due) due.value = parsed.dueDate;
-      if (parsed.estimatedWorkload && workload) workload.value = parsed.estimatedWorkload;
-      if (parsed.status && status) status.value = parsed.status;
-
-      if (parsed.priority && priorityButtons.length) {
-        priorityButtons.forEach(button => {
-          const selected = button.dataset.value === parsed.priority;
-          button.classList.toggle("selected", selected);
-          if (selected) button.click();
-        });
-      }
-
-      if (parsed.unitNumber != null && unit) {
-        const option = [...unit.options].find(option => {
-          const match = option.textContent.match(/Unit\s+(\d+)/i);
-          return match && Number(match[1]) === parsed.unitNumber;
-        });
-        if (option) unit.value = option.value;
-      }
-    });
-  };
+  window.PlannerAssignments.openSmartCapture = text => createFromCapture(text);
 })();
