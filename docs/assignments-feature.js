@@ -8,15 +8,65 @@
   function unitOf(a) { return a.unitId ? window.PlannerData.find("units", a.unitId) : null; }
   function backToAssignmentParent(a) { return a.unitId ? `unit/${a.unitId}` : `subject/${a.subjectId}`; }
 
-  function showAddAssignment(initialName = "") {
+  function parseQuickCapture(text) {
+    const original = text.trim();
+    let remaining = original;
+    const subjects = data().subjects;
+    let subject = null;
+    const aliases = {
+      physics: ["physics", "phys", "sph4u"],
+      chemistry: ["chemistry", "chem", "sch4u"],
+      biology: ["biology", "bio", "sbi4u"],
+      english: ["english", "eng"],
+      mathematics: ["mathematics", "math", "maths", "mcr3u"]
+    };
+    const ordered = Object.entries(aliases).flatMap(([name, words]) => words.map(word => ({name, word}))).sort((a,b)=>b.word.length-a.word.length);
+    for (const item of ordered) {
+      const re = new RegExp(`(^|\\s)${item.word.replace(/[.*+?^${}()|[\\]\\\\]/g,"\\\\$&")}(?=\\s|$)`, "i");
+      if (re.test(remaining)) {
+        subject = subjects.find(s => s.name.toLowerCase() === item.name.toLowerCase()) || null;
+        if (subject) remaining = remaining.replace(re, " ");
+        break;
+      }
+    }
+
+    let unitNumber = null;
+    remaining = remaining.replace(/\bunit\s*(\d+)\b/i, (_, n) => { unitNumber = Number(n); return " "; });
+
+    let dueDate = null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = {sunday:0,monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6};
+    remaining = remaining.replace(/\b(today|tomorrow)\b/i, word => {
+      const d = new Date(today); if (word.toLowerCase() === "tomorrow") d.setDate(d.getDate()+1); dueDate=d.toISOString().slice(0,10); return " ";
+    });
+    if (!dueDate) remaining = remaining.replace(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i, word => {
+      const target=days[word.toLowerCase()], d=new Date(today), diff=(target-d.getDay()+7)%7; d.setDate(d.getDate()+(diff===0?7:diff)); dueDate=d.toISOString().slice(0,10); return " ";
+    });
+
+    let workload = null;
+    remaining = remaining.replace(/\b(1h30|1h|2h|15m|30m|45m)\b/i, value => { workload=value.toLowerCase(); return " "; });
+
+    let type = null;
+    const typeWords = {test:"Assessment",tests:"Assessment",quiz:"Assessment",quizzes:"Assessment",lab:"Assignment",assignment:"Assignment",essay:"Assignment",project:"Assignment",exam:"Assessment",culminating:"Culminating"};
+    for (const [word,value] of Object.entries(typeWords)) {
+      const re=new RegExp(`\\b${word}\\b`,"i");
+      if(re.test(remaining)){type=value;remaining=remaining.replace(re," ");break;}
+    }
+
+    const name = remaining.replace(/\s+/g," ").trim();
+    return {original, subjectId:subject?.id||null, unitNumber, dueDate, estimatedWorkload:workload, type, name:name||original};
+  }
+
+  function showAddAssignment(initialName = "", parsed = null) {
     const subjects = data().subjects;
     if (!subjects.length) { alert("Add a subject first before creating an assignment."); location.hash = "subjects"; return; }
+    const p = parsed || {name:initialName};
     const b = document.createElement("div");
     b.className = "assignment-feature-modal-backdrop";
     b.innerHTML = `<div class="assignment-feature-modal" role="dialog" aria-modal="true" aria-label="Add Assignment">
       <h2>Add Assignment</h2>
       <form class="assignment-feature-form" id="assignmentForm">
-        <div class="assignment-feature-field"><label for="assignmentName">Name</label><input id="assignmentName" value="${esc(initialName)}" required autofocus></div>
+        <div class="assignment-feature-field"><label for="assignmentName">Name</label><input id="assignmentName" value="${esc(p.name||"")}" required autofocus></div>
         <div class="assignment-feature-field"><label for="assignmentSubject">Subject</label><select id="assignmentSubject" required>${subjects.map(s => `<option value="${esc(s.id)}">${esc(s.icon || "📚")} ${esc(s.name)}</option>`).join("")}</select></div>
         <div class="assignment-feature-field"><label for="assignmentType">Type</label><select id="assignmentType"><option>Assignment</option><option>Assessment</option><option>Culminating</option></select></div>
         <div class="assignment-feature-field"><label for="assignmentUnit">Unit</label><select id="assignmentUnit"><option value="">No unit</option></select></div>
@@ -33,8 +83,14 @@
       const subjectId = b.querySelector("#assignmentSubject").value;
       const units = data().units.filter(u => u.subjectId === subjectId).sort((a,z)=>(Number(a.number)||999)-(Number(z.number)||999));
       b.querySelector("#assignmentUnit").innerHTML = `<option value="">No unit</option>${units.map(u=>`<option value="${esc(u.id)}">Unit ${esc(u.number)} — ${esc(u.name)}</option>`).join("")}`;
+      if (p.unitNumber != null) { const match=units.find(u=>Number(u.number)===p.unitNumber); if(match)b.querySelector("#assignmentUnit").value=match.id; }
     }
     updateUnits();
+    b.querySelector("#assignmentSubject").value = p.subjectId || subjects[0].id;
+    updateUnits();
+    if (p.type) b.querySelector("#assignmentType").value=p.type;
+    if (p.dueDate) b.querySelector("#assignmentDue").value=p.dueDate;
+    if (p.estimatedWorkload) b.querySelector("#assignmentWorkload").value=p.estimatedWorkload;
     b.querySelector("#assignmentSubject").onchange=updateUnits;
     b.querySelectorAll("[data-value]").forEach(btn=>btn.onclick=()=>{selectedPriority=btn.dataset.value;b.querySelectorAll("[data-value]").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected")});
     b.querySelector("#assignmentCancel").onclick=()=>b.remove(); b.onclick=e=>{if(e.target===b)b.remove()};
@@ -76,7 +132,7 @@
   }
 
   function editDetails(a){
-    const s=subjectOf(a),b=document.createElement("div");b.className="assignment-feature-modal-backdrop";b.innerHTML=`<div class="assignment-feature-modal" role="dialog" aria-modal="true"><h2>Edit Details</h2><form class="assignment-feature-form"><div class="assignment-feature-field"><label>Name</label><input id="edName" value="${esc(a.name)}" required></div><div class="assignment-feature-field"><label>Type</label><select id="edType"><option>Assignment</option><option>Assessment</option><option>Culminating</option></select></div><div class="assignment-feature-field"><label>Due date</label><input id="edDue" type="date" value="${esc(a.dueDate||"")}"></div><div class="assignment-feature-field"><label>Status</label><select id="edStatus"><option>Not started</option><option>In progress</option><option>Finished</option><option>Submitted</option><option>Graded</option></select></div><div class="assignment-feature-field"><label>Priority</label><select id="edPriority"><option>Low</option><option>Normal</option><option>High</option></select></div><div class="assignment-feature-actions"><button type="button" class="assignment-feature-secondary" id="edCancel">Cancel</button><button class="assignment-feature-button">Save</button></div></form></div>`;document.body.appendChild(b);b.querySelector("#edType").value=a.type||"Assignment";b.querySelector("#edStatus").value=a.status||"Not started";b.querySelector("#edPriority").value=a.priority||"Normal";b.querySelector("#edCancel").onclick=()=>b.remove();b.onclick=e=>{if(e.target===b)b.remove()};b.querySelector("form").onsubmit=e=>{e.preventDefault();window.PlannerData.update("assignments",a.id,{name:b.querySelector("#edName").value.trim(),type:b.querySelector("#edType").value,dueDate:b.querySelector("#edDue").value||null,status:b.querySelector("#edStatus").value,priority:b.querySelector("#edPriority").value});b.remove();};
+    const b=document.createElement("div");b.className="assignment-feature-modal-backdrop";b.innerHTML=`<div class="assignment-feature-modal" role="dialog" aria-modal="true"><h2>Edit Details</h2><form class="assignment-feature-form"><div class="assignment-feature-field"><label>Name</label><input id="edName" value="${esc(a.name)}" required></div><div class="assignment-feature-field"><label>Type</label><select id="edType"><option>Assignment</option><option>Assessment</option><option>Culminating</option></select></div><div class="assignment-feature-field"><label>Due date</label><input id="edDue" type="date" value="${esc(a.dueDate||"")}"></div><div class="assignment-feature-field"><label>Status</label><select id="edStatus"><option>Not started</option><option>In progress</option><option>Finished</option><option>Submitted</option><option>Graded</option></select></div><div class="assignment-feature-field"><label>Priority</label><select id="edPriority"><option>Low</option><option>Normal</option><option>High</option></select></div><div class="assignment-feature-actions"><button type="button" class="assignment-feature-secondary" id="edCancel">Cancel</button><button class="assignment-feature-button">Save</button></div></form></div>`;document.body.appendChild(b);b.querySelector("#edType").value=a.type||"Assignment";b.querySelector("#edStatus").value=a.status||"Not started";b.querySelector("#edPriority").value=a.priority||"Normal";b.querySelector("#edCancel").onclick=()=>b.remove();b.onclick=e=>{if(e.target===b)b.remove()};b.querySelector("form").onsubmit=e=>{e.preventDefault();window.PlannerData.update("assignments",a.id,{name:b.querySelector("#edName").value.trim(),type:b.querySelector("#edType").value,dueDate:b.querySelector("#edDue").value||null,status:b.querySelector("#edStatus").value,priority:b.querySelector("#edPriority").value});b.remove();};
   }
   function editGrade(a){const value=prompt("Enter the grade (for example 18/20 or 90%).",a.grade==null?"":gradeText(a));if(value!==null)window.PlannerData.update("assignments",a.id,{grade:value.trim()||null});}
   function editNotes(a){const value=prompt("Notes",a.notes||"");if(value!==null)window.PlannerData.update("assignments",a.id,{notes:value});}
