@@ -7,7 +7,7 @@
 
   function data() { return window.PlannerData.getData(); }
 
-  function showAddAssignment() {
+  function showAddAssignment(initialName = "") {
     const subjects = data().subjects;
     if (!subjects.length) {
       alert("Add a subject first before creating an assignment.");
@@ -20,7 +20,7 @@
     b.innerHTML = `<div class="assignment-feature-modal" role="dialog" aria-modal="true" aria-label="Add Assignment">
       <h2>Add Assignment</h2>
       <form class="assignment-feature-form" id="assignmentForm">
-        <div class="assignment-feature-field"><label for="assignmentName">Name</label><input id="assignmentName" required autofocus></div>
+        <div class="assignment-feature-field"><label for="assignmentName">Name</label><input id="assignmentName" value="${esc(initialName)}" required autofocus></div>
         <div class="assignment-feature-field"><label for="assignmentSubject">Subject</label><select id="assignmentSubject" required>${subjects.map(s => `<option value="${esc(s.id)}">${esc(s.icon || "📚")} ${esc(s.name)}</option>`).join("")}</select></div>
         <div class="assignment-feature-field"><label for="assignmentType">Type</label><select id="assignmentType"><option>Assignment</option><option>Assessment</option><option>Culminating</option></select></div>
         <div class="assignment-feature-field"><label for="assignmentUnit">Unit</label><select id="assignmentUnit"><option value="">No unit</option></select></div>
