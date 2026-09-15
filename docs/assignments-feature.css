@@ -12,3 +12,42 @@
 .assignment-feature-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:5px; }
 .assignment-feature-button { border:0; border-radius:10px; padding:11px 16px; background:var(--accent); color:white; font-weight:650; cursor:pointer; }
 .assignment-feature-secondary { border:1px solid var(--border); border-radius:10px; padding:10px 14px; background:var(--surface); color:var(--text); cursor:pointer; }
+
+.assignment-detail { max-width:1050px; margin:0 auto; }
+.assignment-detail-top { display:flex; justify-content:space-between; margin-bottom:18px; }
+.assignment-detail-header { margin-bottom:22px; }
+.assignment-detail-title { display:flex; align-items:flex-start; gap:16px; }
+.assignment-detail-icon { width:54px; height:54px; border-radius:15px; display:grid; place-items:center; background:var(--bg); border:1px solid var(--border); font-size:27px; flex:0 0 auto; }
+.assignment-detail-kicker { margin:0 0 5px; color:var(--muted); font-size:13px; }
+.assignment-detail-title h1 { margin:0; font-size:clamp(25px,4vw,36px); }
+.assignment-detail-badges { display:flex; flex-wrap:wrap; gap:7px; margin-top:11px; }
+.assignment-detail-badges span { border:1px solid var(--border); border-radius:999px; padding:5px 9px; font-size:12px; background:var(--surface); }
+.assignment-detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.assignment-detail-card { border:1px solid var(--border); border-radius:16px; background:var(--surface); padding:20px; min-width:0; }
+.assignment-detail-card-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:15px; }
+.assignment-detail-card-heading h2 { margin:0; font-size:18px; }
+.assignment-detail-card-heading > span { color:var(--muted); font-size:13px; }
+.assignment-detail-edit { border:0; background:none; color:var(--accent); cursor:pointer; font-weight:650; }
+.assignment-detail-info-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.assignment-detail-info-grid div { display:grid; gap:4px; }
+.assignment-detail-info-grid span { font-size:12px; color:var(--muted); }
+.assignment-detail-info-grid strong { font-size:14px; }
+.assignment-detail-progress { height:7px; background:var(--bg); border-radius:999px; overflow:hidden; margin-bottom:13px; }
+.assignment-detail-progress div { height:100%; background:var(--accent); border-radius:999px; }
+.assignment-detail-task-list { display:grid; gap:6px; }
+.assignment-detail-task { display:flex; align-items:center; gap:9px; padding:8px 4px; border-radius:8px; }
+.assignment-detail-task:hover { background:var(--bg); }
+.assignment-detail-task input { accent-color:var(--accent); }
+.assignment-detail-task span { flex:1; font-size:14px; }
+.assignment-detail-task.complete span { text-decoration:line-through; opacity:.6; }
+.assignment-detail-task button,.assignment-detail-resources button { border:0; background:none; color:var(--muted); cursor:pointer; font-size:18px; }
+.assignment-detail-inline-form { display:flex; gap:8px; margin-top:12px; }
+.assignment-detail-inline-form input { flex:1; min-width:0; height:40px; border:1px solid var(--border); border-radius:9px; padding:0 10px; background:var(--bg); color:var(--text); }
+.assignment-detail-grade-value { font-size:28px; font-weight:700; margin:7px 0; }
+.assignment-detail-muted { color:var(--muted); font-size:14px; margin:6px 0; }
+.assignment-detail-notes { line-height:1.6; font-size:14px; min-height:40px; }
+.assignment-detail-resources { list-style:none; padding:0; margin:0; display:grid; gap:8px; }
+.assignment-detail-resources li { display:flex; justify-content:space-between; gap:10px; align-items:center; padding:9px 10px; border:1px solid var(--border); border-radius:9px; font-size:14px; }
+.assignment-detail-activity { font-size:13px; color:var(--muted); }
+.assignment-detail-activity p { margin:7px 0; }
+@media (max-width:760px){.assignment-detail-grid{grid-template-columns:1fr}.assignment-detail-info-grid{grid-template-columns:1fr}.assignment-detail-card{padding:16px}}
