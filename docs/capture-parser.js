@@ -7,6 +7,14 @@
     mathematics: ["mathematics", "math", "maths", "mcr3u"]
   };
 
+  // Generic names are still meaningful, but read more naturally with the
+  // subject attached when they are the entire captured name.
+  const genericNames = new Set([
+    "test", "tests", "quiz", "quizzes", "exam", "exams", "assessment", "assessments",
+    "essay", "essays", "lab", "labs", "assignment", "assignments", "worksheet", "worksheets",
+    "project", "projects", "presentation", "presentations", "report", "reports"
+  ]);
+
   function escapeRegExp(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -123,8 +131,17 @@
       }
     }
 
+    let name = remaining.replace(/\s+/g, " ").trim() || text.trim();
+
+    // If the whole meaningful name is generic, include the actual subject name.
+    // This gives "chem test" -> "Chemistry test" while keeping
+    // "chem momentum lab" -> "Momentum lab".
+    if (subject && genericNames.has(name.toLowerCase())) {
+      name = `${subject.name} ${name}`;
+    }
+
     return {
-      name: remaining.replace(/\s+/g, " ").trim() || text.trim(),
+      name,
       subjectId: subject ? subject.id : null,
       unitNumber,
       dueDate,
