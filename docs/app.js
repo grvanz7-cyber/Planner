@@ -8,18 +8,119 @@
     search: { title: "Search", subtitle: "Find existing planner information quickly.", cards: [["Search foundation", "Search will work against the single planner data source once that source exists."]] },
     settings: { title: "Settings", subtitle: "Configure Planner to work the way you want.", cards: [["Settings foundation", "Configuration will be connected to real planner data later. Nothing is being hardcoded into the core logic."]] }
   };
-  const pageElement=document.getElementById("page"),notificationButton=document.getElementById("notificationButton"),notificationPanel=document.getElementById("notificationPanel"),notificationBadge=document.getElementById("notificationBadge"),notificationCount=document.getElementById("notificationCount"),quickCapture=document.getElementById("quickCapture");
-  function getPageFromHash(){const value=window.location.hash.replace(/^#/,"");return pages[value]?value:"dashboard";}
-  function renderPage(pageName){const page=pages[pageName]||pages.dashboard;pageElement.innerHTML=`<div class="page-header"><h1>${page.title}</h1><p>${page.subtitle}</p></div><div class="placeholder-grid">${page.cards.map(([title,text])=>`<article class="placeholder-card"><h2>${title}</h2><p>${text}</p></article>`).join("")}</div>`;document.querySelectorAll(".nav-item").forEach(button=>button.classList.toggle("active",button.dataset.page===pageName));}
-  function navigate(pageName){if(!pages[pageName])return;if(getPageFromHash()===pageName)renderPage(pageName);else window.location.hash=pageName;}
-  document.querySelectorAll(".nav-item").forEach(button=>button.addEventListener("click",()=>navigate(button.dataset.page)));
-  window.addEventListener("hashchange",()=>renderPage(getPageFromHash()));
-  notificationButton.addEventListener("click",event=>{event.stopPropagation();const isOpen=!notificationPanel.classList.contains("hidden");notificationPanel.classList.toggle("hidden",isOpen);notificationButton.setAttribute("aria-expanded",String(!isOpen));});
-  notificationPanel.addEventListener("click",event=>event.stopPropagation());document.addEventListener("click",()=>{notificationPanel.classList.add("hidden");notificationButton.setAttribute("aria-expanded","false");});
-  quickCapture.addEventListener("keydown",event=>{if(event.key!=="Enter")return;event.preventDefault();const value=quickCapture.value.trim();if(!value)return;quickCapture.value="";if(window.PlannerAssignments&&typeof window.PlannerAssignments.openSmartCapture==="function"){window.PlannerAssignments.openSmartCapture(value);}else if(window.PlannerAssignments){window.PlannerAssignments.showAddAssignment(value);}else{quickCapture.placeholder=`Ready to capture: ${value}`;window.setTimeout(()=>{quickCapture.placeholder="What do you need to add?";},1800);}});
-  function setNotificationCount(count){notificationCount.textContent=String(count);notificationBadge.textContent=String(count);notificationBadge.classList.toggle("hidden",count===0);}
-  function refreshNotifications(){const data=window.PlannerData&&window.PlannerData.getData?window.PlannerData.getData():null;const notifications=data&&Array.isArray(data.notifications)?data.notifications:[];const active=notifications.filter(n=>!n.resolved&&!n.read);setNotificationCount(active.length);}
-  window.addEventListener("planner:notifications-changed",refreshNotifications);
-  window.addEventListener("planner:data-changed",refreshNotifications);
-  refreshNotifications();renderPage(getPageFromHash());
+
+  const pageElement = document.getElementById("page");
+  const notificationButton = document.getElementById("notificationButton");
+  const notificationPanel = document.getElementById("notificationPanel");
+  const notificationBadge = document.getElementById("notificationBadge");
+  const notificationCount = document.getElementById("notificationCount");
+  const notificationContent = document.getElementById("notificationContent");
+  const quickCapture = document.getElementById("quickCapture");
+
+  function getPageFromHash() {
+    const value = window.location.hash.replace(/^#/, "");
+    return pages[value] ? value : "dashboard";
+  }
+
+  function renderPage(pageName) {
+    const page = pages[pageName] || pages.dashboard;
+    pageElement.innerHTML = `<div class="page-header"><h1>${page.title}</h1><p>${page.subtitle}</p></div><div class="placeholder-grid">${page.cards.map(([title, text]) => `<article class="placeholder-card"><h2>${title}</h2><p>${text}</p></article>`).join("")}</div>`;
+    document.querySelectorAll(".nav-item").forEach(button => button.classList.toggle("active", button.dataset.page === pageName));
+  }
+
+  function navigate(pageName) {
+    if (!pages[pageName]) return;
+    if (getPageFromHash() === pageName) renderPage(pageName);
+    else window.location.hash = pageName;
+  }
+
+  function setNotificationCount(count) {
+    notificationCount.textContent = String(count);
+    notificationBadge.textContent = String(count);
+    notificationBadge.classList.toggle("hidden", count === 0);
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+  }
+
+  function refreshNotifications() {
+    const data = window.PlannerData && window.PlannerData.getData ? window.PlannerData.getData() : null;
+    const notifications = data && Array.isArray(data.notifications) ? data.notifications : [];
+    const active = notifications.filter(notification => !notification.resolved);
+    setNotificationCount(active.length);
+
+    if (!active.length) {
+      notificationContent.innerHTML = `<p class="empty-state">You're all caught up.</p>`;
+      return;
+    }
+
+    notificationContent.innerHTML = active.map(notification => `
+      <article class="notification-item" data-notification-id="${escapeHtml(notification.id)}">
+        <div class="notification-item-main">
+          <strong>${escapeHtml(notification.title || "Needs attention")}</strong>
+          <p>${escapeHtml(notification.message || "This item needs your attention.")}</p>
+        </div>
+        <button type="button" class="notification-resolve" data-notification-id="${escapeHtml(notification.id)}">Resolve</button>
+      </article>
+    `).join("");
+
+    notificationContent.querySelectorAll(".notification-resolve").forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        const id = button.dataset.notificationId;
+        window.PlannerData.update("notifications", id, { resolved: true, read: true });
+      });
+    });
+
+    notificationContent.querySelectorAll(".notification-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const id = item.dataset.notificationId;
+        const notification = notifications.find(value => value.id === id);
+        if (notification && notification.itemType === "assignment" && notification.itemId) {
+          notificationPanel.classList.add("hidden");
+          notificationButton.setAttribute("aria-expanded", "false");
+          window.location.hash = `assignment/${notification.itemId}`;
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll(".nav-item").forEach(button => button.addEventListener("click", () => navigate(button.dataset.page)));
+  window.addEventListener("hashchange", () => renderPage(getPageFromHash()));
+
+  notificationButton.addEventListener("click", event => {
+    event.stopPropagation();
+    const isOpen = !notificationPanel.classList.contains("hidden");
+    if (!isOpen) refreshNotifications();
+    notificationPanel.classList.toggle("hidden", isOpen);
+    notificationButton.setAttribute("aria-expanded", String(!isOpen));
+  });
+
+  notificationPanel.addEventListener("click", event => event.stopPropagation());
+  document.addEventListener("click", () => {
+    notificationPanel.classList.add("hidden");
+    notificationButton.setAttribute("aria-expanded", "false");
+  });
+
+  quickCapture.addEventListener("keydown", event => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    const value = quickCapture.value.trim();
+    if (!value) return;
+    quickCapture.value = "";
+    if (window.PlannerAssignments && typeof window.PlannerAssignments.openSmartCapture === "function") {
+      window.PlannerAssignments.openSmartCapture(value);
+    } else if (window.PlannerAssignments) {
+      window.PlannerAssignments.showAddAssignment(value);
+    } else {
+      quickCapture.placeholder = `Ready to capture: ${value}`;
+      window.setTimeout(() => { quickCapture.placeholder = "What do you need to add?"; }, 1800);
+    }
+  });
+
+  window.addEventListener("planner:notifications-changed", refreshNotifications);
+  window.addEventListener("planner:data-changed", refreshNotifications);
+  refreshNotifications();
+  renderPage(getPageFromHash());
 })();
