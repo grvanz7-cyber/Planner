@@ -12,6 +12,7 @@
     const p = location.hash.replace(/^#/, "").split("/");
     if (p[0] === "subjects") return { type: "subjects" };
     if (p[0] === "subject" && p[1]) return { type: "subject", id: p[1] };
+    if (p[0] === "unit" && p[1]) return { type: "unit", id: p[1] };
     return null;
   }
 
@@ -91,12 +92,12 @@
     </div>`;
     document.getElementById("subjectBack").onclick = () => location.hash = "subjects";
     document.getElementById("unitAddButton").onclick = () => showAddUnit(s);
-    PAGE.querySelectorAll("[data-unit-id]").forEach(c => c.onclick = () => { /* Unit detail comes in Stage 3C. */ });
+    PAGE.querySelectorAll("[data-unit-id]").forEach(c => c.onclick = () => location.hash = `unit/${c.dataset.unitId}`);
   }
 
   function unitCard(unit) {
     const status = unit.status || "Upcoming";
-    return `<article class="subjects-feature-unit-card" data-unit-id="${esc(unit.id)}">
+    return `<article class="subjects-feature-unit-card" data-unit-id="${esc(unit.id)}" role="button" tabindex="0">
       <div class="subjects-feature-unit-number">${esc(unit.number ?? "—")}</div>
       <div class="subjects-feature-unit-info"><h4>${esc(unit.name)}</h4><span class="subjects-feature-status status-${status.toLowerCase()}">${esc(status)}</span></div>
     </article>`;
@@ -132,11 +133,48 @@
     };
   }
 
+  function renderUnit(id) {
+    active();
+    const unit = window.PlannerData.find("units", id);
+    if (!unit) { location.hash = "subjects"; return; }
+    const subject = window.PlannerData.find("subjects", unit.subjectId);
+    if (!subject) { location.hash = "subjects"; return; }
+    const status = unit.status || "Upcoming";
+    const sections = [
+      ["Assignments", "Assignments connected to this unit will appear here."],
+      ["Assessments", "Assessments connected to this unit will appear here."],
+      ["Culminating", "Culminating work connected to this unit will appear here."],
+      ["Study plans", "Study plans for this unit will appear here."],
+      ["Unit grade overview", "Grades for this unit will appear here."],
+      ["Unit tasks", "Tasks connected to this unit will appear here."],
+      ["Materials & resources", "Materials and resources for this unit will appear here."],
+      ["Notes", "Notes for this unit will appear here."]
+    ];
+    PAGE.innerHTML = `<div class="subjects-feature">
+      <div class="subjects-feature-detail-header">
+        <button class="subjects-feature-secondary" id="unitBack">← Back to ${esc(subject.name)}</button>
+        <div class="subjects-feature-unit-heading">
+          <div class="subjects-feature-unit-number">${esc(unit.number ?? "—")}</div>
+          <div><h2>${esc(unit.name)}</h2><p>${esc(subject.name)} · ${esc(subject.academicPeriod || "")}</p></div>
+          <span class="subjects-feature-status status-${status.toLowerCase()}">${esc(status)}</span>
+        </div>
+      </div>
+      <section class="subjects-feature-overview-card">
+        <span>Unit overview</span>
+        <strong>Unit ${esc(unit.number ?? "—")}</strong>
+        <p>This unit is part of ${esc(subject.name)}. More details can be added as assignments, study plans, grades, and tasks are connected.</p>
+      </section>
+      <div class="subjects-feature-detail-grid">${sections.map(([title, text]) => `<section class="subjects-feature-detail-card"><h3>${esc(title)}</h3><p>${esc(text)}</p></section>`).join("")}</div>
+    </div>`;
+    document.getElementById("unitBack").onclick = () => location.hash = `subject/${subject.id}`;
+  }
+
   function render() {
     const r = route();
     if (!r) return;
     if (r.type === "subjects") renderSubjects();
-    else renderSubject(r.id);
+    else if (r.type === "subject") renderSubject(r.id);
+    else if (r.type === "unit") renderUnit(r.id);
   }
 
   window.addEventListener("hashchange", render);
