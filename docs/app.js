@@ -16,7 +16,10 @@
   window.addEventListener("hashchange",()=>renderPage(getPageFromHash()));
   notificationButton.addEventListener("click",event=>{event.stopPropagation();const isOpen=!notificationPanel.classList.contains("hidden");notificationPanel.classList.toggle("hidden",isOpen);notificationButton.setAttribute("aria-expanded",String(!isOpen));});
   notificationPanel.addEventListener("click",event=>event.stopPropagation());document.addEventListener("click",()=>{notificationPanel.classList.add("hidden");notificationButton.setAttribute("aria-expanded","false");});
-  quickCapture.addEventListener("keydown",event=>{if(event.key!=="Enter")return;event.preventDefault();const value=quickCapture.value.trim();if(!value)return;quickCapture.value="";if(window.PlannerAssignments){if(typeof window.PlannerAssignments.openSmartCapture==="function")window.PlannerAssignments.openSmartCapture(value);else window.PlannerAssignments.showAddAssignment(value);}else{quickCapture.placeholder=`Ready to capture: ${value}`;window.setTimeout(()=>{quickCapture.placeholder="What do you need to add?";},1800);}});
+  quickCapture.addEventListener("keydown",event=>{if(event.key!=="Enter")return;event.preventDefault();const value=quickCapture.value.trim();if(!value)return;quickCapture.value="";if(window.PlannerAssignments&&typeof window.PlannerAssignments.openSmartCapture==="function"){window.PlannerAssignments.openSmartCapture(value);}else if(window.PlannerAssignments){window.PlannerAssignments.showAddAssignment(value);}else{quickCapture.placeholder=`Ready to capture: ${value}`;window.setTimeout(()=>{quickCapture.placeholder="What do you need to add?";},1800);}});
   function setNotificationCount(count){notificationCount.textContent=String(count);notificationBadge.textContent=String(count);notificationBadge.classList.toggle("hidden",count===0);}
-  setNotificationCount(0);renderPage(getPageFromHash());
+  function refreshNotifications(){const data=window.PlannerData&&window.PlannerData.getData?window.PlannerData.getData():null;const notifications=data&&Array.isArray(data.notifications)?data.notifications:[];const active=notifications.filter(n=>!n.resolved&&!n.read);setNotificationCount(active.length);}
+  window.addEventListener("planner:notifications-changed",refreshNotifications);
+  window.addEventListener("planner:data-changed",refreshNotifications);
+  refreshNotifications();renderPage(getPageFromHash());
 })();
