@@ -61,6 +61,7 @@
     document.querySelectorAll(".calendar-item").forEach(button => button.addEventListener("click", () => { window.PlannerAssignments?.openAssignment?.(button.dataset.assignmentId); }));
   }
 
+  window.PlannerCalendar = { render };
   window.addEventListener("hashchange", render);
   window.addEventListener("planner:data-changed", render);
   window.addEventListener("planner:assignment-created", render);
