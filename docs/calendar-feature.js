@@ -58,7 +58,10 @@
     document.getElementById("calendarToday").addEventListener("click", () => { viewDate = new Date(); render(); });
     document.getElementById("calendarPrev").addEventListener("click", () => { viewDate = new Date(year, month - 1, 1); render(); });
     document.getElementById("calendarNext").addEventListener("click", () => { viewDate = new Date(year, month + 1, 1); render(); });
-    document.querySelectorAll(".calendar-item").forEach(button => button.addEventListener("click", () => { window.PlannerAssignments?.openAssignment?.(button.dataset.assignmentId); }));
+    document.querySelectorAll(".calendar-item").forEach(button => button.addEventListener("click", () => {
+      sessionStorage.setItem("planner-assignment-return", "calendar");
+      window.PlannerAssignments?.openAssignment?.(button.dataset.assignmentId);
+    }));
   }
 
   window.PlannerCalendar = { render };
