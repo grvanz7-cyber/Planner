@@ -1,0 +1,50 @@
+:root {
+  --bg: #f5f6f2;
+  --surface: #ffffff;
+  --surface-soft: #eef1eb;
+  --text: #20231f;
+  --muted: #70766f;
+  --border: #dfe3dc;
+  --accent: #6f9279;
+  --accent-soft: #e5ede7;
+  --sidebar: #20251f;
+  --sidebar-text: #f4f6f2;
+  --sidebar-muted: #aeb6ac;
+  --shadow: 0 8px 28px rgba(20, 30, 20, .06);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+.app-shell { min-height: 100vh; display: flex; }
+.sidebar { width: 230px; min-height: 100vh; background: var(--sidebar); color: var(--sidebar-text); padding: 26px 14px; flex-shrink: 0; }
+.brand { font-size: 22px; font-weight: 750; padding: 0 12px 28px; }
+.nav-list { display: grid; gap: 5px; }
+.nav-item { width: 100%; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 11px; padding: 11px 12px; background: transparent; color: var(--sidebar-muted); text-align: left; transition: background .15s, color .15s; }
+.nav-item:hover { background: rgba(255,255,255,.07); color: var(--sidebar-text); }
+.nav-item.active { background: rgba(255,255,255,.12); color: var(--sidebar-text); font-weight: 650; }
+.nav-item span:first-child { width: 23px; text-align: center; font-size: 18px; }
+.main-area { min-width: 0; flex: 1; }
+.topbar { height: 76px; display: flex; align-items: center; gap: 16px; padding: 14px 28px; background: var(--surface); border-bottom: 1px solid var(--border); position: relative; z-index: 10; }
+.capture-wrap { flex: 1; max-width: 720px; display: flex; align-items: center; gap: 9px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); padding: 0 14px; }
+.capture-plus { color: var(--accent); font-size: 22px; font-weight: 500; }
+#quickCapture { width: 100%; height: 44px; border: 0; outline: 0; background: transparent; color: var(--text); }
+#quickCapture::placeholder { color: var(--muted); }
+.notification-button { position: relative; width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); }
+.notification-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center; border-radius: 999px; background: #b85c50; color: white; font-size: 10px; font-weight: 750; }
+.hidden { display: none !important; }
+.page { padding: 34px 38px 50px; max-width: 1180px; }
+.page-header { margin-bottom: 28px; }
+.page-header h1 { margin: 0; font-size: 30px; letter-spacing: -.5px; }
+.page-header p { margin: 7px 0 0; color: var(--muted); }
+.placeholder-grid { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 16px; }
+.placeholder-card { min-height: 150px; padding: 22px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+.placeholder-card h2 { margin: 0 0 8px; font-size: 17px; }
+.placeholder-card p { margin: 0; color: var(--muted); line-height: 1.5; }
+.notification-panel { position: fixed; top: 68px; right: 26px; width: 330px; max-height: 430px; overflow: auto; z-index: 20; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 16px 45px rgba(20,30,20,.14); }
+.notification-header { display: flex; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--border); }
+.notification-header span { color: var(--muted); font-size: 13px; }
+.notification-content { padding: 16px; }
+.empty-state { margin: 0; color: var(--muted); text-align: center; padding: 18px 5px; }
+@media (max-width: 720px) { .sidebar { width: 72px; padding: 18px 9px; } .brand { font-size: 0; padding: 0 0 24px; text-align: center; } .brand::after { content: "P"; font-size: 22px; } .nav-item { justify-content: center; padding: 11px 7px; } .nav-item span:last-child { display: none; } .page { padding: 25px 20px 40px; } .topbar { padding: 12px 16px; } .placeholder-grid { grid-template-columns: 1fr; } .notification-panel { right: 14px; width: min(330px, calc(100vw - 88px)); } }

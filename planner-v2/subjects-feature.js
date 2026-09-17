@@ -1,0 +1,50 @@
+(() => {
+  const PAGE = document.getElementById("page");
+  const SUBJECTS_NAV = document.querySelector('.nav-item[data-page="subjects"]');
+
+  function esc(v) { return String(v ?? "").replace(/[&<>\"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+  function data() { return window.PlannerData.getData(); }
+  function route() { const p = location.hash.replace(/^#/, "").split("/"); if (p[0] === "subjects") return {type:"subjects"}; if (p[0] === "subject" && p[1]) return {type:"subject",id:p[1]}; return null; }
+  function active() { if (SUBJECTS_NAV) SUBJECTS_NAV.classList.add("active"); }
+
+  function renderSubjects() {
+    active(); const subjects = data().subjects;
+    PAGE.innerHTML = `<div class="subjects-feature"><div class="subjects-feature-header"><div><h2>Subjects</h2><p>Your courses, units, grades, and academic progress.</p></div><button class="subjects-feature-button" id="subjectsAddButton">+ Add Subject</button></div>${subjects.length ? `<div class="subjects-feature-grid">${subjects.map(card).join("")}</div>` : `<div class="subjects-feature-empty"><strong>No subjects yet</strong>Add your first subject to get started.</div>`}</div>`;
+    document.getElementById("subjectsAddButton").onclick = showAdd;
+    PAGE.querySelectorAll("[data-subject-id]").forEach(c => c.onclick = () => location.hash = `subject/${c.dataset.subjectId}`);
+  }
+
+  function card(s) { return `<article class="subjects-feature-card" data-subject-id="${esc(s.id)}"><div class="subjects-feature-icon" style="background:${esc(s.color || "#e5ede7")}">${esc(s.icon || "📚")}</div><h3>${esc(s.name)}</h3><div class="subjects-feature-meta">Current grade: —<br>Current unit: —</div></article>`; }
+
+  function showAdd() {
+    const b = document.createElement("div"); b.className = "subjects-feature-modal-backdrop";
+    b.innerHTML = `<div class="subjects-feature-modal" role="dialog" aria-modal="true" aria-label="Add Subject"><h2>Add Subject</h2><form class="subjects-feature-form" id="subjectsFeatureForm"><div class="subjects-feature-field"><label for="subjectName">Name</label><input id="subjectName" required autofocus></div><div class="subjects-feature-field"><label for="subjectIcon">Icon</label><input id="subjectIcon" value="📚" maxlength="4"></div><div class="subjects-feature-field"><label>Colour</label><div class="subjects-feature-colours" id="subjectColor"><button type="button" data-colour="#e5ede7" class="selected" style="background:#e5ede7"></button><button type="button" data-colour="#dce8f5" style="background:#dce8f5"></button><button type="button" data-colour="#f4e1e1" style="background:#f4e1e1"></button><button type="button" data-colour="#eee4d1" style="background:#eee4d1"></button><button type="button" data-colour="#e4ddf2" style="background:#e4ddf2"></button><button type="button" data-colour="#dcece3" style="background:#dcece3"></button></div></div><div class="subjects-feature-field"><label>Academic period</label><div class="subjects-feature-periods"><button type="button" data-period="Semester 1" class="selected">Semester 1</button><button type="button" data-period="Semester 2">Semester 2</button></div></div><div class="subjects-feature-actions"><button type="button" class="subjects-feature-secondary" id="subjectCancel">Cancel</button><button class="subjects-feature-button" type="submit">Add Subject</button></div></form></div>`;
+    document.body.appendChild(b); let selectedColour="#e5ede7", selectedPeriod="Semester 1";
+    b.querySelectorAll("[data-colour]").forEach(btn => btn.onclick=()=>{selectedColour=btn.dataset.colour;b.querySelectorAll("[data-colour]").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected");});
+    b.querySelectorAll("[data-period]").forEach(btn => btn.onclick=()=>{selectedPeriod=btn.dataset.period;b.querySelectorAll("[data-period]").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected");});
+    b.querySelector("#subjectCancel").onclick=()=>b.remove(); b.onclick=e=>{if(e.target===b)b.remove();};
+    b.querySelector("form").onsubmit=e=>{e.preventDefault();const s=window.PlannerData.create("subjects",{name:b.querySelector("#subjectName").value.trim(),icon:b.querySelector("#subjectIcon").value.trim()||"📚",color:selectedColour,academicPeriod:selectedPeriod});b.remove();renderSubject(s.id);};
+  }
+
+  function renderSubject(id) {
+    active(); const s=window.PlannerData.find("subjects",id); if(!s){location.hash="subjects";return;}
+    const units=data().units.filter(u=>u.subjectId===s.id).sort((a,b)=>(Number(a.number)||999)-(Number(b.number)||999)); const current=units.find(u=>u.status==="Current");
+    PAGE.innerHTML=`<div class="subjects-feature"><div class="subjects-feature-detail-header"><button class="subjects-feature-secondary" id="subjectBack">← Back</button><div class="subjects-feature-subject-heading"><div class="subjects-feature-icon" style="background:${esc(s.color||"#e5ede7")}">${esc(s.icon||"📚")}</div><div><h2>${esc(s.name)}</h2><p>${esc(s.academicPeriod||"")}</p></div></div></div><div class="subjects-feature-summary"><div><span>Current grade</span><strong>—</strong></div><div><span>Current unit</span><strong>${current?`Unit ${esc(current.number)} — ${esc(current.name)}`:"—"}</strong></div></div><section class="subjects-feature-section"><div class="subjects-feature-section-heading"><div><h3>Units</h3><p>Organize the course into its units and track where you are.</p></div><button class="subjects-feature-button" id="unitAddButton">+ Add Unit</button></div>${units.length?`<div class="subjects-feature-unit-list">${units.map(unitCard).join("")}</div>`:`<div class="subjects-feature-empty"><strong>No units yet</strong>Add the first unit for ${esc(s.name)}.</div>`}</section></div>`;
+    document.getElementById("subjectBack").onclick=()=>location.hash="subjects"; document.getElementById("unitAddButton").onclick=()=>showAddUnit(s);
+  }
+
+  function unitCard(unit) { const status=unit.status||"Upcoming"; return `<article class="subjects-feature-unit-card"><div class="subjects-feature-unit-number">${esc(unit.number??"—")}</div><div class="subjects-feature-unit-info"><h4>${esc(unit.name)}</h4><span class="subjects-feature-status status-${status.toLowerCase()}">${esc(status)}</span></div></article>`; }
+
+  function showAddUnit(subject) {
+    const existing=data().units.filter(u=>u.subjectId===subject.id); const nextNumber=existing.reduce((max,u)=>Math.max(max,Number(u.number)||0),0)+1;
+    const b=document.createElement("div"); b.className="subjects-feature-modal-backdrop";
+    b.innerHTML=`<div class="subjects-feature-modal" role="dialog" aria-modal="true" aria-label="Add Unit"><h2>Add Unit</h2><form class="subjects-feature-form" id="unitForm"><div class="subjects-feature-field"><label for="unitName">Unit name</label><input id="unitName" required autofocus></div><div class="subjects-feature-field"><label for="unitNumber">Unit number</label><input id="unitNumber" type="number" min="1" step="1" value="${nextNumber}" required></div><div class="subjects-feature-field"><label>Status</label><div class="subjects-feature-status-options"><button type="button" data-status="Upcoming" class="selected">Upcoming</button><button type="button" data-status="Current">Current</button><button type="button" data-status="Completed">Completed</button></div></div><div class="subjects-feature-actions"><button type="button" class="subjects-feature-secondary" id="unitCancel">Cancel</button><button class="subjects-feature-button" type="submit">Add Unit</button></div></form></div>`;
+    document.body.appendChild(b); let selectedStatus="Upcoming";
+    b.querySelectorAll("[data-status]").forEach(btn=>btn.onclick=()=>{selectedStatus=btn.dataset.status;b.querySelectorAll("[data-status]").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected");});
+    b.querySelector("#unitCancel").onclick=()=>b.remove(); b.onclick=e=>{if(e.target===b)b.remove();};
+    b.querySelector("form").onsubmit=e=>{e.preventDefault();const unit=window.PlannerData.create("units",{subjectId:subject.id,name:b.querySelector("#unitName").value.trim(),number:Number(b.querySelector("#unitNumber").value),status:selectedStatus});if(selectedStatus==="Current"){data().units.filter(u=>u.subjectId===subject.id&&u.id!==unit.id&&u.status==="Current").forEach(u=>window.PlannerData.update("units",u.id,{status:"Upcoming"}));}b.remove();renderSubject(subject.id);};
+  }
+
+  function render(){const r=route();if(!r)return;if(r.type==="subjects")renderSubjects();else renderSubject(r.id);}
+  window.addEventListener("hashchange",render); window.addEventListener("planner:data-changed",()=>{if(route())render();}); if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",render);else render();
+})();

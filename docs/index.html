@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f4">
+  <title>Planner</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="subjects.css">
+  <link rel="stylesheet" href="assignments-feature.css">
+  <link rel="stylesheet" href="calendar.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand">Planner</div>
+      <nav class="nav-list">
+        <button class="nav-item active" data-page="dashboard"><span>🏠</span><span>Dashboard</span></button>
+        <button class="nav-item" data-page="calendar"><span>📅</span><span>Calendar</span></button>
+        <button class="nav-item" data-page="subjects"><span>📚</span><span>Subjects</span></button>
+        <button class="nav-item" data-page="study"><span>📖</span><span>Study</span></button>
+        <button class="nav-item" data-page="grades"><span>📊</span><span>Grades</span></button>
+        <button class="nav-item" data-page="search"><span>🔎</span><span>Search</span></button>
+        <button class="nav-item" data-page="settings"><span>⚙️</span><span>Settings</span></button>
+      </nav>
+    </aside>
+    <main class="main-area">
+      <header class="topbar">
+        <div class="capture-wrap">
+          <span class="capture-plus">+</span>
+          <input id="quickCapture" type="text" autocomplete="off" placeholder="What do you need to add?" aria-label="Quick Capture">
+        </div>
+        <button id="notificationButton" class="notification-button" aria-label="Notifications" aria-expanded="false">🔔<span id="notificationBadge" class="notification-badge hidden">0</span></button>
+      </header>
+      <section id="page" class="page" aria-live="polite"></section>
+    </main>
+  </div>
+  <div id="notificationPanel" class="notification-panel hidden" role="dialog" aria-label="Notifications">
+    <div class="notification-header"><strong>Notifications</strong><span id="notificationCount">0</span></div>
+    <div id="notificationContent" class="notification-content"><p class="empty-state">You're all caught up.</p></div>
+  </div>
+  <script src="app-data.js"></script>
+  <script src="app.js"></script>
+  <script src="subjects-feature.js"></script>
+  <script src="assignments-feature.js"></script>
+  <script src="capture-parser.js"></script>
+  <script src="calendar-feature.js"></script>
+</body>
+</html>
