@@ -20,7 +20,7 @@
   function timedAssignmentsFor(key) { return assignmentsFor(key).filter(a => a.dueTime); }
   function allDayAssignmentsFor(key) { return assignmentsFor(key).filter(a => !a.dueTime); }
   function openAssignment(id) { window.PlannerAssignments?.openAssignment?.(id); }
-  function itemMarkup(a) { const subject = subjectOf(a); return `<button type="button" class="calendar-item calendar-assignment-item" data-assignment-id="${esc(a.id)}"><span>${esc(subject?.icon || "📝")}</span><span>${esc(a.name)}</span></button>`; }
+  function itemMarkup(a) { const subject = subjectOf(a); return `<button type="button" class="calendar-item calendar-assignment-item" draggable="true" data-assignment-id="${esc(a.id)}"><span>${esc(subject?.icon || "📝")}</span><span>${esc(a.name)}</span></button>`; }
   function taskMarkup(t) { return `<div class="calendar-item calendar-task-item"><span>☑️</span><span>${esc(t.name)}</span></div>`; }
   function eventMarkup(e) { return `<div class="calendar-item calendar-event-item"><span>📅</span><span>${esc(e.name)}</span></div>`; }
   function dayItems(key) {
@@ -43,7 +43,7 @@
     for (let i = 0; i < startOffset; i++) cells += `<div class="calendar-cell calendar-cell-empty"></div>`;
     for (let day = 1; day <= days; day++) {
       const date = new Date(year, month, day), key = localDate(date);
-      cells += `<div class="calendar-cell${key === today ? " calendar-today" : ""}"><div class="calendar-day-number">${day}</div><div class="calendar-items">${dayItems(key)}</div></div>`;
+      cells += `<div class="calendar-cell calendar-drop-day${key === today ? " calendar-today" : ""}" data-drop-date="${esc(key)}"><div class="calendar-day-number">${day}</div><div class="calendar-items">${dayItems(key)}</div></div>`;
     }
     const total = startOffset + days, trailing = (7 - (total % 7)) % 7;
     for (let i = 0; i < trailing; i++) cells += `<div class="calendar-cell calendar-cell-empty"></div>`;
@@ -55,7 +55,7 @@
   function renderTimedColumn(date) {
     const key = localDate(date), timed = filters.assignments ? timedAssignmentsFor(key) : [], allDay = filters.assignments ? allDayAssignmentsFor(key) : [], today = localDate(new Date());
     let rows = "";
-    for (let minutes = START_HOUR * 60; minutes < END_HOUR * 60; minutes += SLOT_MINUTES) rows += `<div class="calendar-slot-row"><div class="calendar-time-label">${minutes % 60 === 0 ? esc(timeText(minutes)) : ""}</div><div class="calendar-slot-cell">${slotMarkup(key, minutes)}</div></div>`;
+    for (let minutes = START_HOUR * 60; minutes < END_HOUR * 60; minutes += SLOT_MINUTES) rows += `<div class="calendar-slot-row"><div class="calendar-time-label">${minutes % 60 === 0 ? esc(timeText(minutes)) : ""}</div><div class="calendar-slot-cell" data-drop-date="${esc(key)}" data-drop-minutes="${minutes}">${slotMarkup(key, minutes)}</div></div>`;
     const events = timed.map(a => {
       const [h,m] = String(a.dueTime).split(":").map(Number), minutes = h * 60 + m;
       if (minutes < START_HOUR*60 || minutes >= END_HOUR*60) return "";
@@ -123,6 +123,25 @@
     };
   }
 
+  function moveAssignment(id, dateKey, minutes) {
+    const a = window.PlannerData.find("assignments", id);
+    if (!a) return;
+    const changes = { dueDate: dateKey };
+    if (minutes != null) { changes.dueTime = timeValue(minutes); changes.dueTimeMode = "Custom"; }
+    window.PlannerData.update("assignments", id, changes);
+  }
+
+  function wireDragDrop() {
+    document.querySelectorAll(".calendar-assignment-item,.calendar-timed-item").forEach(item => {
+      item.addEventListener("dragstart", e => { e.stopPropagation(); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", item.dataset.assignmentId); item.classList.add("calendar-dragging"); });
+      item.addEventListener("dragend", () => item.classList.remove("calendar-dragging"));
+    });
+    document.querySelectorAll("[data-drop-date]").forEach(target => {
+      target.addEventListener("dragover", e => { e.preventDefault(); target.classList.add("calendar-drag-over"); });
+      target.addEventListener("dragleave", () => target.classList.remove("calendar-drag-over"));
+      target.addEventListener("drop", e => { e.preventDefault(); target.classList.remove("calendar-drag-over"); const id = e.dataTransfer.getData("text/plain"); if (!id) return; moveAssignment(id, target.dataset.dropDate, target.dataset.dropMinutes == null ? null : Number(target.dataset.dropMinutes)); });
+    });
+  }
   function render() {
     if (!location.hash.replace(/^#/, "").startsWith("calendar")) return;
     PAGE.innerHTML = `<div class="page-header calendar-page-header"><div><h1>Calendar</h1><p>Assignments and deadlines in one calendar view.</p></div><div class="calendar-toolbar"><div class="calendar-view-switch" role="group" aria-label="Calendar view"><button type="button" class="calendar-view-button${viewMode === "month" ? " selected" : ""}" data-view="month">Month</button><button type="button" class="calendar-view-button${viewMode === "week" ? " selected" : ""}" data-view="week">Week</button><button type="button" class="calendar-view-button${viewMode === "day" ? " selected" : ""}" data-view="day">Day</button></div><div class="calendar-controls"><button type="button" class="calendar-control" id="calendarToday">Today</button><button type="button" class="calendar-control" id="calendarPrev" aria-label="Previous">‹</button><strong>${esc(title())}</strong><button type="button" class="calendar-control" id="calendarNext" aria-label="Next">›</button></div>${filterBar()}</div></div><section class="calendar-card">${viewMode === "month" ? renderMonth() : renderColumns(viewMode === "day" ? 1 : 7)}</section>`;
@@ -135,6 +154,7 @@
     document.querySelectorAll("[data-filter]").forEach(input => input.addEventListener("change", () => { filters[input.dataset.filter] = input.checked; render(); }));
     document.querySelectorAll(".calendar-time-slot").forEach(button => button.addEventListener("click", () => showAddAtSlot(button.dataset.date, Number(button.dataset.minutes))));
     document.querySelectorAll(".calendar-all-day-label").forEach(button => button.addEventListener("click", () => showAddAtSlot(button.dataset.allDayDate, null)));
+    wireDragDrop();
   }
 
   window.PlannerCalendar = { render };
