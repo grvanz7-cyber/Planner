@@ -50,7 +50,7 @@
       const subject = subjectOf(a);
       return `<button type="button" class="calendar-timed-item" data-assignment-id="${esc(a.id)}" style="top:${(minutes-START_HOUR*60)*2}px"><span>${esc(subject?.icon || "📝")}</span>${esc(a.name)}</button>`;
     }).join("");
-    return `<div class="calendar-timed-column${key === today ? " calendar-column-today" : ""}"><div class="calendar-column-header"><strong>${esc(date.toLocaleDateString(undefined,{weekday:"short"}))}</strong><span>${esc(date.toLocaleDateString(undefined,{month:"short",day:"numeric"}))}</span></div><div class="calendar-all-day"><span>All day</span><div class="calendar-items">${allDay.map(itemMarkup).join("")}</div></div><div class="calendar-time-grid"><div class="calendar-time-rows">${rows}</div><div class="calendar-timed-items">${events}</div></div></div>`;
+    return `<div class="calendar-timed-column${key === today ? " calendar-column-today" : ""}"><div class="calendar-column-header"><strong>${esc(date.toLocaleDateString(undefined,{weekday:"short"}))}</strong><span>${esc(date.toLocaleDateString(undefined,{month:"short",day:"numeric"}))}</span></div><div class="calendar-all-day" data-all-day-date="${esc(key)}"><button type="button" class="calendar-all-day-label" data-all-day-date="${esc(key)}">All day</button><div class="calendar-items">${allDay.map(itemMarkup).join("")}</div></div><div class="calendar-time-grid"><div class="calendar-time-rows">${rows}</div><div class="calendar-timed-items">${events}</div></div></div>`;
   }
 
   function renderColumns(count) {
@@ -75,10 +75,10 @@
 
   function showAddAtSlot(dateKey, minutes) {
     const subjects = data().subjects || [];
-    const time = timeValue(minutes);
+    const time = minutes == null ? null : timeValue(minutes);
     const b = document.createElement("div");
     b.className = "assignment-feature-modal-backdrop";
-    b.innerHTML = `<div class="assignment-feature-modal calendar-add-modal" role="dialog" aria-modal="true" aria-label="Add calendar item"><h2>Add to calendar</h2><p class="calendar-add-time">${esc(new Date(dateKey+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}))} at ${esc(timeText(minutes))}</p><form id="calendarAddForm" class="assignment-feature-form"><div class="assignment-feature-field"><label for="calendarAddType">Type</label><select id="calendarAddType"><option value="assignment">Assignment</option><option value="task">Task</option><option value="event">Event</option></select></div><div class="assignment-feature-field"><label for="calendarAddName">Name</label><input id="calendarAddName" required autofocus placeholder="What are you adding?"></div><div class="assignment-feature-field" id="calendarSubjectField"><label for="calendarAddSubject">Subject</label><select id="calendarAddSubject" ${subjects.length?"":"disabled"}>${subjects.map(s=>`<option value="${esc(s.id)}">${esc(s.icon||"📚")} ${esc(s.name)}</option>`).join("")}</select></div><div class="assignment-feature-field" id="calendarEndField"><label for="calendarAddEnd">End time</label><input id="calendarAddEnd" type="time" value="${esc(timeValue(Math.min(minutes+60,END_HOUR*60)))}"></div><div class="assignment-feature-actions"><button type="button" class="assignment-feature-secondary" id="calendarAddCancel">Cancel</button><button class="assignment-feature-button">Add</button></div></form></div>`;
+    b.innerHTML = `<div class="assignment-feature-modal calendar-add-modal" role="dialog" aria-modal="true" aria-label="Add calendar item"><h2>Add to calendar</h2><p class="calendar-add-time">${esc(new Date(dateKey+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}))} · ${esc(minutes == null ? "All day / no time specified" : timeText(minutes))}</p><form id="calendarAddForm" class="assignment-feature-form"><div class="assignment-feature-field"><label for="calendarAddType">Type</label><select id="calendarAddType"><option value="assignment">Assignment</option><option value="task">Task</option><option value="event">Event</option></select></div><div class="assignment-feature-field"><label for="calendarAddName">Name</label><input id="calendarAddName" required autofocus placeholder="What are you adding?"></div><div class="assignment-feature-field" id="calendarSubjectField"><label for="calendarAddSubject">Subject</label><select id="calendarAddSubject" ${subjects.length?"":"disabled"}>${subjects.map(s=>`<option value="${esc(s.id)}">${esc(s.icon||"📚")} ${esc(s.name)}</option>`).join("")}</select></div><div class="assignment-feature-field" id="calendarTimeField"><label for="calendarAddTime">Time</label><input id="calendarAddTime" type="time" value="${esc(time || "")}"><p class="calendar-add-hint">Leave blank to keep this item all day.</p></div><div class="assignment-feature-field" id="calendarEndField"><label for="calendarAddEnd">End time</label><input id="calendarAddEnd" type="time" value="${esc(timeValue(Math.min((minutes == null ? START_HOUR*60 : minutes)+60,END_HOUR*60)))}"></div><div class="assignment-feature-actions"><button type="button" class="assignment-feature-secondary" id="calendarAddCancel">Cancel</button><button class="assignment-feature-button">Add</button></div></form></div>`;
     document.body.appendChild(b);
     const type = b.querySelector("#calendarAddType"), subjectField = b.querySelector("#calendarSubjectField"), endField = b.querySelector("#calendarEndField");
     function updateFields(){ const isAssignment=type.value==="assignment", isEvent=type.value==="event"; subjectField.style.display=isAssignment?"":"none"; endField.style.display=isEvent?"":"none"; }
@@ -87,16 +87,17 @@
     b.querySelector("form").onsubmit=e=>{
       e.preventDefault();
       const name=b.querySelector("#calendarAddName").value.trim(); if(!name)return;
+      const selectedTime=b.querySelector("#calendarAddTime").value || null;
       if(type.value==="assignment"){
         if(!subjects.length){alert("Add a subject first.");return;}
-        const a=window.PlannerData.create("assignments",{name,subjectId:b.querySelector("#calendarAddSubject").value,type:"Assignment",unitId:null,dueDate:dateKey,dueTime:time,dueTimeMode:"Custom",priority:"Normal",estimatedWorkload:null,status:"Not started",notes:"",resources:[],grade:null,tasks:[],studyPlanId:null});
+        const a=window.PlannerData.create("assignments",{name,subjectId:b.querySelector("#calendarAddSubject").value,type:"Assignment",unitId:null,dueDate:dateKey,dueTime:selectedTime,dueTimeMode:selectedTime?"Custom":"No time specified",priority:"Normal",estimatedWorkload:null,status:"Not started",notes:"",resources:[],grade:null,tasks:[],studyPlanId:null});
         sessionStorage.setItem("planner-assignment-return","calendar"); b.remove(); render();
       } else if(type.value==="task") {
-        window.PlannerData.create("tasks",{name,subjectId:null,parentType:null,parentId:null,dueDate:dateKey,dueTime:time,priority:"Normal",estimatedTime:null,status:"Not started",notes:"",scheduledTime:null});
+        window.PlannerData.create("tasks",{name,subjectId:null,parentType:null,parentId:null,dueDate:dateKey,dueTime:selectedTime,priority:"Normal",estimatedTime:null,status:"Not started",notes:"",scheduledTime:null});
         b.remove(); render();
       } else {
         const end=b.querySelector("#calendarAddEnd").value || timeValue(Math.min(minutes+60,END_HOUR*60));
-        window.PlannerData.create("events",{name,startDate:dateKey,startTime:time,endDate:dateKey,endTime:end,allDay:false,notes:""});
+        window.PlannerData.create("events",{name,startDate:dateKey,startTime:selectedTime,endDate:dateKey,endTime:selectedTime ? end : null,allDay:!selectedTime,notes:""});
         b.remove(); render();
       }
     };
@@ -112,6 +113,7 @@
     document.getElementById("calendarNext").addEventListener("click", () => move(1));
     document.querySelectorAll(".calendar-item,.calendar-timed-item").forEach(button => button.addEventListener("click", () => { sessionStorage.setItem("planner-assignment-return", "calendar"); openAssignment(button.dataset.assignmentId); }));
     document.querySelectorAll(".calendar-time-slot").forEach(button => button.addEventListener("click", () => showAddAtSlot(button.dataset.date, Number(button.dataset.minutes))));
+    document.querySelectorAll(".calendar-all-day-label").forEach(button => button.addEventListener("click", () => showAddAtSlot(button.dataset.allDayDate, null)));
   }
 
   window.PlannerCalendar = { render };
