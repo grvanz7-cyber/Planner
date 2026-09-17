@@ -8,3 +8,4 @@
 .calendar-all-day-label{border:0;background:none;padding:0 0 4px;font:inherit;font-weight:600;cursor:pointer;color:inherit;text-align:left;}
 .calendar-all-day-label:hover{text-decoration:underline;}
 .calendar-add-hint{margin:4px 0 0;font-size:.82rem;opacity:.7;}
+.calendar-filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0 0;font-size:12px;color:var(--text-muted,#666)}.calendar-filters label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}.calendar-filters input{margin:0;accent-color:var(--accent,#333)}.calendar-task-item,.calendar-event-item{cursor:default}.calendar-task-item:hover,.calendar-event-item:hover{background:var(--surface-muted,#f5f5f2)}
