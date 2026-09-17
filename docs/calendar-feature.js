@@ -2,6 +2,7 @@
   const PAGE = document.getElementById("page");
   let viewDate = new Date();
   let viewMode = "month";
+  const filters = { assignments: true, tasks: true, events: true };
   const START_HOUR = 7;
   const END_HOUR = 22;
   const SLOT_MINUTES = 30;
@@ -14,10 +15,21 @@
   function assignmentDate(a) { return a.dueDate || null; }
   function subjectOf(a) { return (data().subjects || []).find(s => s.id === a.subjectId) || null; }
   function assignmentsFor(key) { return (data().assignments || []).filter(a => assignmentDate(a) === key).sort((a,b) => String(a.name).localeCompare(String(b.name))); }
+  function tasksFor(key) { return (data().tasks || []).filter(t => t.dueDate === key).sort((a,b) => String(a.name).localeCompare(String(b.name))); }
+  function eventsFor(key) { return (data().events || []).filter(e => (e.startDate || e.date) === key).sort((a,b) => String(a.name).localeCompare(String(b.name))); }
   function timedAssignmentsFor(key) { return assignmentsFor(key).filter(a => a.dueTime); }
   function allDayAssignmentsFor(key) { return assignmentsFor(key).filter(a => !a.dueTime); }
   function openAssignment(id) { window.PlannerAssignments?.openAssignment?.(id); }
-  function itemMarkup(a) { const subject = subjectOf(a); return `<button type="button" class="calendar-item" data-assignment-id="${esc(a.id)}"><span>${esc(subject?.icon || "📝")}</span><span>${esc(a.name)}</span></button>`; }
+  function itemMarkup(a) { const subject = subjectOf(a); return `<button type="button" class="calendar-item calendar-assignment-item" data-assignment-id="${esc(a.id)}"><span>${esc(subject?.icon || "📝")}</span><span>${esc(a.name)}</span></button>`; }
+  function taskMarkup(t) { return `<div class="calendar-item calendar-task-item"><span>☑️</span><span>${esc(t.name)}</span></div>`; }
+  function eventMarkup(e) { return `<div class="calendar-item calendar-event-item"><span>📅</span><span>${esc(e.name)}</span></div>`; }
+  function dayItems(key) {
+    let html = "";
+    if (filters.assignments) html += assignmentsFor(key).map(itemMarkup).join("");
+    if (filters.tasks) html += tasksFor(key).map(taskMarkup).join("");
+    if (filters.events) html += eventsFor(key).map(eventMarkup).join("");
+    return html;
+  }
   function timeText(minutes) { const h = Math.floor(minutes / 60), m = minutes % 60, suffix = h >= 12 ? "PM" : "AM", display = h % 12 || 12; return `${display}:${String(m).padStart(2,"0")} ${suffix}`; }
   function timeValue(minutes) { const h = Math.floor(minutes / 60), m = minutes % 60; return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`; }
   function dateTimeFrom(dateKey, time) { return `${dateKey}T${time}`; }
@@ -30,8 +42,8 @@
     let cells = "";
     for (let i = 0; i < startOffset; i++) cells += `<div class="calendar-cell calendar-cell-empty"></div>`;
     for (let day = 1; day <= days; day++) {
-      const date = new Date(year, month, day), key = localDate(date), items = assignmentsFor(key);
-      cells += `<div class="calendar-cell${key === today ? " calendar-today" : ""}"><div class="calendar-day-number">${day}</div><div class="calendar-items">${items.map(itemMarkup).join("")}</div></div>`;
+      const date = new Date(year, month, day), key = localDate(date);
+      cells += `<div class="calendar-cell${key === today ? " calendar-today" : ""}"><div class="calendar-day-number">${day}</div><div class="calendar-items">${dayItems(key)}</div></div>`;
     }
     const total = startOffset + days, trailing = (7 - (total % 7)) % 7;
     for (let i = 0; i < trailing; i++) cells += `<div class="calendar-cell calendar-cell-empty"></div>`;
@@ -41,7 +53,7 @@
   function startOfWeek(date) { const d = new Date(date); d.setHours(0,0,0,0); d.setDate(d.getDate() - d.getDay()); return d; }
 
   function renderTimedColumn(date) {
-    const key = localDate(date), timed = timedAssignmentsFor(key), allDay = allDayAssignmentsFor(key), today = localDate(new Date());
+    const key = localDate(date), timed = filters.assignments ? timedAssignmentsFor(key) : [], allDay = filters.assignments ? allDayAssignmentsFor(key) : [], today = localDate(new Date());
     let rows = "";
     for (let minutes = START_HOUR * 60; minutes < END_HOUR * 60; minutes += SLOT_MINUTES) rows += `<div class="calendar-slot-row"><div class="calendar-time-label">${minutes % 60 === 0 ? esc(timeText(minutes)) : ""}</div><div class="calendar-slot-cell">${slotMarkup(key, minutes)}</div></div>`;
     const events = timed.map(a => {
@@ -51,6 +63,14 @@
       return `<button type="button" class="calendar-timed-item" data-assignment-id="${esc(a.id)}" style="top:${(minutes-START_HOUR*60)*2}px"><span>${esc(subject?.icon || "📝")}</span>${esc(a.name)}</button>`;
     }).join("");
     return `<div class="calendar-timed-column${key === today ? " calendar-column-today" : ""}"><div class="calendar-column-header"><strong>${esc(date.toLocaleDateString(undefined,{weekday:"short"}))}</strong><span>${esc(date.toLocaleDateString(undefined,{month:"short",day:"numeric"}))}</span></div><div class="calendar-all-day" data-all-day-date="${esc(key)}"><button type="button" class="calendar-all-day-label" data-all-day-date="${esc(key)}">All day</button><div class="calendar-items">${allDay.map(itemMarkup).join("")}</div></div><div class="calendar-time-grid"><div class="calendar-time-rows">${rows}</div><div class="calendar-timed-items">${events}</div></div></div>`;
+  }
+
+  function filterBar() {
+    return `<div class="calendar-filters" role="group" aria-label="Calendar filters">
+      <label><input type="checkbox" data-filter="assignments" ${filters.assignments ? "checked" : ""}> Assignments</label>
+      <label><input type="checkbox" data-filter="tasks" ${filters.tasks ? "checked" : ""}> Tasks</label>
+      <label><input type="checkbox" data-filter="events" ${filters.events ? "checked" : ""}> Events</label>
+    </div>`;
   }
 
   function renderColumns(count) {
