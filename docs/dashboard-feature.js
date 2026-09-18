@@ -63,7 +63,8 @@
 
     const assignments = Array.isArray(d.assignments) ? d.assignments : [];
     const tasks = Array.isArray(d.tasks) ? d.tasks : [];
-    const events = Array.isArray(d.events) ? d.events : [];\n    const notifications = Array.isArray(d.notifications) ? d.notifications.filter(n => !n.resolved) : [];
+    const events = Array.isArray(d.events) ? d.events : [];
+    const notifications = Array.isArray(d.notifications) ? d.notifications.filter(n => !n.resolved) : [];
 
     const todayAssignments = assignments.filter(a => a.dueDate === today).sort((a,b) => String(a.name).localeCompare(String(b.name)));
     const todayTasks = tasks.filter(t => t.dueDate === today).sort((a,b) => String(a.name).localeCompare(String(b.name)));
@@ -74,7 +75,8 @@
     const upcomingEvents = events.filter(e => { const k=e.startDate || e.date; return k && k > today && k <= endKey; }).sort((a,b) => String(a.startDate || a.date).localeCompare(String(b.startDate || b.date)) || String(a.name).localeCompare(String(b.name)));
 
     const todayItems = [...todayAssignments.map(assignmentRow), ...todayTasks.map(taskRow), ...todayEvents.map(eventRow)].join("");
-    const upcomingItems = [...upcomingAssignments.map(assignmentRow), ...upcomingTasks.map(taskRow), ...upcomingEvents.map(eventRow)].join("");\n    const attentionItems = notifications.map(notificationRow).join("");
+    const upcomingItems = [...upcomingAssignments.map(assignmentRow), ...upcomingTasks.map(taskRow), ...upcomingEvents.map(eventRow)].join("");
+    const attentionItems = notifications.map(notificationRow).join("");
 
     const subjects = (d.subjects || []).filter(s => s.archived !== true).slice(0, 6);
     const subjectCards = subjects.length ? subjects.map(s => `<button type="button" class="dashboard-subject" data-subject-id="${esc(s.id)}"><span class="dashboard-subject-icon">${esc(s.icon || "📚")}</span><span><strong>${esc(s.name)}</strong><small>${esc(s.academicPeriod || "")}</small></span></button>`).join("") : `<div class="dashboard-empty">No subjects yet. Add your courses from Subjects.</div>`;
@@ -85,7 +87,8 @@
       </div>
       <div class="dashboard-grid">
         <div class="dashboard-main">
-          ${section("Needs Attention", attentionItems || `<div class="dashboard-empty">Nothing needs your attention right now.</div>`, "dashboard-attention")}\n          ${section("Today", todayItems || `<div class="dashboard-empty">Nothing scheduled for today.</div>`)}
+          ${section("Needs Attention", attentionItems || `<div class="dashboard-empty">Nothing needs your attention right now.</div>`, "dashboard-attention")}
+          ${section("Today", todayItems || `<div class="dashboard-empty">Nothing scheduled for today.</div>`)}
           ${section("Upcoming · next 7 days", upcomingItems || `<div class="dashboard-empty">Nothing due in the next 7 days.</div>`)}
         </div>
         <aside class="dashboard-side">
