@@ -53,6 +53,44 @@
     </div>`;
   }
 
+  function priorityRank(value) {
+    return value === "High" ? 0 : value === "Normal" ? 1 : 2;
+  }
+
+  function workloadMinutes(value) {
+    const map = {"15m":15,"30m":30,"45m":45,"1h":60,"1h30":90,"2h":120};
+    return map[value] || 0;
+  }
+
+  function suggestedNext(assignments) {
+    const today = localDate(new Date());
+    const now = new Date();
+    return assignments
+      .filter(a => a.status !== "Finished" && a.status !== "Submitted" && a.status !== "Graded")
+      .map(a => {
+        const due = a.dueDate ? new Date(a.dueDate + "T23:59:59") : null;
+        const daysAway = due ? Math.ceil((due - now) / 86400000) : 99;
+        return { a, daysAway };
+      })
+      .sort((x,y) =>
+        priorityRank(x.a.priority) - priorityRank(y.a.priority) ||
+        x.daysAway - y.daysAway ||
+        workloadMinutes(x.a.estimatedWorkload) - workloadMinutes(y.a.estimatedWorkload) ||
+        String(x.a.name).localeCompare(String(y.a.name))
+      )
+      .slice(0, 3)
+      .map(({a, daysAway}) => {
+        const subject = subjectOf(a);
+        const dueText = !a.dueDate ? "No due date" : daysAway < 0 ? "Overdue" : daysAway === 0 ? "Due today" : daysAway === 1 ? "Due tomorrow" : "Due " + formatDate(a.dueDate);
+        const workload = a.estimatedWorkload && a.estimatedWorkload !== "Not specified" ? " · ~" + a.estimatedWorkload : "";
+        return `<button type="button" class="dashboard-item dashboard-suggestion" data-assignment-id="${esc(a.id)}">
+          <span class="dashboard-item-icon">${esc(subject?.icon || "📝")}</span>
+          <span class="dashboard-item-main"><strong>${esc(a.name)}</strong><small>${esc(subject?.name || "No subject")} · ${esc(dueText)}${esc(workload)}</small></span>
+          <span class="dashboard-item-meta"><strong>${esc(a.priority || "Normal")}</strong><small>${esc(a.status || "Not started")}</small></span>
+        </button>`;
+      }).join("");
+  }
+
   function render() {
     const d = data();
     const today = localDate(new Date());
@@ -77,6 +115,7 @@
     const todayItems = [...todayAssignments.map(assignmentRow), ...todayTasks.map(taskRow), ...todayEvents.map(eventRow)].join("");
     const upcomingItems = [...upcomingAssignments.map(assignmentRow), ...upcomingTasks.map(taskRow), ...upcomingEvents.map(eventRow)].join("");
     const attentionItems = notifications.map(notificationRow).join("");
+    const suggestedItems = suggestedNext(assignments);
 
     const subjects = (d.subjects || []).filter(s => s.archived !== true).slice(0, 6);
     const subjectCards = subjects.length ? subjects.map(s => `<button type="button" class="dashboard-subject" data-subject-id="${esc(s.id)}"><span class="dashboard-subject-icon">${esc(s.icon || "📚")}</span><span><strong>${esc(s.name)}</strong><small>${esc(s.academicPeriod || "")}</small></span></button>`).join("") : `<div class="dashboard-empty">No subjects yet. Add your courses from Subjects.</div>`;
@@ -88,6 +127,7 @@
       <div class="dashboard-grid">
         <div class="dashboard-main">
           ${section("Needs Attention", attentionItems || `<div class="dashboard-empty">Nothing needs your attention right now.</div>`, "dashboard-attention")}
+          ${section("Suggested Next", suggestedItems || `<div class="dashboard-empty">Nothing to suggest right now.</div>`, "dashboard-suggested")}
           ${section("Today", todayItems || `<div class="dashboard-empty">Nothing scheduled for today.</div>`)}
           ${section("Upcoming · next 7 days", upcomingItems || `<div class="dashboard-empty">Nothing due in the next 7 days.</div>`)}
         </div>
@@ -106,14 +146,9 @@
       }
     }));
     PAGE.querySelectorAll(".dashboard-notification-resolve").forEach(button => button.addEventListener("click", () => {
-      window.PlannerData.update("notifications", button.dataset.notificationId, {
-        resolved: true,
-        read: true,
-        resolvedAt: new Date().toISOString()
-      });
+      window.PlannerData.update("notifications", button.dataset.notificationId, { resolved: true, read: true, resolvedAt: new Date().toISOString() });
     }));
-
-    PAGE.querySelectorAll(".dashboard-assignment").forEach(button => button.addEventListener("click", () => {
+    PAGE.querySelectorAll(".dashboard-assignment,.dashboard-suggestion").forEach(button => button.addEventListener("click", () => {
       sessionStorage.setItem("planner-assignment-return","dashboard");
       window.location.hash = `assignment/${button.dataset.assignmentId}`;
     }));
