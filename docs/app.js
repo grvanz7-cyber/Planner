@@ -18,6 +18,7 @@
     const activeButton=document.querySelector(`.nav-item[data-page="${pageName}"]`);
     if(activeButton)activeButton.classList.add("active");
     if(pageName==="calendar"&&window.PlannerCalendar&&typeof window.PlannerCalendar.render==="function"){window.PlannerCalendar.render();return;}
+    if(pageName==="dashboard"&&window.PlannerDashboard&&typeof window.PlannerDashboard.render==="function"){window.PlannerDashboard.render();return;}
     const page=pages[pageName]||pages.dashboard;
     pageElement.innerHTML=`<div class="page-header"><h1>${page.title}</h1><p>${page.subtitle}</p></div><div class="placeholder-grid">${page.cards.map(([title,text])=>`<article class="placeholder-card"><h2>${title}</h2><p>${text}</p></article>`).join("")}</div>`;
   }
