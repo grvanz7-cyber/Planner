@@ -134,7 +134,33 @@
   function editDetails(a){
     const b=document.createElement("div");b.className="assignment-feature-modal-backdrop";b.innerHTML=`<div class="assignment-feature-modal" role="dialog" aria-modal="true"><h2>Edit Details</h2><form class="assignment-feature-form"><div class="assignment-feature-field"><label>Name</label><input id="edName" value="${esc(a.name)}" required></div><div class="assignment-feature-field"><label>Type</label><select id="edType"><option>Assignment</option><option>Assessment</option><option>Culminating</option></select></div><div class="assignment-feature-field"><label>Due date</label><input id="edDue" type="date" value="${esc(a.dueDate||"")}"></div><div class="assignment-feature-field"><label>Due time</label><input id="edTime" type="time" value="${esc(a.dueTime||"")}"><p class="calendar-add-hint">Leave blank for an all-day / no-time deadline.</p></div><div class="assignment-feature-field"><label>Status</label><select id="edStatus"><option>Not started</option><option>In progress</option><option>Finished</option><option>Submitted</option><option>Graded</option></select></div><div class="assignment-feature-field"><label>Priority</label><select id="edPriority"><option>Low</option><option>Normal</option><option>High</option></select></div><div class="assignment-feature-actions"><button type="button" class="assignment-feature-secondary" id="edCancel">Cancel</button><button class="assignment-feature-button">Save</button></div></form></div>`;document.body.appendChild(b);b.querySelector("#edType").value=a.type||"Assignment";b.querySelector("#edStatus").value=a.status||"Not started";b.querySelector("#edPriority").value=a.priority||"Normal";b.querySelector("#edCancel").onclick=()=>b.remove();b.onclick=e=>{if(e.target===b)b.remove()};b.querySelector("form").onsubmit=e=>{e.preventDefault();window.PlannerData.update("assignments",a.id,{name:b.querySelector("#edName").value.trim(),type:b.querySelector("#edType").value,dueDate:b.querySelector("#edDue").value||null,dueTime:b.querySelector("#edTime").value||null,dueTimeMode:b.querySelector("#edTime").value?"Custom":"No time specified",status:b.querySelector("#edStatus").value,priority:b.querySelector("#edPriority").value});b.remove();};
   }
-  function editGrade(a){const value=prompt("Enter the grade (for example 18/20 or 90%).",a.grade==null?"":gradeText(a));if(value!==null)window.PlannerData.update("assignments",a.id,{grade:value.trim()||null});}
+  function parseGrade(value){
+    const raw=String(value||"").trim();
+    if(!raw)return null;
+    const fraction=raw.match(/^(\\d+(?:\\.\\d+)?)\\s*\\/\\s*(\\d+(?:\\.\\d+)?)$/);
+    if(fraction){
+      const earned=Number(fraction[1]), possible=Number(fraction[2]);
+      if(possible>0)return {raw,earned,possible,percentage:Math.round((earned/possible)*10000)/100};
+    }
+    const percent=raw.match(/^(\\d+(?:\\.\\d+)?)\\s*%$/);
+    if(percent)return {raw,earned:null,possible:null,percentage:Number(percent[1])};
+    const plain=raw.match(/^(\\d+(?:\\.\\d+)?)$/);
+    if(plain){
+      const percentage=Number(plain[1]);
+      if(percentage>=0&&percentage<=100)return {raw,earned:null,possible:null,percentage};
+    }
+    return null;
+  }
+  function editGrade(a){
+    const current=a.grade&&typeof a.grade==="object" ? (a.grade.raw||gradeText(a)) : (a.grade||"");
+    const value=prompt("Enter the grade (for example 18/20 or 90%).",current);
+    if(value===null)return;
+    const raw=value.trim();
+    if(!raw){window.PlannerData.update("assignments",a.id,{grade:null});return;}
+    const parsed=parseGrade(raw);
+    if(!parsed){alert("Please enter a grade like 18/20 or 90%.");return;}
+    window.PlannerData.update("assignments",a.id,{grade:parsed});
+  }
   function editNotes(a){const value=prompt("Notes",a.notes||"");if(value!==null)window.PlannerData.update("assignments",a.id,{notes:value});}
   function addResource(a){const value=prompt("Resource name or link");if(value)window.PlannerData.update("assignments",a.id,{resources:[...(a.resources||[]),value.trim()]});}
 
