@@ -83,7 +83,7 @@
       </div>`;
 
     PAGE.querySelectorAll(".dashboard-assignment").forEach(button => button.addEventListener("click", () => {
-      sessionStorage.removeItem("planner-assignment-return");
+      sessionStorage.setItem("planner-assignment-return","dashboard");
       window.location.hash = `assignment/${button.dataset.assignmentId}`;
     }));
     PAGE.querySelectorAll(".dashboard-subject").forEach(button => button.addEventListener("click", () => {
