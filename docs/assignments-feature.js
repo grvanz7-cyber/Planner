@@ -6,7 +6,7 @@
   function findAssignment(id) { return window.PlannerData.find("assignments", id); }
   function subjectOf(a) { return window.PlannerData.find("subjects", a.subjectId); }
   function unitOf(a) { return a.unitId ? window.PlannerData.find("units", a.unitId) : null; }
-  function backToAssignmentParent(a) { return a.unitId ? `unit/${a.unitId}` : `subject/${a.subjectId}`; }
+  function backToAssignmentParent(a) { const from=sessionStorage.getItem("planner-assignment-return"); if(from==="dashboard") return "dashboard"; return a.unitId ? `unit/${a.unitId}` : `subject/${a.subjectId}`; }
 
   function parseQuickCapture(text) {
     const original = text.trim();
@@ -119,8 +119,8 @@
         <section class="assignment-detail-card"><div class="assignment-detail-card-heading"><h2>Activity</h2></div><div class="assignment-detail-activity"><p>Created ${esc(new Date(a.createdAt).toLocaleString())}</p><p>Last updated ${esc(new Date(a.updatedAt).toLocaleString())}</p></div></section>
       </div>
     </div>`;
-    document.getElementById("assignmentBack").onclick=()=>location.hash=backToAssignmentParent(a);
-    document.getElementById("assignmentDelete").onclick=()=>{if(confirm(`Delete “${a.name}”?`)){window.PlannerData.remove("assignments",a.id);location.hash=backToAssignmentParent(a);}};
+    document.getElementById("assignmentBack").onclick=()=>{const target=backToAssignmentParent(a);sessionStorage.removeItem("planner-assignment-return");location.hash=target;};
+    document.getElementById("assignmentDelete").onclick=()=>{if(confirm(`Delete “${a.name}”?`)){window.PlannerData.remove("assignments",a.id);const target=backToAssignmentParent(a);sessionStorage.removeItem("planner-assignment-return");location.hash=target;}};
     PAGE.querySelectorAll("[data-edit=details]").forEach(x=>x.onclick=()=>editDetails(a));
     PAGE.querySelectorAll("[data-edit=grade]").forEach(x=>x.onclick=()=>editGrade(a));
     PAGE.querySelectorAll("[data-edit=notes]").forEach(x=>x.onclick=()=>editNotes(a));
