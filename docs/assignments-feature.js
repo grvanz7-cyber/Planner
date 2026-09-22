@@ -155,13 +155,37 @@
   }
   function editGrade(a){
     const current=a.grade&&typeof a.grade==="object" ? (a.grade.raw||gradeText(a)) : (a.grade||"");
-    const value=prompt("Enter the grade (for example 18/20 or 90%).",current);
-    if(value===null)return;
-    const raw=value.trim();
-    if(!raw){window.PlannerData.update("assignments",a.id,{grade:null});return;}
-    const parsed=parseGrade(raw);
-    if(!parsed){alert("Please enter a grade like 18/20 or 90%.");return;}
-    window.PlannerData.update("assignments",a.id,{grade:parsed});
+    const b=document.createElement("div");
+    b.className="assignment-feature-modal-backdrop";
+    b.innerHTML=`<div class="assignment-feature-modal assignment-grade-modal" role="dialog" aria-modal="true" aria-label="Edit Grade">
+      <h2>Edit Grade</h2>
+      <p class="assignment-grade-context">${esc(a.name)}</p>
+      <form class="assignment-feature-form" id="gradeForm">
+        <div class="assignment-feature-field">
+          <label for="gradeValue">Grade</label>
+          <input id="gradeValue" type="text" inputmode="decimal" autocomplete="off" placeholder="18/20 or 90%" value="${esc(current)}" autofocus>
+          <p class="assignment-grade-hint">Enter a single grade for this assignment, such as 18/20 or 90%.</p>
+        </div>
+        <div class="assignment-feature-actions">
+          <button type="button" class="assignment-feature-secondary" id="gradeCancel">Cancel</button>
+          <button class="assignment-feature-button" type="submit">Save Grade</button>
+        </div>
+      </form>
+    </div>`;
+    document.body.appendChild(b);
+    const input=b.querySelector("#gradeValue");
+    const close=()=>b.remove();
+    b.querySelector("#gradeCancel").onclick=close;
+    b.onclick=e=>{if(e.target===b)close();};
+    b.querySelector("#gradeForm").onsubmit=e=>{
+      e.preventDefault();
+      const raw=input.value.trim();
+      if(!raw){window.PlannerData.update("assignments",a.id,{grade:null});close();return;}
+      const parsed=parseGrade(raw);
+      if(!parsed){alert("Please enter a grade like 18/20 or 90%.");input.focus();return;}
+      window.PlannerData.update("assignments",a.id,{grade:parsed});
+      close();
+    };
   }
   function editNotes(a){const value=prompt("Notes",a.notes||"");if(value!==null)window.PlannerData.update("assignments",a.id,{notes:value});}
   function addResource(a){const value=prompt("Resource name or link");if(value)window.PlannerData.update("assignments",a.id,{resources:[...(a.resources||[]),value.trim()]});}
