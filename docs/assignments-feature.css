@@ -55,3 +55,10 @@
 .assignment-grade-context { margin:-10px 0 20px; color:var(--muted); font-size:14px; }
 .assignment-grade-hint { margin:2px 0 0; color:var(--muted); font-size:12px; line-height:1.4; }
 .assignment-grade-modal { width:min(430px,100%); }
+
+.assignment-kcta-grid { display:grid; gap:10px; margin:4px 0; }
+.assignment-kcta-row { display:grid; grid-template-columns:34px minmax(0,1fr) 72px 18px; gap:8px; align-items:center; }
+.assignment-kcta-row label { color:var(--text); }
+.assignment-kcta-row input { width:100%; height:40px; border:1px solid var(--border); border-radius:9px; padding:0 10px; background:var(--bg); color:var(--text); outline:none; }
+.assignment-kcta-row input:focus { border-color:var(--accent); }
+.assignment-kcta-row span { color:var(--muted); font-size:13px; }
