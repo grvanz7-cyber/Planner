@@ -100,93 +100,78 @@
   function detailRoute(){const p=location.hash.replace(/^#/,"").split("/");return p[0]==="assignment"&&p[1]?p[1]:null;}
   function formatDate(value){if(!value)return "No due date";return new Date(value+"T00:00:00").toLocaleDateString(undefined,{weekday:"short",month:"long",day:"numeric",year:"numeric"});}
   function workload(value){return ({"15m":"15 minutes","30m":"30 minutes","45m":"45 minutes","1h":"1 hour","1h30":"1 hour 30 minutes","2h":"2 hours"}[value]||value||"Not specified");}
-  function gradeText(a){if(a.grade===null||a.grade===undefined||a.grade==="")return "Not graded";if(typeof a.grade==="object")return a.grade.percentage!=null?`${a.grade.percentage}%`:JSON.stringify(a.grade);return String(a.grade);}
-
-  function renderAssignment(id){
-    const a=findAssignment(id); if(!a){location.hash="subjects";return;}
-    const s=subjectOf(a),u=unitOf(a), tasks=Array.isArray(a.tasks)?a.tasks:[];
-    const done=tasks.filter(t=>t.completed).length;
-    const resources=Array.isArray(a.resources)?a.resources:[];
-    PAGE.innerHTML=`<div class="assignment-detail">
-      <div class="assignment-detail-top"><button class="assignment-feature-secondary" id="assignmentBack">← Back</button><div class="assignment-detail-actions"><button class="assignment-feature-secondary" id="assignmentDelete">Delete</button></div></div>
-      <header class="assignment-detail-header"><div class="assignment-detail-title"><span class="assignment-detail-icon">${esc(s?.icon||"📚")}</span><div><p class="assignment-detail-kicker">${esc(s?.name||"Unknown subject")}${u?` · Unit ${esc(u.number)} — ${esc(u.name)}`:""}</p><h1>${esc(a.name)}</h1><div class="assignment-detail-badges"><span>${esc(a.type||"Assignment")}</span><span>${esc(a.status||"Not started")}</span><span>${esc(a.priority||"Normal")} priority</span></div></div></div></header>
-      <div class="assignment-detail-grid">
-        <section class="assignment-detail-card"><div class="assignment-detail-card-heading"><h2>Details</h2><button class="assignment-detail-edit" data-edit="details">Edit</button></div><div class="assignment-detail-info-grid"><div><span>Subject</span><strong>${esc(s?.name||"—")}</strong></div><div><span>Unit</span><strong>${u?`Unit ${esc(u.number)} — ${esc(u.name)}`:"No unit"}</strong></div><div><span>Due</span><strong>${esc(formatDate(a.dueDate))}</strong></div><div><span>Workload</span><strong>${esc(workload(a.estimatedWorkload))}</strong></div></div></section>
-        <section class="assignment-detail-card"><div class="assignment-detail-card-heading"><h2>Tasks</h2><span>${done}/${tasks.length} complete</span></div><div class="assignment-detail-progress"><div style="width:${tasks.length?Math.round(done/tasks.length*100):0}%"></div></div><div class="assignment-detail-task-list">${tasks.length?tasks.map((t,i)=>`<label class="assignment-detail-task ${t.completed?"complete":""}"><input type="checkbox" data-task-index="${i}" ${t.completed?"checked":""}><span>${esc(t.name||t.title||"Task")}</span><button type="button" data-delete-task="${i}" aria-label="Delete task">×</button></label>`).join(""):"<p class=\"assignment-detail-muted\">No tasks yet.</p>"}</div><form class="assignment-detail-inline-form" id="taskForm"><input id="newTask" placeholder="Add a task…" required><button class="assignment-feature-button">Add</button></form></section>
-        <section class="assignment-detail-card"><div class="assignment-detail-card-heading"><h2>Grade</h2><button class="assignment-detail-edit" data-edit="grade">Edit</button></div><div class="assignment-detail-grade-value">${esc(gradeText(a))}</div><p class="assignment-detail-muted">Enter a grade when this assignment has been marked.</p></section>
-        <section class="assignment-detail-card"><div class="assignment-detail-card-heading"><h2>Notes</h2><button class="assignment-detail-edit" data-edit="notes">Edit</button></div><div class="assignment-detail-notes">${a.notes?esc(a.notes).replace(/\n/g,"<br>"):"<span class=\"assignment-detail-muted\">No notes yet.</span>"}</div></section>
-        <section class="assignment-detail-card"><div class="assignment-detail-card-heading"><h2>Resources</h2><button class="assignment-detail-edit" data-edit="resources">Add</button></div>${resources.length?`<ul class="assignment-detail-resources">${resources.map((r,i)=>`<li><span>${esc(typeof r==="string"?r:r.name||r.url||"Resource")}</span><button type="button" data-delete-resource="${i}">×</button></li>`).join("")}</ul>`:"<p class=\"assignment-detail-muted\">No resources yet.</p>"}</section>
-        <section class="assignment-detail-card"><div class="assignment-detail-card-heading"><h2>Activity</h2></div><div class="assignment-detail-activity"><p>Created ${esc(new Date(a.createdAt).toLocaleString())}</p><p>Last updated ${esc(new Date(a.updatedAt).toLocaleString())}</p></div></section>
-      </div>
-    </div>`;
-    document.getElementById("assignmentBack").onclick=()=>{const target=backToAssignmentParent(a);sessionStorage.removeItem("planner-assignment-return");location.hash=target;};
-    document.getElementById("assignmentDelete").onclick=()=>{if(confirm(`Delete “${a.name}”?`)){window.PlannerData.remove("assignments",a.id);const target=backToAssignmentParent(a);sessionStorage.removeItem("planner-assignment-return");location.hash=target;}};
-    PAGE.querySelectorAll("[data-edit=details]").forEach(x=>x.onclick=()=>editDetails(a));
-    PAGE.querySelectorAll("[data-edit=grade]").forEach(x=>x.onclick=()=>editGrade(a));
-    PAGE.querySelectorAll("[data-edit=notes]").forEach(x=>x.onclick=()=>editNotes(a));
-    PAGE.querySelectorAll("[data-edit=resources]").forEach(x=>x.onclick=()=>addResource(a));
-    PAGE.querySelectorAll("[data-task-index]").forEach(x=>x.onchange=()=>{const updated=[...tasks];updated[Number(x.dataset.taskIndex)]={...updated[Number(x.dataset.taskIndex)],completed:x.checked};window.PlannerData.update("assignments",a.id,{tasks:updated});});
-    PAGE.querySelectorAll("[data-delete-task]").forEach(x=>x.onclick=()=>{const updated=tasks.filter((_,i)=>i!==Number(x.dataset.deleteTask));window.PlannerData.update("assignments",a.id,{tasks:updated});});
-    PAGE.querySelectorAll("[data-delete-resource]").forEach(x=>x.onclick=()=>{const updated=resources.filter((_,i)=>i!==Number(x.dataset.deleteResource));window.PlannerData.update("assignments",a.id,{resources:updated});});
-    document.getElementById("taskForm").onsubmit=e=>{e.preventDefault();const name=document.getElementById("newTask").value.trim();if(!name)return;window.PlannerData.update("assignments",a.id,{tasks:[...tasks,{id:Math.random().toString(36).slice(2,9),name,completed:false,createdAt:new Date().toISOString()}]});};
+  function achievementGrades(a){
+    const g=a.grade;
+    if(g&&typeof g==="object"&&g.achievements)return g.achievements;
+    if(g&&typeof g==="object"&&g.percentage!=null)return {K:null,T:null,C:null,A:{raw:g.raw||"",earned:g.earned,possible:g.possible,percentage:Number(g.percentage)}};
+    return {K:null,T:null,C:null,A:null};
   }
-
-  function editDetails(a){
-    const b=document.createElement("div");b.className="assignment-feature-modal-backdrop";b.innerHTML=`<div class="assignment-feature-modal" role="dialog" aria-modal="true"><h2>Edit Details</h2><form class="assignment-feature-form"><div class="assignment-feature-field"><label>Name</label><input id="edName" value="${esc(a.name)}" required></div><div class="assignment-feature-field"><label>Type</label><select id="edType"><option>Assignment</option><option>Assessment</option><option>Culminating</option></select></div><div class="assignment-feature-field"><label>Due date</label><input id="edDue" type="date" value="${esc(a.dueDate||"")}"></div><div class="assignment-feature-field"><label>Due time</label><input id="edTime" type="time" value="${esc(a.dueTime||"")}"><p class="calendar-add-hint">Leave blank for an all-day / no-time deadline.</p></div><div class="assignment-feature-field"><label>Status</label><select id="edStatus"><option>Not started</option><option>In progress</option><option>Finished</option><option>Submitted</option><option>Graded</option></select></div><div class="assignment-feature-field"><label>Priority</label><select id="edPriority"><option>Low</option><option>Normal</option><option>High</option></select></div><div class="assignment-feature-actions"><button type="button" class="assignment-feature-secondary" id="edCancel">Cancel</button><button class="assignment-feature-button">Save</button></div></form></div>`;document.body.appendChild(b);b.querySelector("#edType").value=a.type||"Assignment";b.querySelector("#edStatus").value=a.status||"Not started";b.querySelector("#edPriority").value=a.priority||"Normal";b.querySelector("#edCancel").onclick=()=>b.remove();b.onclick=e=>{if(e.target===b)b.remove()};b.querySelector("form").onsubmit=e=>{e.preventDefault();window.PlannerData.update("assignments",a.id,{name:b.querySelector("#edName").value.trim(),type:b.querySelector("#edType").value,dueDate:b.querySelector("#edDue").value||null,dueTime:b.querySelector("#edTime").value||null,dueTimeMode:b.querySelector("#edTime").value?"Custom":"No time specified",status:b.querySelector("#edStatus").value,priority:b.querySelector("#edPriority").value});b.remove();};
+  function gradeText(a){
+    const g=a.grade;
+    if(g&&typeof g==="object"&&g.achievements){
+      const entries=Object.entries(g.achievements).filter(([,v])=>v&&v.percentage!=null);
+      if(!entries.length)return "Not graded";
+      const weights=g.weights||{K:25,T:25,C:25,A:25};
+      const total=entries.reduce((sum,[key])=>sum+(Number(weights[key])||0),0);
+      if(!total)return "Not graded";
+      const value=entries.reduce((sum,[key,v])=>sum+Number(v.percentage)*(Number(weights[key])||0),0)/total;
+      return Math.round(value*10)/10+"%";
+    }
+    if(g===null||g===undefined||g==="")return "Not graded";
+    if(typeof g==="object")return g.percentage!=null?g.percentage+"%":JSON.stringify(g);
+    return String(g);
   }
   function parseGrade(value){
     const raw=String(value||"").trim();
     if(!raw)return null;
     const parts=raw.split("/").map(v=>v.trim());
-    if(parts.length===2 && parts[0]!=="" && parts[1]!==""){
-      const earned=Number(parts[0]), possible=Number(parts[1]);
-      if(Number.isFinite(earned)&&Number.isFinite(possible)&&possible>0){
-        return {raw,earned,possible,percentage:Math.round((earned/possible)*10000)/100};
-      }
+    if(parts.length===2&&parts[0]!==""&&parts[1]!==""){
+      const earned=Number(parts[0]),possible=Number(parts[1]);
+      if(Number.isFinite(earned)&&Number.isFinite(possible)&&possible>0)return {raw,earned,possible,percentage:Math.round((earned/possible)*10000)/100};
     }
     const percent=raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*%$/);
     if(percent)return {raw,earned:null,possible:null,percentage:Number(percent[1])};
     const plain=raw.match(/^([0-9]+(?:\.[0-9]+)?)$/);
-    if(plain){
-      const percentage=Number(plain[1]);
-      if(percentage>=0&&percentage<=100)return {raw,earned:null,possible:null,percentage};
-    }
+    if(plain){const percentage=Number(plain[1]);if(percentage>=0&&percentage<=100)return {raw,earned:null,possible:null,percentage};}
     return null;
   }
   function editGrade(a){
-    const current=a.grade&&typeof a.grade==="object" ? (a.grade.raw||gradeText(a)) : (a.grade||"");
+    const current=achievementGrades(a);
+    const weights=a.grade&&typeof a.grade==="object"&&a.grade.weights?a.grade.weights:{K:25,T:25,C:25,A:25};
     const b=document.createElement("div");
     b.className="assignment-feature-modal-backdrop";
-    b.innerHTML=`<div class="assignment-feature-modal assignment-grade-modal" role="dialog" aria-modal="true" aria-label="Edit Grade">
-      <h2>Edit Grade</h2>
-      <p class="assignment-grade-context">${esc(a.name)}</p>
-      <form class="assignment-feature-form" id="gradeForm">
-        <div class="assignment-feature-field">
-          <label for="gradeValue">Grade</label>
-          <input id="gradeValue" type="text" inputmode="decimal" autocomplete="off" placeholder="18/20 or 90%" value="${esc(current)}" autofocus>
-          <p class="assignment-grade-hint">Enter a single grade for this assignment, such as 18/20 or 90%.</p>
-        </div>
-        <div class="assignment-feature-actions">
-          <button type="button" class="assignment-feature-secondary" id="gradeCancel">Cancel</button>
-          <button class="assignment-feature-button" type="submit">Save Grade</button>
-        </div>
-      </form>
-    </div>`;
+    b.innerHTML='<div class="assignment-feature-modal assignment-grade-modal" role="dialog" aria-modal="true" aria-label="Edit Grades">'+
+      '<h2>Edit Grades</h2><p class="assignment-grade-context">'+esc(a.name)+'</p>'+
+      '<p class="assignment-grade-hint">Enter any K/T/C/A grades that apply. Each achievement can have its own grade.</p>'+
+      '<form class="assignment-feature-form" id="gradeForm"><div class="assignment-kcta-grid">'+
+      '<div class="assignment-kcta-row"><label for="gradeK"><strong>K</strong></label><input id="gradeK" type="text" inputmode="decimal" placeholder="18/20 or 90%" value="'+esc(current.K?.raw||"")+'"><input id="weightK" type="number" min="0" max="100" step="1" value="'+(Number(weights.K)||0)+'"><span>%</span></div>'+
+      '<div class="assignment-kcta-row"><label for="gradeT"><strong>T</strong></label><input id="gradeT" type="text" inputmode="decimal" placeholder="18/20 or 90%" value="'+esc(current.T?.raw||"")+'"><input id="weightT" type="number" min="0" max="100" step="1" value="'+(Number(weights.T)||0)+'"><span>%</span></div>'+
+      '<div class="assignment-kcta-row"><label for="gradeC"><strong>C</strong></label><input id="gradeC" type="text" inputmode="decimal" placeholder="18/20 or 90%" value="'+esc(current.C?.raw||"")+'"><input id="weightC" type="number" min="0" max="100" step="1" value="'+(Number(weights.C)||0)+'"><span>%</span></div>'+
+      '<div class="assignment-kcta-row"><label for="gradeA"><strong>A</strong></label><input id="gradeA" type="text" inputmode="decimal" placeholder="18/20 or 90%" value="'+esc(current.A?.raw||"")+'"><input id="weightA" type="number" min="0" max="100" step="1" value="'+(Number(weights.A)||0)+'"><span>%</span></div>'+
+      '</div><p class="assignment-grade-hint">The K/T/C/A weights must total 100%. They apply within this assignment\'s grading category.</p>'+
+      '<div class="assignment-feature-actions"><button type="button" class="assignment-feature-secondary" id="gradeCancel">Cancel</button><button class="assignment-feature-button" type="submit">Save Grades</button></div></form></div>';
     document.body.appendChild(b);
-    const input=b.querySelector("#gradeValue");
     const close=()=>b.remove();
     b.querySelector("#gradeCancel").onclick=close;
     b.onclick=e=>{if(e.target===b)close();};
     b.querySelector("#gradeForm").onsubmit=e=>{
       e.preventDefault();
-      const raw=input.value.trim();
-      if(!raw){window.PlannerData.update("assignments",a.id,{grade:null});close();return;}
-      const parsed=parseGrade(raw);
-      if(!parsed){alert("Please enter a grade like 18/20 or 90%.");input.focus();return;}
-      window.PlannerData.update("assignments",a.id,{grade:parsed});
+      const achievements={};let hasGrade=false;
+      for(const k of ["K","T","C","A"]){
+        const raw=b.querySelector("#grade"+k).value.trim();
+        if(!raw){achievements[k]=null;continue;}
+        const parsed=parseGrade(raw);
+        if(!parsed){alert("Please enter a valid grade for "+k+", such as 18/20 or 90%.");b.querySelector("#grade"+k).focus();return;}
+        achievements[k]=parsed;hasGrade=true;
+      }
+      const weights={};let total=0;
+      for(const k of ["K","T","C","A"]){const n=Number(b.querySelector("#weight"+k).value);if(!Number.isFinite(n)||n<0){alert("Weights must be 0 or greater.");return;}weights[k]=n;total+=n;}
+      if(hasGrade&&Math.round(total*100)/100!==100){alert("K/T/C/A weights must total 100%.");return;}
+      window.PlannerData.update("assignments",a.id,{grade:{achievements,weights}});
       close();
     };
   }
+
   function editNotes(a){const value=prompt("Notes",a.notes||"");if(value!==null)window.PlannerData.update("assignments",a.id,{notes:value});}
   function addResource(a){const value=prompt("Resource name or link");if(value)window.PlannerData.update("assignments",a.id,{resources:[...(a.resources||[]),value.trim()]});}
 
