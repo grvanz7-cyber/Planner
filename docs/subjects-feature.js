@@ -41,11 +41,12 @@
     active();const s=window.PlannerData.find("subjects",id);if(!s){location.hash="subjects";return}
     const d=data(),units=d.units.filter(u=>u.subjectId===s.id).sort((a,b)=>(Number(a.number)||999)-(Number(b.number)||999)),current=units.find(u=>u.status==="Current");
     const assignments=d.assignments.filter(a=>a.subjectId===s.id).sort((a,b)=>(a.dueDate||"9999").localeCompare(b.dueDate||"9999"));
-    const graded=assignments.filter(a=>a.grade&&Number.isFinite(Number(a.grade.percentage)));
+    const assignmentGrade=a=>{const g=a.grade;if(g&&typeof g==="object"&&g.achievements){const entries=Object.entries(g.achievements).filter(([,v])=>v&&Number.isFinite(Number(v.percentage)));const w=g.weights||{K:25,T:25,C:25,A:25};const total=entries.reduce((s,[k])=>s+(Number(w[k])||0),0);return total?entries.reduce((s,[k,v])=>s+Number(v.percentage)*(Number(w[k])||0),0)/total:null;}return g&&Number.isFinite(Number(g.percentage))?Number(g.percentage):null;};
+    const graded=assignments.filter(a=>assignmentGrade(a)!=null);
     const coursework=graded.filter(a=>a.type!=="Culminating");
     const culminating=graded.filter(a=>a.type==="Culminating");
     const weights={coursework:65,culminating:25,other:10,...(d.settings?.gradingWeights||{})};
-    const average=list=>list.length?list.reduce((sum,a)=>sum+Number(a.grade.percentage),0)/list.length:null;
+    const average=list=>list.length?list.reduce((sum,a)=>sum+assignmentGrade(a),0)/list.length:null;
     const courseworkAvg=average(coursework),culminatingAvg=average(culminating);
     const available=[];
     if(courseworkAvg!=null)available.push({value:courseworkAvg,weight:Number(weights.coursework)||0});
