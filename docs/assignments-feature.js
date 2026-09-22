@@ -137,14 +137,16 @@
   function parseGrade(value){
     const raw=String(value||"").trim();
     if(!raw)return null;
-    const fraction=raw.match(/^(\\d+(?:\\.\\d+)?)\\s*\\/\\s*(\\d+(?:\\.\\d+)?)$/);
-    if(fraction){
-      const earned=Number(fraction[1]), possible=Number(fraction[2]);
-      if(possible>0)return {raw,earned,possible,percentage:Math.round((earned/possible)*10000)/100};
+    const parts=raw.split("/").map(v=>v.trim());
+    if(parts.length===2 && parts[0]!=="" && parts[1]!==""){
+      const earned=Number(parts[0]), possible=Number(parts[1]);
+      if(Number.isFinite(earned)&&Number.isFinite(possible)&&possible>0){
+        return {raw,earned,possible,percentage:Math.round((earned/possible)*10000)/100};
+      }
     }
-    const percent=raw.match(/^(\\d+(?:\\.\\d+)?)\\s*%$/);
+    const percent=raw.match(/^([0-9]+(?:\.[0-9]+)?)\s*%$/);
     if(percent)return {raw,earned:null,possible:null,percentage:Number(percent[1])};
-    const plain=raw.match(/^(\\d+(?:\\.\\d+)?)$/);
+    const plain=raw.match(/^([0-9]+(?:\.[0-9]+)?)$/);
     if(plain){
       const percentage=Number(plain[1]);
       if(percentage>=0&&percentage<=100)return {raw,earned:null,possible:null,percentage};
