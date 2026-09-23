@@ -176,7 +176,7 @@
   function addResource(a){const value=prompt("Resource name or link");if(value)window.PlannerData.update("assignments",a.id,{resources:[...(a.resources||[]),value.trim()]});}
 
   function render(){const id=detailRoute();if(id)renderAssignment(id);}
-  window.PlannerAssignments={showAddAssignment,openAssignment:id=>{location.hash=`assignment/${id}`}};
+  window.PlannerAssignments={showAddAssignment,openAssignment:id=>{location.hash=`assignment/${id}`},render};
   window.addEventListener("hashchange",render);
   window.addEventListener("planner:data-changed",()=>{if(detailRoute())render();});
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",render);else render();
